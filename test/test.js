@@ -12,16 +12,34 @@
  * Armor5, Inc..
  **************************************************************************/
 
-var Logger = require('../index');
-var log = require('../index').get('test');
+if( true ) {
+    var Logger = require('../index');
+    var log = require('../index').get('test');
 
-log.date();
-log.info( "Hello world");
+    log.date();
+    log.info( "Hello world");
 
-Logger.setLogger( 'sos' );
-log.info("Hello SOS");
-log.date();
-log.verbose("Verbose message");
-log.debug("Debug message");
-log.error("Error message");
-log.warn("Warning message");
+    Logger.setLogger( 'sos' );
+    log.info("Hello SOS");
+    log.date();
+    log.verbose("Verbose message");
+    log.debug("Debug message");
+    log.error("Error message");
+    log.warn("Warning message");
+}
+else {
+    var timer;
+    var result = {}
+    console.log("setting timeout");
+    var timer = setTimeout( function() {
+        console.log( "Timeout");
+        result.done = true;
+    }, 3000 );
+}
+
+//while( result.done === undefined ) {
+//    console.log( "result = %s", result.done );
+//    // console.log("spinning");
+//};
+
+console.log( 'done');
