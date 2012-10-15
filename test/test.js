@@ -26,6 +26,7 @@ if( true ) {
     log.debug("Debug message");
     log.error("Error message");
     log.warn("Warning message");
+    log.log( 'info', ["First line of message", "Second line of message", "third line of message"] );
 }
 
 var idx = 0;
