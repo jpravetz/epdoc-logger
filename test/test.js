@@ -27,19 +27,12 @@ if( true ) {
     log.error("Error message");
     log.warn("Warning message");
 }
-else {
-    var timer;
-    var result = {}
-    console.log("setting timeout");
-    var timer = setTimeout( function() {
-        console.log( "Timeout");
-        result.done = true;
-    }, 3000 );
-}
 
-//while( result.done === undefined ) {
-//    console.log( "result = %s", result.done );
-//    // console.log("spinning");
-//};
+var idx = 0;
+var timer = setInterval( function() {
+    log.date();
+    log.debug( "Message %d", ++idx );
+}, 3000 );
+
 
 console.log( 'done');
