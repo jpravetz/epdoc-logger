@@ -12,6 +12,7 @@
  * Armor5, Inc..
  **************************************************************************/
 
+var type = "sos";
 if( true ) {
     var Logger = require('../index');
     var log = require('../index').get('test');
@@ -19,8 +20,8 @@ if( true ) {
     log.date();
     log.info( "Hello world");
 
-    Logger.setLogger( 'sos' );
-    log.info("Hello SOS");
+    Logger.setLogger( type, { path: "temp.log" } );
+    log.info("Hello " + type );
     log.date();
     log.verbose("Verbose message");
     log.debug("Debug message");
