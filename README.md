@@ -28,6 +28,7 @@ log.log('info',["A multiline","output"]);
 The string "MyModule" above should usually be set to the name of your Javascript file, and will be output
 along with the log level.
 
+
 ## Logging to a File ##
 
 ```javascript
@@ -39,6 +40,11 @@ log.info("Return value for %s is %s", "hello", "world" );
 ```
 
 ## Logging to SOS ##
+
+When you set the logger to SOS the setLogger method returns immediately, but the socket takes awhile to
+initialize. In the meantime log messages are queued up and getLogger() returns the SOS logger. Once the
+connection is made the messages are flushed. If the connection is refused the messages are flushed to the
+previously set logger output (usually the console).
 
 ```javascript
 var Logger = require('logger');
@@ -58,8 +64,9 @@ var Logger = require('logger');
 
 var log = Logger.get('MyModuleName');
 Logger.setLogger( 'file', { path: 'path/to/myfile.log' } );
+var loggerType = Logger.getLogger().type;        // One of file, console or sos
 Logger.setGlobalLogLevel( 'warn' );
-var startTime = Logger.getTime();
+var startTime = Logger.getStartTime();           // Milliseconds
 
 
 // Instance methods

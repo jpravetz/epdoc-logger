@@ -13,27 +13,28 @@
  **************************************************************************/
 
 var type = "sos";
-if( true ) {
-    var Logger = require('../index');
-    var log = require('../index').get('test');
 
-    log.date();
-    log.info( "Hello world");
+var Logger = require('../index');
+var log = require('../index').get('test');
 
-    Logger.setLogger( type, { path: "temp.log" } );
-    log.info("Hello " + type );
-    log.date();
-    log.verbose("Verbose message");
-    log.debug("Debug message");
-    log.error("Error message");
-    log.warn("Warning message");
-    log.log( 'info', ["First line of message", "Second line of message", "third line of message"] );
-}
+log.date();
+log.info( "Hello world");
+
+Logger.setLogger( type, { path: "temp.log" } );
+log.info("Hello " + type );
+log.date();
+log.verbose("Verbose message");
+log.debug("Debug message");
+log.error("Error message");
+log.warn("Warning message");
+log.log( 'info', ["First line of message", "Second line of message", "third line of message"] );
 
 var idx = 0;
 var timer = setInterval( function() {
     log.date();
     log.debug( "Message %d", ++idx );
+    var t = Logger.getStartTime();
+    log.warn( "We started at this time %s", new Date(t) );
 }, 3000 );
 
 
