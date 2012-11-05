@@ -76,7 +76,8 @@ log.debug( "We %s formatted messages", "do" );
 log.error( "Error: %s", err );
 log.verbose( "We don't see verbose message by default" );
 log.warn( "Danger Will Robinson, danger" );
-log.date( "Output now's date/time" );
+log.date();             // Output now's date/time
+log.separator();        // Output a line separator
 
 log.log( 'info', "A message that " + "is not formatted" );
 
