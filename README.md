@@ -63,11 +63,12 @@ var Logger = require('logger');
 // Static methods
 
 var log = Logger.get('MyModuleName');
-Logger.setLogger( 'file', { path: 'path/to/myfile.log' } );
+// The setLogger method's first parameter must be 'file','sos' or 'console'
+// The second parameter is options with path (for file) and dateFormat of ISO or formatMS (default)
+Logger.setLogger( 'file', { path: 'path/to/myfile.log', dateFormat: 'ISO' } );
 var loggerType = Logger.getLogger().type;        // One of file, console or sos
 Logger.setGlobalLogLevel( 'warn' );
 var startTime = Logger.getStartTime();           // Milliseconds
-
 
 // Instance methods
 
@@ -83,4 +84,32 @@ log.log( 'info', "A message that " + "is not formatted" );
 
 // Enable verbose messages to be output for this log object (overrides global setting)
 log.setLogLevel( "verbose" );
+```
+
+## Adding a SessionID to the log output ##
+
+For requests it can be useful to output a unique session ID with every log message.
+You can pass an object, with a method that can retrieve a session ID, to any of the log methods
+and the session ID will be included in the output.
+
+You can configure the logger with an object callback to be called if the first parameter of a log
+message is an object. This is used to get a session ID.
+
+```
+//  Here is a sample object
+var req = {
+    getSessionId: function() {
+        return "SAMPLE_SESSION_ID";
+    }
+}
+
+// Setup the logger once with the name of the function to call for an object
+Logger.setSessionIdCallback( 'getSessionId' );
+
+// Now when you call any of the log methods, if the first parameter is an object that
+// has a method 'getSessionId', it will add the session ID to the output
+log.info( req, "Hello " + Logger.getLogger().type );
+
+// Sample output:
+// [00:00.010] INFO: [SAMPLE_SESSION_ID] test: Hello console
 ```

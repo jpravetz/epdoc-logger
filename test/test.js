@@ -12,20 +12,30 @@
  * Armor5, Inc..
  **************************************************************************/
 
-var type = "sos";
+//var type = "console";
+//var type = "sos";
+var type = "file";
+
+var testObject = {
+    getSessionId: function() {
+        return "SESSIONID";
+    }
+}
 
 var Logger = require('../index');
+Logger.setGlobalLogLevel( 'verbose' );
+Logger.setSessionIdCallback( 'getSessionId' );
 var log = require('../index').get('test');
 
 log.date();
 log.info( "Hello world");
 
 Logger.setLogger( type, { path: "temp.log" } );
-log.info("Hello " + type );
+log.info(testObject,"Hello " + Logger.getLogger().type );
 log.date();
-log.verbose("Verbose message");
-log.debug("Debug message");
-log.error("Error message");
+log.verbose( "Verbose message");
+log.debug( testObject, "Debug message");
+log.error(testObject,"Error message");
 log.warn("Warning message");
 log.log( 'info', ["First line of message", "Second line of message", "third line of message"] );
 
