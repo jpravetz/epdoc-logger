@@ -77,6 +77,7 @@ log.debug( "We %s formatted messages", "do" );
 log.error( "Error: %s", err );
 log.verbose( "We don't see verbose message by default" );
 log.warn( "Danger Will Robinson, danger" );
+log.fault( "Restarting server in 10 seconds" );
 log.date();             // Output now's date/time
 log.separator();        // Output a line separator
 
