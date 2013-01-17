@@ -91,7 +91,7 @@ log.setLogLevel( "verbose" );
 
 ## Adding a SessionID to the log output ##
 
-When logging network requests (_.e.g. http requests) it can be useful to output a unique session ID
+When logging network requests (_.e.g._ http requests) it can be useful to output a unique session ID
 with every log message. Logger provides optional support for outputting a session ID. To enable
 session ID output you must configure logger and then pass an additional _session object_ to the log methods.
 This _session object_ must include a function that returns a session ID as a string.
