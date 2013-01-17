@@ -4,10 +4,8 @@ Jim's logger module. Includes support for formatted logging to
 
 - console (default)
 - file (specify path)
-- [SOS Max](http://www.sos.powerflasher.com/developer-tools/sosmax/home/)
-
-_"The SOS max is the POWERFLASHER Socket Output Server - a fast and helpful programmer tool with graphical
-user interface to display log messages for debugging purpose."_
+- [SOS Max](http://www.sos.powerflasher.com/developer-tools/sosmax/home/) - _SOS max is the POWERFLASHER Socket Output Server - a fast and helpful programmer tool with graphical
+user interface to display log messages for debugging purpose._
 
 On startup the logger is set to console.
 If a file or SOS logger is closed logging will revert to the previously specified logger.
@@ -114,6 +112,7 @@ Logger.setSessionIdCallback( 'getSessionId' );
 // it will add the session ID to the output.
 // You cannot pass the req object to the date or separator methods.
 log.info( req, "Hello " + Logger.getLogger().type );
+// For log.log the req object is the (optional) second parameter
 log.log( 'info', req, "Hello " + Logger.getLogger().type );
 
 // Sample output:
@@ -124,7 +123,7 @@ If you have the session ID string you will need to create an object wrapper for 
 Here is an example of how to do this:
 
 ```javascript
-this.fnSid = function(inSid) {
+function fnSid(inSid) {
     return {
         sid: inSid,
         getSessionId: function() {
