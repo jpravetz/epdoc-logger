@@ -71,17 +71,19 @@ Logger.setGlobalLogLevel( 'warn' );
 var startTime = Logger.getStartTime();           // Milliseconds
 
 // Instance methods
+// The first six of these methods are shortcuts that call the log method
 
 log.info( "I just want to say %s to the %s", "Hello", "World" );
 log.debug( "We %s formatted messages", "do" );
 log.error( "Error: %s", err );
-log.verbose( "We don't see verbose message by default" );
+log.verbose( "The default is to not output verbose messages" );
 log.warn( "Danger Will Robinson, danger" );
-log.fault( "Restarting server in 10 seconds" );
+log.fault( "Restarting server in %d seconds", 10 );
+
 log.date();             // Output now's date/time
 log.separator();        // Output a line separator
 
-log.log( 'info', "A message that " + "is not formatted" );
+log.log( 'info', "This method %s supports formatting", "also" );
 
 // Enable verbose messages to be output for this log object (overrides global setting)
 log.setLogLevel( "verbose" );
@@ -89,28 +91,48 @@ log.setLogLevel( "verbose" );
 
 ## Adding a SessionID to the log output ##
 
-For requests it can be useful to output a unique session ID with every log message.
-You can pass an object, with a method that can retrieve a session ID, to any of the log methods
-and the session ID will be included in the output.
-
-You can configure the logger with an object callback to be called if the first parameter of a log
-message is an object. This is used to get a session ID.
+When logging network requests (_.e.g. http requests) it can be useful to output a unique session ID
+with every log message. Logger provides optional support for outputting a session ID. To enable
+session ID output you must configure logger and then pass an additional _session object_ to the log methods.
+This _session object_ must include a function that returns a session ID as a string.
 
 ```
 //  Here is a sample object
+// Alternatively, you can add a getSessionID function to an existing request object
 var req = {
     getSessionId: function() {
         return "SAMPLE_SESSION_ID";
     }
 }
 
-// Setup the logger once with the name of the function to call for an object
+// Setup the logger once with the name of the function to call on the object
+// You can use any method name, but it must be a function of the object
 Logger.setSessionIdCallback( 'getSessionId' );
 
-// Now when you call any of the log methods, if the first parameter is an object that
-// has a method 'getSessionId', it will add the session ID to the output
+// Now when you call any of the log instance methods that call the log.log method,
+// if the first parameter is an object that has a method 'getSessionId',
+// it will add the session ID to the output.
+// You cannot pass the req object to the date or separator methods.
 log.info( req, "Hello " + Logger.getLogger().type );
+log.log( 'info', req, "Hello " + Logger.getLogger().type );
 
 // Sample output:
 // [00:00.010] INFO: [SAMPLE_SESSION_ID] test: Hello console
+```
+
+If you have the session ID string you will need to create an object wrapper for the string.
+Here is an example of how to do this:
+
+```javascript
+this.fnSid = function(inSid) {
+    return {
+        sid: inSid,
+        getSessionId: function() {
+            return this.sid;
+        }
+    };
+};
+
+var sid = "012345";
+log.info( fnSid(sid), "The sid will appear in the log output" );
 ```
