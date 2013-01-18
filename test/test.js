@@ -36,6 +36,7 @@ log.date();
 log.verbose( "Verbose message");
 log.debug( testObject, "Debug message");
 log.error(testObject,"Error message");
+log.error(null,"Error message");
 log.fatal("Danger, danger!");
 log.warn("Warning message");
 log.log( 'info', ["First line of message", "Second line of message", "third line of message"] );

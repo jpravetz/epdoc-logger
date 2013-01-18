@@ -135,3 +135,7 @@ function fnSid(inSid) {
 var sid = "012345";
 log.info( fnSid(sid), "The sid will appear in the log output" );
 ```
+
+The log-based methods (log.info, log.error) will also except null or undefined as a first parameter.
+This can be used when the session ID object may or may not be available. If the session ID is unknown,
+make the object null rather then the session ID.
