@@ -38,6 +38,7 @@ log.debug( testObject, "Debug message");
 log.error(testObject,"Error message");
 log.error(null,"Error message");
 log.fatal("Danger, danger!");
+log.info();
 log.warn("Warning message");
 log.log( 'info', ["First line of message", "Second line of message", "third line of message"] );
 
