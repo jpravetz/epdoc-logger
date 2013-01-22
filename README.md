@@ -87,6 +87,24 @@ log.log( 'info', "This method %s supports formatting", "also" );
 log.setLogLevel( "verbose" );
 ```
 
+## Transports ##
+
+Logger supports three transports, along with these options:
+
+  * console
+    * ```dateFormat``` = ISO | formatMS, default formatMS
+  * file
+    * ```dateFormat``` = ISO | formatMS, default formatMS
+    * ```path``` - path to log output file
+    * ```buffer``` - buffer flush interval, default no buffering
+  * sos
+
+Transports are maintained in a stack. You push a transport using ```setLogger``` and pop a transport
+using ```popLogger```. If a transport closes (_e.g._ SOS Max is closed) the stack is
+automatically popped. Logger buffers messages while switching transports, however individual
+transports can do their own buffering (_e.g._ file). If a transport closes prematurely, it's buffer
+may be lost.
+
 ## Adding a SessionID to the log output ##
 
 When logging network requests (_.e.g._ http requests) it can be useful to output a unique session ID

@@ -1,3 +1,9 @@
+1.2.0 / 2013-01-22
+==================
+
+  * Added buffering option to file transport
+  * Now support push/pop of transports on transport stack, with auto unshift when transport closes
+
 1.1.2 / 2013-01-17
 ==================
 

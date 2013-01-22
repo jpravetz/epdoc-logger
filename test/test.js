@@ -12,9 +12,11 @@
  * Armor5, Inc..
  **************************************************************************/
 
+const TIMER_INTERVAL = 2000;
+const BUFFER_INTERVAL = 6000;
 //var type = "console";
 var type = "sos";
-//var type = "file";
+var type = "file";
 
 var testObject = {
     getSessionId: function() {
@@ -30,7 +32,7 @@ var log = require('../index').get('test');
 log.date();
 log.info( "Hello world");
 
-Logger.setLogger( type, { path: "temp.log" } );
+Logger.setLogger( type, { path: __dirname + "/temp.log", buffer: BUFFER_INTERVAL } );
 log.info(testObject,"Hello " + Logger.getLogger().type );
 log.date();
 log.verbose( "Verbose message");
@@ -48,7 +50,7 @@ var timer = setInterval( function() {
     log.debug( "Message %d", ++idx );
     var t = Logger.getStartTime();
     log.warn( "We started at this time %s", new Date(t) );
-}, 3000 );
+}, TIMER_INTERVAL );
 
 
 console.log( 'done');
