@@ -1,8 +1,9 @@
-1.2.0 / 2013-01-22
+1.2.1 / 2013-01-22
 ==================
 
   * Added buffering option to file transport
   * Now support push/pop of transports on transport stack, with auto unshift when transport closes
+  * Exposed raw writeMessage method for use by express response extension
 
 1.1.2 / 2013-01-17
 ==================
