@@ -1,3 +1,10 @@
+1.3.0 / 2013-01-23
+==================
+
+  * Added bIncludeSid to options when setting logger
+  * Removed support for passing in sessionId callback object, as we now support this in raw writeMessage method
+  * Fixed raw writeMessage method so that it is filtered based on gLogLevel and time/timeDiff are auto populated
+
 1.2.1 / 2013-01-22
 ==================
 

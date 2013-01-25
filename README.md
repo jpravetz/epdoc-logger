@@ -1,43 +1,44 @@
 # Logger #
 
-Jim's logger module. Includes support for formatted logging to
+Jim's Logger module. Includes support for formatted logging to
 
-- console (default)
-- file (specify path)
-- [SOS Max](http://www.sos.powerflasher.com/developer-tools/sosmax/home/) - _SOS max is the POWERFLASHER Socket Output Server - a fast and helpful programmer tool with graphical
+* console (default)
+* file (specify path)
+* [SOS Max](http://www.sos.powerflasher.com/developer-tools/sosmax/home/) - _SOS max is the POWERFLASHER Socket Output Server - a fast and helpful programmer tool with graphical
 user interface to display log messages for debugging purpose._
 
-On startup the logger is set to console.
+On startup the logger is set to the console transport.
 If a file or SOS logger is closed logging will revert to the previously specified logger.
 Thus if you specify an SOS logger and the SOS application is closed, logging will return back to the console.
 
-## Logging to Console ##
+## Setting the Logger Transport ##
 
-You create a new logging object using the ```get``` method.
+Transports are maintained in a stack. You push a transport using ```setLogger``` and pop a transport
+using ```popLogger```. If a transport closes (_e.g._ SOS Max is closed) the stack is
+automatically popped. Logger buffers messages while switching transports, however individual
+transports can do their own buffering (_e.g._ file). If a transport closes prematurely, it's buffer
+may be lost.
 
-```javascript
-var log = require('logger').get('MyModule');
+There are probably few where you would need to manually call ```popLogger```.
 
-log.info("Return value for %s is %s", "hello", "world" );
+The ```setLogger``` method takes an object with these properties:
 
-log.log('info',["A multiline","output"]);
-```
+ * type - Must be one of 'console', 'file' or 'sos'
+ * path - 'path/to/myfile.log', used when type is file
+ * dateFormat - one of 'ISO' or 'formatMS', default is dependent on the transport but is usually 'formatMS'
+ * bIncludeSessionId - Indicates whether the sessionId should be included in the output, defaults to true
 
-The string "MyModule" above should usually be set to the name of your Javascript file, and will be output
-along with the log level.
-
-
-## Logging to a File ##
+### Logging to a File ###
 
 ```javascript
 var Logger = require('logger');
 var log = Logger.get('MyModule');
-Logger.setLogger( 'file', { path: 'path/to/myfile.log' } );
+Logger.setLogger( { type: 'file', path: 'path/to/myfile.log' } );
 
 log.info("Return value for %s is %s", "hello", "world" );
 ```
 
-## Logging to SOS ##
+### Logging to SOS ###
 
 When you set the logger to SOS the setLogger method returns immediately, but the socket takes awhile to
 initialize. In the meantime log messages are queued up and getLogger() returns the SOS logger. Once the
@@ -47,10 +48,68 @@ previously set logger output (usually the console).
 ```javascript
 var Logger = require('logger');
 var log = Logger.get('MyModule');
-Logger.setLogger( 'sos' );
+Logger.setLogger( { type: 'sos', bIncludeSessionId: false } );
 
 log.info("Return value for %s is %s", "hello", "world" );
 ```
+
+## How to Log Messages ##
+
+Logging is done by:
+
+1. Directly calling the Logger's logMessage function
+2. Using Logger.get() to create a logging object and calling methods on that object (as shown in above examples)
+3. Creating your own logging object that exposes it's own methods, then use this object to call logMethod
+
+If you are creating your own logging object, use Logger's logging object as an example. You can also find
+an example in the Armor5 Admin Console where a middleware module extends the express.js response object
+with logging methods.
+
+### The logMessage Function ##
+
+The logMessage function gives you a direct API into the queue of logging messages that are to be output.
+This function is used by the Logging Object (next section) and by your custom logging objects.
+
+```javascript
+var Logger = require('logger');
+Logger.setLogger( { type: 'sos', bIncludeSessionId: true } );
+Logger.setGlobalLogLevel( 'info' );
+Logger.logMessage( {
+        level: 'info',
+        sid: '123',
+        module: 'api.org.create',
+        message: "My formatted message"
+        });
+```
+
+The logMessage function takes an object with the following parameters:
+
+ * level - Must be one of LEVEL_ORDER values, all lower case
+ * sid - (Optional) sessionID to display
+ * module - (Optional) Module descriptor to display (usually of form route.obj.function)
+ * time - (Optional) A date object with the current time, will be filled in if not provided
+ * timeDiff - (Optional) The difference in milliseconds between 'time' and when the application was
+started, based on reading Logger.getStartTime()
+ * message - A string or an array of strings. If an array the string will be printed on multiple lines
+where supported (e.g. SOS). The string must already formatted (e.g.. no '%s')
+
+
+### Logging using Logger's Logging Object ###
+
+The logger module includes a handy logging object that you can initialize in a file for logging from that file.
+
+You create a new logging object using the Logger's ```get``` method.
+
+```javascript
+var log = require('logger').get('MyModuleName');
+
+log.info("Return value for %s is %s", "hello", "world" );
+
+log.log('info',["A multiline","output",["With formatted %drd line",%d]]);
+```
+
+The string "MyModuleName" above should usually be set to the name of your Javascript file, and will be output
+along with the log level.
 
 ## Logging Commands ##
 
@@ -61,9 +120,7 @@ var Logger = require('logger');
 // Static methods
 
 var log = Logger.get('MyModuleName');
-// The setLogger method's first parameter must be 'file','sos' or 'console'
-// The second parameter is options with path (for file) and dateFormat of ISO or formatMS (default)
-Logger.setLogger( 'file', { path: 'path/to/myfile.log', dateFormat: 'ISO' } );
+Logger.setLogger( { type: 'file', path: 'path/to/myfile.log', dateFormat: 'ISO', bIncludeSid: false } );
 var loggerType = Logger.getLogger().type;        // One of file, console or sos
 Logger.setGlobalLogLevel( 'warn' );
 var startTime = Logger.getStartTime();           // Milliseconds
@@ -86,74 +143,3 @@ log.log( 'info', "This method %s supports formatting", "also" );
 // Enable verbose messages to be output for this log object (overrides global setting)
 log.setLogLevel( "verbose" );
 ```
-
-## Transports ##
-
-Logger supports three transports, along with these options:
-
-  * console
-    * ```dateFormat``` = ISO | formatMS, default formatMS
-  * file
-    * ```dateFormat``` = ISO | formatMS, default formatMS
-    * ```path``` - path to log output file
-    * ```buffer``` - buffer flush interval, default no buffering
-  * sos
-
-Transports are maintained in a stack. You push a transport using ```setLogger``` and pop a transport
-using ```popLogger```. If a transport closes (_e.g._ SOS Max is closed) the stack is
-automatically popped. Logger buffers messages while switching transports, however individual
-transports can do their own buffering (_e.g._ file). If a transport closes prematurely, it's buffer
-may be lost.
-
-## Adding a SessionID to the log output ##
-
-When logging network requests (_.e.g._ http requests) it can be useful to output a unique session ID
-with every log message. Logger provides optional support for outputting a session ID. To enable
-session ID output you must configure logger and then pass an additional _session object_ to the log methods.
-This _session object_ must include a function that returns a session ID as a string.
-
-```
-//  Here is a sample object
-// Alternatively, you can add a getSessionID function to an existing request object
-var req = {
-    getSessionId: function() {
-        return "SAMPLE_SESSION_ID";
-    }
-}
-
-// Setup the logger once with the name of the function to call on the object
-// You can use any method name, but it must be a function of the object
-Logger.setSessionIdCallback( 'getSessionId' );
-
-// Now when you call any of the log instance methods that call the log.log method,
-// if the first parameter is an object that has a method 'getSessionId',
-// it will add the session ID to the output.
-// You cannot pass the req object to the date or separator methods.
-log.info( req, "Hello " + Logger.getLogger().type );
-// For log.log the req object is the (optional) second parameter
-log.log( 'info', req, "Hello " + Logger.getLogger().type );
-
-// Sample output:
-// [00:00.010] INFO: [SAMPLE_SESSION_ID] test: Hello console
-```
-
-If you have the session ID string you will need to create an object wrapper for the string.
-Here is an example of how to do this:
-
-```javascript
-function fnSid(inSid) {
-    return {
-        sid: inSid,
-        getSessionId: function() {
-            return this.sid;
-        }
-    };
-};
-
-var sid = "012345";
-log.info( fnSid(sid), "The sid will appear in the log output" );
-```
-
-The log-based methods (log.info, log.error) will also except null or undefined as a first parameter.
-This can be used when the session ID object may or may not be available. If the session ID is unknown,
-make the object null rather then the session ID.

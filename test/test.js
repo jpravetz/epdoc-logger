@@ -18,15 +18,8 @@ const BUFFER_INTERVAL = 6000;
 var type = "sos";
 var type = "file";
 
-var testObject = {
-    getSessionId: function() {
-        return "SESSIONID";
-    }
-}
-
 var Logger = require('../index');
 Logger.setGlobalLogLevel( 'verbose' );
-Logger.setSessionIdCallback( 'getSessionId' );
 var log = require('../index').get('test');
 
 log.date();
