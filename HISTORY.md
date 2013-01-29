@@ -1,3 +1,9 @@
+1.3.2 / 2013-01-29
+==================
+
+  * Added length property to Logger.logMessage so that caller can have messages
+    truncated with ... if the message is over a certain length
+
 1.3.0 / 2013-01-23
 ==================
 
