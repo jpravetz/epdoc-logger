@@ -1,3 +1,8 @@
+1.4.0 / 2013-01-30
+==================
+
+  * Added data property to Logger.logMessage and now output to file as JSON array
+
 1.3.2 / 2013-01-29
 ==================
 
