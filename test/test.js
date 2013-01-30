@@ -13,10 +13,10 @@
  **************************************************************************/
 
 const TIMER_INTERVAL = 2000;
-const BUFFER_INTERVAL = 6000;
-//var type = "console";
-var type = "sos";
-var type = "file";
+const BUFFER_INTERVAL = 0; //1000;
+var type = "console";
+//var type = "sos";
+//var type = "file";
 
 var Logger = require('../index');
 Logger.setGlobalLogLevel( 'verbose' );
@@ -25,17 +25,18 @@ var log = require('../index').get('test');
 log.date();
 log.info( "Hello world");
 
-Logger.setLogger( type, { path: __dirname + "/temp.log", buffer: BUFFER_INTERVAL } );
-log.info(testObject,"Hello " + Logger.getLogger().type );
+Logger.setLogger( { type: type, path: __dirname + "/temp.log", buffer: BUFFER_INTERVAL } );
+log.info("Hello " + Logger.getLogger().type );
 log.date();
 log.verbose( "Verbose message");
-log.debug( testObject, "Debug message");
-log.error(testObject,"Error message");
-log.error(null,"Error message");
+log.data('obj',{a:3}).debug( "Debug message");
+log.error("Error message");
+log.error("Error message");
 log.fatal("Danger, danger!");
 log.info();
 log.warn("Warning message");
 log.log( 'info', ["First line of message", "Second line of message", "third line of message"] );
+Logger.logMessage( { message: "Calling Logger.writeMessage", module: "MyModule", sid: "MySessionId", data: { key: "value" } } );
 
 var idx = 0;
 var timer = setInterval( function() {

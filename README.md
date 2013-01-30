@@ -3,7 +3,7 @@
 Jim's Logger module. Includes support for formatted logging to
 
 * console (default)
-* file (specify path)
+* file (specify path) - logs as a JSON array
 * [SOS Max](http://www.sos.powerflasher.com/developer-tools/sosmax/home/) - _SOS max is the POWERFLASHER Socket Output Server - a fast and helpful programmer tool with graphical
 user interface to display log messages for debugging purpose._
 
@@ -36,7 +36,12 @@ var log = Logger.get('MyModule');
 Logger.setLogger( { type: 'file', path: 'path/to/myfile.log' } );
 
 log.info("Return value for %s is %s", "hello", "world" );
+log.data('req',{a:3}).info();
+log.data('res',{b:4}).info("My message with %s support", 'formatting');
 ```
+
+Log output to a file is a JSON-formatted array with [ date, level, sid, module, message, data ], as defined
+under the LogMessage function (below).
 
 ### Logging to SOS ###
 
@@ -55,7 +60,7 @@ log.info("Return value for %s is %s", "hello", "world" );
 
 ## How to Log Messages ##
 
-Logging is done by:
+Logging is done by one of these methods:
 
 1. Directly calling the Logger's logMessage function
 2. Using Logger.get() to create a logging object and calling methods on that object (as shown in above examples)
@@ -92,6 +97,7 @@ The logMessage function takes an object with the following parameters:
 started, based on reading Logger.getStartTime()
  * message - A string or an array of strings. If an array the string will be printed on multiple lines
 where supported (e.g. SOS). The string must already formatted (e.g.. no '%s')
+* data - Any object, will be serialized as JSON
 
 
 ### Logging using Logger's Logging Object ###
@@ -106,10 +112,22 @@ var log = require('logger').get('MyModuleName');
 log.info("Return value for %s is %s", "hello", "world" );
 
 log.log('info',["A multiline","output",["With formatted %drd line",%d]]);
+
+// Output a message and a JSON-encoded object
+log.data('key2',{type:'value2'}).info("My message");
+
+// Output two objects with no accompanying message
+log.data('key1',{type:'value1'}).data('key2',{type:'value2'}).debug();
+
 ```
 
 The string "MyModuleName" above should usually be set to the name of your Javascript file, and will be output
 along with the log level.
+
+The logging object support chaining. Every method except isAboveLevel() will return the logging object.
+
+Items added with the data() method are flushed when logArgs is called.
+logArgs is called for any of the methods info(), debug(), log(), etc.
 
 ## Logging Commands ##
 
@@ -134,6 +152,8 @@ log.error( "Error: %s", err );
 log.verbose( "The default is to not output verbose messages" );
 log.warn( "Danger Will Robinson, danger" );
 log.fault( "Restarting server in %d seconds", 10 );
+log.data('key1',{type:'value'}).info();
+log.data('key2',{type:'value2'}).info("My message");
 
 log.date();             // Output now's date/time
 log.separator();        // Output a line separator
