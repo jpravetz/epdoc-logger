@@ -1,3 +1,9 @@
+1.4.3 / 2013-02-02
+==================
+
+  * Added request unique ID to logging
+  * Interface improvements and better JSON output
+
 1.4.0 / 2013-01-30
 ==================
 
