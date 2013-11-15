@@ -1,3 +1,8 @@
+1.4.6 / 2013-11-15
+==================
+
+  * Method action now accepts arrays of strings as parameter
+
 1.4.5 / 2013-09-08
 ==================
 

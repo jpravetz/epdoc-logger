@@ -92,6 +92,7 @@ The logMessage function takes an object with the following parameters:
  * level - Must be one of LEVEL_ORDER values, all lower case
  * sid - (Optional) sessionID to display
  * module - (Optional) Module descriptor to display (usually of form route.obj.function)
+ * action - (Optional) Action (verb) descriptor to display (eg. 'org.update')
  * time - (Optional) A date object with the current time, will be filled in if not provided
  * timeDiff - (Optional) The difference in milliseconds between 'time' and when the application was
 started, based on reading Logger.getStartTime()
@@ -146,14 +147,17 @@ var startTime = Logger.getStartTime();           // Milliseconds
 // Instance methods
 // The first six of these methods are shortcuts that call the log method
 
+log.action('obj.update');
+log.action('obj','update');
+log.action(['obj','update']);
+log.logObj('a',1).logObj('b',[2,3]).info();
+log.logObj({a:1,b:[2,3]}).info("My message");
 log.info( "I just want to say %s to the %s", "Hello", "World" );
 log.debug( "We %s formatted messages", "do" );
 log.error( "Error: %s", err );
 log.verbose( "The default is to not output verbose messages" );
 log.warn( "Danger Will Robinson, danger" );
 log.fault( "Restarting server in %d seconds", 10 );
-log.data('key1',{type:'value'}).info();
-log.data('key2',{type:'value2'}).info("My message");
 
 log.date();             // Output now's date/time
 log.separator();        // Output a line separator
