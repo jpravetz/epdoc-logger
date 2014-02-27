@@ -1,3 +1,18 @@
+1.5.2 / 2014-02-27
+==================
+
+  * Set req._hrStartTime in reqId middleware
+
+1.5.1 / 2014-02-13
+==================
+
+  * Made ResStub available
+
+1.5.0 / 2014-02-13
+==================
+
+  * Added express logging and other logging-related middleware to this module
+
 1.4.6 / 2013-11-15
 ==================
 

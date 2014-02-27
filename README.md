@@ -7,6 +7,8 @@ Jim's Logger module. Includes support for formatted logging to
 * [SOS Max](http://www.sos.powerflasher.com/developer-tools/sosmax/home/) - _SOS max is the POWERFLASHER Socket Output Server - a fast and helpful programmer tool with graphical
 user interface to display log messages for debugging purpose._
 
+Also includes optional express middleware logging-related methods.
+
 On startup the logger is set to the console transport.
 If a file or SOS logger is closed logging will revert to the previously specified logger.
 Thus if you specify an SOS logger and the SOS application is closed, logging will return back to the console.
@@ -167,3 +169,49 @@ log.log( 'info', "This method %s supports formatting", "also" );
 // Enable verbose messages to be output for this log object (overrides global setting)
 log.setLogLevel( "verbose" );
 ```
+
+## Express Middleware ##
+
+The included express middleware are instantiated as follows:
+
+```javascript
+var Logger = require('logger');
+
+var reqId = Logger.middleware().reqId;
+var responseLogger = Logger.middleware().responseLogger;
+var routeLogger = Logger.middleware().routeLogger;
+var routeSeparator = Logger.middleware().routeSeparator;
+
+var app = express();
+app.use(reqId());
+
+app.use(app.router);
+app.all('*', responseLogger());
+app.all('*', routeSeparator());
+app.all('*', routeLogger());
+```
+
+### reqId ###
+
+Adds ```_reqId``` and ```_hrStartTime``` to the request object. These are used later during logging.
+
+### responseLogger ###
+
+Adds a set of methods to the response object to enable easier request-context-sensitive logging.
+Most methods can be chained. An example usage:
+
+```javascript
+function myFunction(req,res,params) {
+    res.pushRouteInfo('myFunction');
+    res.action('complete').logObj(params).info('Entering function');
+    res.popRouteInfo();
+}
+```
+
+### routeSeparator ###
+
+Adds a separator line to the log file for each new route.
+
+### routeLogger ###
+
+Adds an information line to the log file for each new route.
