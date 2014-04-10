@@ -1,9 +1,9 @@
 {
     "name": "logger",
-    "version": "1.5.2",
+    "version": "1.6.0",
     "private": true,
     "dependencies": {
-        "a5dateutil": "git+ssh://git@bitbucket.org:armor5/a5dateutil.git#v0.0.6",
+        "dateutil": "git+ssh://git@github.com:jpravetz/dateutil.git#v1.0.0",
         "underscore": "~1.6.0"
     }
 }
