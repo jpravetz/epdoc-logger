@@ -15,17 +15,13 @@ Logger.setGlobalLogLevel('verbose');
 var log = require('../index').get('reqtest');
 
 var middleware = Logger.middleware();
-var ResStub = Logger.resStub;
-var res = new ResStub();
-res.onSend = function (msg) {
-    log.info(msg);
+
+var req = Logger.request();
+var res = Logger.response(req, onSend);
+function onSend (msg) {
+    log.action('onSend').info(msg);
     process.exit(0);
 };
-
-var req = {
-    _startTime: new Date()
-};
-res.req = req;
 
 middleware.reqId()(req, res, function (err) {
     if (err) {
