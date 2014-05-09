@@ -1,6 +1,6 @@
 {
     "name": "logger",
-    "version": "1.7.0-alpha.2",
+    "version": "1.7.0-alpha.3",
     "private": true,
     "dependencies": {
         "underscore": "~1.6.0"
