@@ -3,7 +3,6 @@
     "version": "1.7.0-alpha.1",
     "private": true,
     "dependencies": {
-        "dateutil": "git+ssh://git@github.com:jpravetz/dateutil.git#v1.0.2",
         "underscore": "~1.6.0"
     }
 }
