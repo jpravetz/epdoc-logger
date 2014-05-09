@@ -13,6 +13,8 @@ On startup the logger is set to the console transport.
 If a file or SOS logger is closed logging will revert to the previously specified logger.
 Thus if you specify an SOS logger and the SOS application is closed, logging will return back to the console.
 
+See the files in the examples folder for additional information.
+
 ## Setting the Logger Transport ##
 
 Transports are maintained in a stack. You push a transport using ```setLogger``` and pop a transport
@@ -190,6 +192,10 @@ app.all('*', responseLogger());
 app.all('*', routeSeparator());
 app.all('*', routeLogger());
 ```
+
+See examples/reqtest.js for an example of how to use a stub request and response method to test middleware.
+This technique can also be useful if you wish to use the req/res/next mechanism in non-express environments.
+As an example, you could have req/res objects for tracking AMQP (RabbitMQ) requests and responses.
 
 ### reqId ###
 

@@ -23,9 +23,7 @@ res.onSend = function (msg) {
 };
 
 var req = {
-    _startTime: new Date(),
-    send: function (msg) {
-    }
+    _startTime: new Date()
 };
 res.req = req;
 
