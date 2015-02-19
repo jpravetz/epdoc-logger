@@ -1,7 +1,6 @@
 {
-    "name": "logger",
-    "version": "1.7.0-alpha.3",
-    "private": true,
+    "name": "epdoc-logger",
+    "version": "1.7.0",
     "dependencies": {
         "underscore": "~1.6.0"
     }
