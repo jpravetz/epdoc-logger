@@ -1,6 +1,15 @@
 {
     "name": "epdoc-logger",
     "version": "1.7.0",
+    "description": "Logging module with express middleware methods",
+    "bugs": {
+        "url": "https://github.com/jpravetz/logger/issues"
+    },
+    "license": "MIT",
+    "author": {
+        "name": "Jim Pravetz",
+        "email": "jpravetz@epdoc.com"
+    },
     "dependencies": {
         "underscore": "~1.6.0"
     }

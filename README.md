@@ -1,6 +1,6 @@
 # Logger #
 
-Jim's Logger module. Includes support for formatted logging to
+Logging module. Includes support for formatted logging to
 
 * console (default)
 * file (specify path) - logs as a JSON array
