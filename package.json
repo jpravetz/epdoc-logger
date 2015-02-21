@@ -1,7 +1,7 @@
 {
     "name": "epdoc-logger",
-    "version": "1.7.0",
-    "description": "Logging module with express middleware methods",
+    "version": "1.7.1",
+    "description": "Logging module with express middleware methods and extendable transports",
     "bugs": {
         "url": "https://github.com/jpravetz/logger/issues"
     },

@@ -17,27 +17,43 @@ See the files in the examples folder for additional information.
 
 ## Setting the Logger Transport ##
 
-Transports are maintained in a stack. You push a transport using ```setLogger``` and pop a transport
-using ```popLogger```. If a transport closes (_e.g._ SOS Max is closed) the stack is
-automatically popped. Logger buffers messages while switching transports, however individual
+Normally you need only set the logger transport as follows.
+
+```javascript
+var Logger = require('logger');
+Logger.setLogger( 'file', { path: 'path/to/myfile.log' } );
+```
+
+Transports are actually maintained in a stack. When calling ```setLogger``` you are shifting a transport onto
+the head of the stack. When you call ```unsetLogger``` you are unshifting the transport and restoring the 
+previously set transport. The stack begins it's life with a console transport already in place on the stack.
+If a transport closes (_e.g._ SOS Max application exits) the stack is
+automatically unshifted. Logger buffers messages while switching transports, however individual
 transports can do their own buffering (_e.g._ file). If a transport closes prematurely, it's buffer
 may be lost.
 
-There are probably few where you would need to manually call ```popLogger```.
+There are probably few instances where you would need to manually call ```unsetLogger``` or deal with the stack.
 
-The ```setLogger``` method takes an object with these properties:
+The ```setLogger(type,options)``` has the following parameters:
 
- * type - Must be one of 'console', 'file' or 'sos'
- * path - 'path/to/myfile.log', used when type is file
- * dateFormat - one of 'ISO' or 'formatMS', default is dependent on the transport but is usually 'formatMS'
- * bIncludeSessionId - Indicates whether the sessionId should be included in the output, defaults to true
+ * ```type``` - The transport type, which is either a string (one of the built-in transports 'console', 'file' or
+ 'sos') or the class of a custom transport.
+ * ```options``` - An object with the following optional parameters
+    * ```path``` - 'path/to/myfile.log', used when type is file
+    * ```dateFormat``` - one of 'ISO' or 'formatMS', default is dependent on the transport but is usually 'formatMS'
+    * ```bIncludeSessionId``` - Indicates whether the sessionId should be included in the output, defaults to true
+
+To build your own custom transport class it
+is recommended that you subclass the console transport (obtained using ```Logger.getLoggerClass('console')```)
+and modify as has been done for the file and sos transports.
+
 
 ### Logging to a File ###
 
 ```javascript
 var Logger = require('logger');
 var log = Logger.get('MyModule');
-Logger.setLogger( { type: 'file', path: 'path/to/myfile.log' } );
+Logger.setLogger( 'file', { path: 'path/to/myfile.log' } );
 
 log.info("Return value for %s is %s", "hello", "world" );
 log.data('req',{a:3}).info();
