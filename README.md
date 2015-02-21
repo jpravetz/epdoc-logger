@@ -48,6 +48,17 @@ is recommended that you subclass the console transport (obtained using ```Logger
 and modify as has been done for the file and sos transports.
 
 
+### Logging to Console ###
+
+```javascript
+var Logger = require('logger');
+var log = Logger.get('MyModule');
+
+log.info("Return value for %s is %s", "hello", "world" );
+log.data('req',{a:3}).info();
+log.data('res',{b:4}).info("My message with %s support", 'formatting');
+```
+
 ### Logging to a File ###
 
 ```javascript
@@ -82,18 +93,19 @@ log.info("Return value for %s is %s", "hello", "world" );
 
 Logging is done by one of these methods:
 
-1. Directly calling the Logger's logMessage function
-2. Using Logger.get() to create a logging object and calling methods on that object (as shown in above examples)
-3. Creating your own logging object that exposes it's own methods, then use this object to call logMethod
+1. Directly calling the Logger's ```logMessage``` function
+2. Using ```Logger.get()``` to create a logging object and calling methods on that object (as shown in above examples)
+3. By creating your own logging object that exposes it's own methods, then use this object to call ```logMethod```
 
 If you are creating your own logging object, use Logger's logging object as an example. You can also find
-an example in the Armor5 Admin Console where a middleware module extends the express.js response object
+an example in the middleware modules that extend the express.js response object
 with logging methods.
 
 ### The logMessage Function ##
 
-The logMessage function gives you a direct API into the queue of logging messages that are to be output.
-This function is used by the Logging Object (next section) and by your custom logging objects.
+The ```logMessage``` function directly adds a log message to the log message queue.
+This function is used by the _Logging Object_ (next section) and by any
+custom logging objects that you may choose to create.
 
 ```javascript
 var Logger = require('logger');
@@ -107,32 +119,39 @@ Logger.logMessage( {
         });
 ```
 
-The logMessage function takes an object with the following parameters:
+The ```logMessage``` function takes an object with the following parameters:
 
- * level - Must be one of LEVEL_ORDER values, all lower case
- * sid - (Optional) sessionID to display
- * module - (Optional) Module descriptor to display (usually of form route.obj.function)
- * action - (Optional) Action (verb) descriptor to display (eg. 'org.update')
- * time - (Optional) A date object with the current time, will be filled in if not provided
- * timeDiff - (Optional) The difference in milliseconds between 'time' and when the application was
+ * ```level``` - Must be one of LEVEL_ORDER values, all lower case
+ * ```sid``` - (Optional) sessionID to display
+ * ```module``` - (Optional) Module descriptor to display (usually of form route.obj.function)
+ * ```action``` - (Optional) Action (verb) descriptor to display (eg. 'org.update')
+ * ```time``` - (Optional) A date object with the current time, will be filled in if not provided
+ * ```timeDiff``` - (Optional) The difference in milliseconds between 'time' and when the application was
 started, based on reading Logger.getStartTime()
- * message - A string or an array of strings. If an array the string will be printed on multiple lines
+ * ```message``` - A string or an array of strings. If an array the string will be printed on multiple lines
 where supported (e.g. SOS). The string must already formatted (e.g.. no '%s')
-* data - Any object, will be serialized as JSON
+ * ```data``` - Any object, will be serialized as JSON
 
 
 ### Logging using Logger's Logging Object ###
 
-The logger module includes a handy logging object that you can initialize in a file for logging from that file.
-
-You create a new logging object using the Logger's ```get``` method.
+A logging object is obtained by calling ```get``` on the logger.
 
 ```javascript
 var log = require('logger').get('MyModuleName');
+```
 
+The string "MyModuleName" above should usually be set to the name of your Javascript file.
+It is output on each line that is created by calling methods on the log object.
+
+This object provides a convenient interface above the ```logMessage``` function with a number of
+useful, chainable logging methods, such as ```info```, ```data```, ```action```, etc.
+
+```javascript
+// Each of these lines outputs a new log message
 log.info("Return value for %s is %s", "hello", "world" );
 
-log.log('info',["A multiline","output",["With formatted %drd line",%d]]);
+log.log('info',["A multi-line","output",["With formatted %drd line",%d]]);
 
 // Output a message and a JSON-encoded object
 log.data('key2',{type:'value2'}).info("My message");
@@ -142,43 +161,43 @@ log.data('key1',{type:'value1'}).data('key2',{type:'value2'}).debug();
 
 ```
 
-The string "MyModuleName" above should usually be set to the name of your Javascript file, and will be output
-along with the log level.
+The logging object support chaining. Every method except ```isAboveLevel()``` will return the logging object.
 
-The logging object support chaining. Every method except isAboveLevel() will return the logging object.
-
-Items added with the data() method are flushed when logArgs is called.
-logArgs is called for any of the methods info(), debug(), log(), etc.
+Items added with the ```data``` method are flushed when ```logArgs``` is called.
+```logArgs``` is called directly or by any of the methods ```info```, ```debug```, ```log```, etc.
 
 ## Logging Commands ##
 
+This sections shows example uses of the log object.
+
 ```javascript
+// Get the global logger object
 
 var Logger = require('logger');
 
-// Static methods
+// Logger static methods
+
+Logger.setLogger( 'file', { path: 'path/to/myfile.log', dateFormat: 'ISO', bIncludeSid: false } );
+var loggerType = Logger.getCurrentLogger().type();        // Will return the transport type of the logger
+Logger.setGlobalLogLevel( 'warn' );
+var startTime = Logger.getStartTime();                    // Milliseconds
+
+// Get a log object for this file or module
 
 var log = Logger.get('MyModuleName');
-Logger.setLogger( { type: 'file', path: 'path/to/myfile.log', dateFormat: 'ISO', bIncludeSid: false } );
-var loggerType = Logger.getLogger().type;        // One of file, console or sos
-Logger.setGlobalLogLevel( 'warn' );
-var startTime = Logger.getStartTime();           // Milliseconds
 
-// Instance methods
-// The first six of these methods are shortcuts that call the log method
+// Instance methods. Each line outputs a message.
 
-log.action('obj.update');
-log.action('obj','update');
-log.action(['obj','update']);
 log.logObj('a',1).logObj('b',[2,3]).info();
 log.logObj({a:1,b:[2,3]}).info("My message");
 log.info( "I just want to say %s to the %s", "Hello", "World" );
-log.debug( "We %s formatted messages", "do" );
+log.action('obj.update').debug( "We %s formatted messages", "do" );
 log.error( "Error: %s", err );
-log.verbose( "The default is to not output verbose messages" );
+log.verbose( "The default is to not output verbose messages, so this will not by default be output" );
 log.warn( "Danger Will Robinson, danger" );
 log.fault( "Restarting server in %d seconds", 10 );
 
+// Outputs a new message
 log.date();             // Output now's date/time
 log.separator();        // Output a line separator
 
@@ -187,6 +206,33 @@ log.log( 'info', "This method %s supports formatting", "also" );
 // Enable verbose messages to be output for this log object (overrides global setting)
 log.setLogLevel( "verbose" );
 ```
+
+### Chaining ###
+
+The following methods all add column values to the message that is output but do not output the message:
+
+* ```action``` - Sets the action column value to this string.
+* ```logObj``` - Sets the data column value. Either pass in a key value pair, which is then added to the data
+object, or an object, which the data object is then set to.
+
+The following methods result in a message being output with the corresponding log level set:
+
+* ```info```
+* ```warn```
+* ```debug```
+* ```verbose```
+* ```error```
+* ```fatal```
+
+The following methods result in a message output with log level set to INFO:
+
+* ```separator``` - Output a separator line containing # characters
+* ```date``` - Outputs localtime, utctime and uptime
+* ```log``` - Outputs level and string message, for example: ```log.log( 'info', "Found %d lines", iLines )```.
+    * ```level``` - Optional level (defaults to ```info```)
+    * ```msg``` - String to output, formatted with ```util.format```
+
+
 
 ## Express Middleware ##
 
@@ -211,11 +257,12 @@ app.all('*', routeLogger());
 
 See examples/reqtest.js for an example of how to use a stub request and response method to test middleware.
 This technique can also be useful if you wish to use the req/res/next mechanism in non-express environments.
-As an example, you could have req/res objects for tracking AMQP (RabbitMQ) requests and responses.
+As an example, you could have req/res objects for tracking AMQP (RabbitMQ) requests and responses and
+associating reqIds with the AMQP requests.
 
 ### reqId ###
 
-Adds ```_reqId``` and ```_hrStartTime``` to the request object. These are used later during logging.
+Adds ```_reqId``` and ```_hrStartTime``` to the request object. These are used later when logging.
 
 ### responseLogger ###
 
