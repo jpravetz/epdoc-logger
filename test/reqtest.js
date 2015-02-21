@@ -4,15 +4,13 @@
  * May be freely distributed under the MIT license.
  **************************************************************************/
 
-const TIMER_INTERVAL = 2000;
-const BUFFER_INTERVAL = 0; //1000;
 var type = "console";
 //var type = "sos";
 //var type = "file";
 
 var Logger = require('../index');
 Logger.setGlobalLogLevel('verbose');
-var log = require('../index').get('reqtest');
+var log = Logger.get('reqtest');
 
 var middleware = Logger.middleware();
 
