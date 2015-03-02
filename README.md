@@ -1,38 +1,63 @@
 # Logger #
 
-Logging module. Includes support for formatted logging to
+Logging module supporting built-in and custom transports, expressjs response mixins, and chainable method syntax for creating log events.
+
+Includes support for formatted logging to the following transports:
 
 * console (default)
 * file (specify path) - logs as a JSON array
 * [SOS Max](http://www.sos.powerflasher.com/developer-tools/sosmax/home/) - _SOS max is the POWERFLASHER Socket Output Server - a fast and helpful programmer tool with graphical
 user interface to display log messages for debugging purpose._
 
-Also includes optional express middleware logging-related methods.
+On startup the logger is set to the console transport, but the console transport is not yet activated.
+All log messages are queued until you start the current transport or set a different transport.
+Once you start the current transport with ```startLogger``` the console will begin to output log messages.
+Instead you can set a different transport using ```setLogger``` and then logging, including queued log messages,
+will begin being output to the new transport.
 
-On startup the logger is set to the console transport.
-If a file or SOS logger is closed logging will revert to the previously specified logger.
-Thus if you specify an SOS logger and the SOS application is closed, logging will return back to the console.
+If a transport is closed using ```unsetLogger``` logging will revert to the previously specified transport.
+For example, if you specify an SOS transport and the SOS application is closed, logging will return back to the console
+and the console will be (re)started automatically.
 
-See the files in the examples folder for additional information.
+See the files in the test folder for additional examples and information.
 
-## Setting the Logger Transport ##
+## Logger Transports ##
 
-Normally you need only set the logger transport as follows.
+### Starting the Default Console Transport ###
+
+The default console transport is not activated until it is started.
+
+```javascript
+var Logger = require('logger');
+Logger.startLogger();
+```
+
+Once started, any queued messages will begin being output.
+
+
+### Setting the Logger Transport ###
+
+Alternate transports can be set as follows.
 
 ```javascript
 var Logger = require('logger');
 Logger.setLogger( 'file', { path: 'path/to/myfile.log' } );
 ```
 
-Transports are actually maintained in a stack. When calling ```setLogger``` you are shifting a transport onto
-the head of the stack. When you call ```unsetLogger``` you are unshifting the transport and restoring the 
-previously set transport. The stack begins it's life with a console transport already in place on the stack.
-If a transport closes (_e.g._ SOS Max application exits) the stack is
-automatically unshifted. Logger buffers messages while switching transports, however individual
-transports can do their own buffering (_e.g._ file). If a transport closes prematurely, it's buffer
-may be lost.
+The call to ```setLogger``` will stop the previously activated transport (if any),
+add the new transport to the stack and automatically start the new transport.
 
-There are probably few instances where you would need to manually call ```unsetLogger``` or deal with the stack.
+Transports are maintained in a list. When calling ```setLogger``` you are unshifting a transport onto
+the head of the list. When you call ```unsetLogger``` you are stopping the transport, shifting it off the list
+of transports, and restoring and restarting the previously set transport.
+
+If an active transport closes (_e.g._ SOS Max application exits) the active transport is automatically shifted
+off the list of transports as if calling ```unsetLogger```. The Logger will buffer messages while switching transports,
+however individual transports can do their own buffering (_e.g._ file).
+If a transport closes prematurely, it's buffer may be lost.
+
+There are probably few instances where you would need to manually call ```unsetLogger``` or deal with the list
+of transports, except where wishing to start and stop an _SOS_-style transport.
 
 The ```setLogger(type,options)``` has the following parameters:
 
@@ -52,6 +77,7 @@ and modify as has been done for the file and sos transports.
 
 ```javascript
 var Logger = require('logger');
+Logger.startLogger();
 var log = Logger.get('MyModule');
 
 log.info("Return value for %s is %s", "hello", "world" );
@@ -91,20 +117,23 @@ log.info("Return value for %s is %s", "hello", "world" );
 
 ## How to Log Messages ##
 
+Now that we've seen how to specify a transport, and have been shown example code that logs messages, let's look
+at the various ways that log messages can be created.
+
 Logging is done by one of these methods:
 
 1. Directly calling the Logger's ```logMessage``` function
 2. Using ```Logger.get()``` to create a logging object and calling methods on that object (as shown in above examples)
-3. By creating your own logging object that exposes it's own methods, then use this object to call ```logMethod```
+3. By creating your own logging object that exposes it's own methods, then use this object to call ```logMessage```
 
-If you are creating your own logging object, use Logger's logging object as an example. You can also find
-an example in the middleware modules that extend the express.js response object
+If you are creating your own logging object, use Logger's logging object as an example. You can also look
+at ```middleware/responseLogger.js``` for an example of a module that extends the express.js response object
 with logging methods.
 
 ### The logMessage Function ##
 
-The ```logMessage``` function directly adds a log message to the log message queue.
-This function is used by the _Logging Object_ (next section) and by any
+The ```logMessage``` function directly adds a log message object to the log message queue.
+The ```logMessage``` function is used by the _Logging Object_ (next section) and by any
 custom logging objects that you may choose to create.
 
 ```javascript
@@ -132,19 +161,24 @@ started, based on reading Logger.getStartTime()
 where supported (e.g. SOS). The string must already formatted (e.g.. no '%s')
  * ```data``` - Any object, will be serialized as JSON
 
+Messages are flushed from the queue whenever the transport indicates it is ready for more messages. Messages
+are then passed to the transport by calling the transport's ```write``` method and passing the log message object
+as a method parameter. The transport then formats and outputs the data. You can layer your own logging library underneath
+epdoc-logger by wrapping your library as a transport.
 
 ### Logging using Logger's Logging Object ###
 
-A logging object is obtained by calling ```get``` on the logger.
+A new logging object is obtained by calling ```get``` on the logger.
 
 ```javascript
+// Return new logging object with property ```moduleName``` set.
 var log = require('logger').get('MyModuleName');
 ```
 
-The string "MyModuleName" above should usually be set to the name of your Javascript file.
-It is output on each line that is created by calling methods on the log object.
+The string "MyModuleName" above should usually be set to the name of your Javascript file or module.
+It is output as a column or property of each line that is created by calling methods on the log object.
 
-This object provides a convenient interface above the ```logMessage``` function with a number of
+The logging object provides a convenient interface that sits above the ```logMessage``` function and adds a number of
 useful, chainable logging methods, such as ```info```, ```data```, ```action```, etc.
 
 ```javascript
@@ -158,10 +192,9 @@ log.data('key2',{type:'value2'}).info("My message");
 
 // Output two objects with no accompanying message
 log.data('key1',{type:'value1'}).data('key2',{type:'value2'}).debug();
-
 ```
 
-The logging object support chaining. Every method except ```isAboveLevel()``` will return the logging object.
+The logging object supports chaining. Every method except ```isAboveLevel()``` will return the logging object.
 
 Items added with the ```data``` method are flushed when ```logArgs``` is called.
 ```logArgs``` is called directly or by any of the methods ```info```, ```debug```, ```log```, etc.
@@ -255,7 +288,7 @@ app.all('*', routeSeparator());
 app.all('*', routeLogger());
 ```
 
-See examples/reqtest.js for an example of how to use a stub request and response method to test middleware.
+See test/reqtest.js for an example of how to use a stub request and response method to test middleware.
 This technique can also be useful if you wish to use the req/res/next mechanism in non-express environments.
 As an example, you could have req/res objects for tracking AMQP (RabbitMQ) requests and responses and
 associating reqIds with the AMQP requests.
@@ -266,8 +299,11 @@ Adds ```_reqId``` and ```_hrStartTime``` to the request object. These are used l
 
 ### responseLogger ###
 
-Adds a set of methods to the response object to enable easier request-context-sensitive logging.
-Most methods can be chained. An example usage:
+The responseLogger middleware mixes custom logging methods, similar to those in the logging object,
+into the express ```response``` object. This will add request-context-sensitive logging information
+to each log message.
+
+As with the logging object, most methods can be chained. An example usage:
 
 ```javascript
 function myFunction(req,res,params) {
@@ -276,6 +312,9 @@ function myFunction(req,res,params) {
     res.popRouteInfo();
 }
 ```
+
+It would be nice if there were more documentation for the logging methods, but in the meantime,
+please refer to the source code in resopnseLogger.js.
 
 ### routeSeparator ###
 
