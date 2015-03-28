@@ -314,7 +314,7 @@ function myFunction(req,res,params) {
 ```
 
 It would be nice if there were more documentation for the logging methods, but in the meantime,
-please refer to the source code in resopnseLogger.js.
+please refer to the source code in responseLogger.js.
 
 ### routeSeparator ###
 

@@ -13,6 +13,8 @@ var type = "console";
 
 var type = process.argv[process.argv.length - 1];
 
+console.log("type = " + type);
+
 var Logger = require('../index');
 Logger.setGlobalLogLevel('verbose');
 

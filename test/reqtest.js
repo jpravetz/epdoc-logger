@@ -26,7 +26,8 @@ middleware.reqId()(req, res, function (err) {
         log.error(error);
     } else {
         log.logObj(req);
-        middleware.responseLogger()(req, res, function (err) {
+        var opts = {}; // {responseBuilder:'json-api'};
+        middleware.responseLogger(opts)(req, res, function (err) {
             if (err) {
                 log.error(error);
             } else {
@@ -36,6 +37,9 @@ middleware.reqId()(req, res, function (err) {
                         log.error(error);
                     } else {
                         res.pushRouteInfo('myrouteinfo');
+                        //res.data({key:'my return value'}).setParam({include:"string here"});
+                        //res.errorCode(33).errorParams({extra:'here'});
+                        res.errorParams({extra:'here'}).onError(new Error("My exception"));
                         res.logObj({x: 3, y: 4}).info('Info goes here');
                         res.success(200, "Finished successfully");
                     }
