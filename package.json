@@ -1,6 +1,6 @@
 {
     "name": "epdoc-logger",
-    "version": "1.7.6",
+    "version": "1.8.1",
     "description": "Logging module with express middleware methods and extendable transports",
     "bugs": {
         "url": "https://github.com/jpravetz/logger/issues"
@@ -11,6 +11,6 @@
         "email": "jpravetz@epdoc.com"
     },
     "dependencies": {
-        "underscore": "~1.6.0"
+        "underscore": "~1.8.2"
     }
 }
