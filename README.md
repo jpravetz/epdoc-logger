@@ -1,6 +1,6 @@
 # Logger #
 
-Logging module supporting built-in and custom transports, expressjs response mixins, and chainable method syntax for creating log events.
+Logging module supporting built-in and custom transports, Express 4 response mixins, and chainable method syntax for creating log events.
 
 Includes support for formatted logging to the following transports:
 
