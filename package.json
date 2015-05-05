@@ -1,6 +1,6 @@
 {
     "name": "epdoc-logger",
-    "version": "1.8.10",
+    "version": "1.8.11",
     "description": "Logging module with express middleware mixins and extendable transports",
     "bugs": {
         "url": "https://github.com/jpravetz/logger/issues"
@@ -9,6 +9,10 @@
     "author": {
         "name": "Jim Pravetz",
         "email": "jpravetz@epdoc.com"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git://github.com/jpravetz/epdoc-logger.git"
     },
     "dependencies": {
         "underscore": "~1.8.2"
