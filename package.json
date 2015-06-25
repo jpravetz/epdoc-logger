@@ -1,6 +1,6 @@
 {
     "name": "epdoc-logger",
-    "version": "1.9.1",
+    "version": "1.9.2",
     "description": "Logging module with express middleware mixins and extendable transports",
     "bugs": {
         "url": "https://github.com/jpravetz/logger/issues"
