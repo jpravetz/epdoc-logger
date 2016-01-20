@@ -1,20 +1,24 @@
 {
-    "name": "epdoc-logger",
-    "version": "1.9.7",
-    "description": "Logging module with express middleware mixins and extendable transports",
-    "bugs": {
-        "url": "https://github.com/jpravetz/logger/issues"
-    },
-    "license": "MIT",
-    "author": {
-        "name": "Jim Pravetz",
-        "email": "jpravetz@epdoc.com"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git://github.com/jpravetz/epdoc-logger.git"
-    },
-    "dependencies": {
-        "underscore": "~1.8.2"
-    }
+  "name": "epdoc-logger",
+  "version": "2.0.0-alpha.1",
+  "description": "Logging module with express middleware mixins and extendable transports",
+  "bugs": {
+    "url": "https://github.com/jpravetz/logger/issues"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "Jim Pravetz",
+    "email": "jpravetz@epdoc.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/jpravetz/epdoc-logger.git"
+  },
+  "dependencies": {
+    "moment": "^2.11.1",
+    "underscore": "~1.8.2"
+  },
+  "devDependencies": {
+    "should": "^8.1.1"
+  }
 }
