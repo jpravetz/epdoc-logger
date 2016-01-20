@@ -3,7 +3,7 @@
  * May be freely distributed under the MIT license.
  **************************************************************************/
 
-var Logger = require('../src/logger');
+var Logger = require('../index');
 
 describe("Logger test", function () {
 
@@ -11,12 +11,16 @@ describe("Logger test", function () {
     var log;
 
     it("Logger console", function (done) {
+        log = Logger.get('moduleName');
+        log.action('bake').info("Starting");
+        log.info("Running",{a:2,b:3});
+        done();
+    });
 
-        logger = new Logger();
-        log = logger.get('default');
-        log.info("Starting");
-        logger.start();
-        log.info("Running");
+    it("Logger console2", function (done) {
+        log = Logger.get('module2');
+        log.info("Doing more");
+        log.action('slide').info("end");
         done();
 
     });

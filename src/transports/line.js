@@ -1,5 +1,5 @@
 /*************************************************************************
- * Copyright(c) 2012-2016 Jim Pravetz <jpravetz@epdoc.com>
+ * Copyright(c) 2012-2015 Jim Pravetz <jpravetz@epdoc.com>
  * May be freely distributed under the MIT license.
  **************************************************************************/
 
@@ -7,24 +7,28 @@ var _ = require('underscore');
 var dateutil = require('../dateutil');
 
 /**
- * Create a new console transport.
+ * Create a new line transport where output is added to a lines array.
+ * Used for testing.
  * @param options Output options include:
  *      dateFormat = If "ISO" then output time as an ISO Date, otherwise output as time offset from app launch
  *      bIncludeSid = If true then output express request and session IDs, otherwise do not output these values
  *      buffer = Interval in milliseconds to flush buffer (used for transports that buffer)
  * @constructor
  */
-var ConsoleTransport = function (options) {
+var LineTransport = function (options) {
     this.options = options || {};
     this.bIncludeSid = (options && options.bIncludeSid === false) ? false : true;
     this.bISODate = ( options && options.dateFormat === 'ISO') ? true : false;
-    this.sType = 'console';
+    this.sType = 'line';
     this.bReady = true;
+    this.lines = [];
+    this.data = [];
 };
 
-ConsoleTransport.prototype = {
+LineTransport.prototype = {
 
-    constructor: ConsoleTransport,
+    constructor: LineTansport,
+
 
     validateOptions: function () {
         return null;
@@ -53,13 +57,15 @@ ConsoleTransport.prototype = {
      * as socket transports that direct logs to a UI.
      */
     clear: function () {
+        this.lines = [];
+        this.data = [];
     },
 
     flush: function () {
     },
 
     /**
-     * Write a log line
+     * Write a log line to the lines array, and the params to the data array.
      * @param params Object with the following properties:
      *      time = Date object
      *      level = log level (INFO, WARN, ERROR, or any string)
@@ -71,8 +77,9 @@ ConsoleTransport.prototype = {
      *      data = JSON object
      */
     write: function (params) {
+        data.push(params);
         var msg = this._formatLogMessage(params);
-        console.log(msg);
+        lines.push(msg);
     },
 
     end: function (onClose) {
@@ -115,4 +122,4 @@ ConsoleTransport.prototype = {
 };
 
 
-module.exports = ConsoleTransport;
+module.exports = LineTransport;

@@ -11,8 +11,16 @@ var ModuleLogger = require('./module_logger');
 var ConsoleStream = require('./transports/console');
 
 
-var Logger = function () {
+/**
+ * Create a new logger using the default ConsoleTransport. The logger will automatically begin writing
+ * to the transport unless autoRun = false. To use a different transport, start with autoRun false,
+ * then set the transport using setTransport('file').
+ * @param options {Object} { autoRun: true } is default
+ * @constructor
+ */
+var Logger = function (options) {
 
+    options || (options = {});
     this.t0 = (new Date()).getTime();
     this.logLevel = 'debug';
     // Count of how many errors, warnings, etc
@@ -24,6 +32,9 @@ var Logger = function () {
     this.queue = [];
     // Indicates whether we have started logging or not
     this.running = false;
+    if( options.autoRun !== false ) {
+        this.start();
+    }
 };
 
 Logger.prototype = {
@@ -69,7 +80,7 @@ Logger.prototype = {
      * The default transport, before any is unshifted onto the list of transports, is the console transport.
      * If you add a transport (eg. file transport) then later remove it, the previously set logger (eg. console)
      * will be used.
-     * @param type - For the provided loggers, one of 'sos', 'file', or 'console'. For a custom transport this hsould be a
+     * @param type - For the provided loggers, one of 'sos', 'file', 'line', or 'console'. For a custom transport this hsould be a
      * transport class object that can be instantiated with 'new'.
      * To create your own transport class, use getLoggerClass('console') and then subclass this class.
      * @param options are passed to the transport when constructing the new transport object. Options for the

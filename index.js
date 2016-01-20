@@ -1,22 +1,39 @@
-module.exports.Logger = require('./src/logger');
+var self = {
+    
+    _gLogger: undefined,
 
-/**
- * Return Express Middleware
- * Usage:
- *      var reqId = require('logger').middleware().reqId;
- *      app.use(reqId());
- */
+    Logger: require('./src/logger'),
 
-module.exports.middleware = function () {
-    return {
-        reqId: require('./src/middleware/reqId'),
-        responseLogger: require('./src/middleware/responseLogger'),
-        routeLogger: require('./src/middleware/routeLogger'),
-        routeSeparator: require('./src/middleware/routeSeparator'),
-        errorHandler: require('./src/middleware/errorHandler')
-    };
+    logger: function (options) {
+        if (!self._gLogger) {
+            self._gLogger = new self.Logger(options);
+        }
+        return self._gLogger;
+    },
+
+    get: function (name) {
+        return self.logger().get(name);
+    },
+
+    /**
+     * Return Express Middleware
+     * Usage:
+     *      var reqId = require('logger').middleware().reqId;
+     *      app.use(reqId());
+     */
+
+    middleware: function () {
+        return {
+            reqId: require('./src/middleware/reqId'),
+            responseLogger: require('./src/middleware/responseLogger'),
+            routeLogger: require('./src/middleware/routeLogger'),
+            routeSeparator: require('./src/middleware/routeSeparator'),
+            errorHandler: require('./src/middleware/errorHandler')
+        };
+    },
+
+    response: require('./src/stubs/response'),
+    request: require('./src/stubs/request')
 };
 
-module.exports.response = require('./src/stubs/response');
-module.exports.request = require('./src/stubs/request');
-
+module.exports = self;
