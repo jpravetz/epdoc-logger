@@ -57,10 +57,6 @@ To use a different transport, initialize the logger with ```autoRun``` set to fa
 Successfully setting the transport will also start writing log messages. Messages are buffered prior to the
 transport being intitialized, so prior to this event no messages will be lost.
 
-```javascript
-var Logger = require('epdoc-logger')
-```
-
 ### Logging to Console ###
 
 Main File
@@ -77,7 +73,7 @@ log.data('res',{b:4}).info("My message with %s support", 'formatting');
 Other File
 
 ```javascript 
-var log = require('epdoc-logger').get('other);
+var log = require('epdoc-logger').get('other');
 
 log.info("Hello world");
 ```

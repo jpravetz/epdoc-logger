@@ -32,8 +32,8 @@ var self = {
         };
     },
 
-    response: require('./src/stubs/response'),
-    request: require('./src/stubs/request')
+    Response: require('./src/stubs/response'),
+    Request: require('./src/stubs/request')
 };
 
 module.exports = self;

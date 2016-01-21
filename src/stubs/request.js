@@ -9,14 +9,14 @@
  * @param options The object to attach to req[name], defaults to {}.
  * @return A request object
  */
-module.exports = function( options ) {
-    var req = {
-        _startTime: (new Date()).getTime()
-    };
+
+var Request = function(options) {
+    this._startTime = (new Date()).getTime();
     if( options instanceof Object ) {
         for( var propName in options ) {
-            req[propName] = options[propName];
+            this[propName] = options[propName];
         }
     }
-    return req;
 };
+
+module.exports = Request;

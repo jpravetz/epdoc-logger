@@ -533,7 +533,7 @@ var ResponseLogger = {
         this.logObj('exception', resp); // .logArgs('error');
         return this._origSend(resp);
     }
-}
+};
 
 /**
  * Export a function that will cause the express res object to inherit from ResponseLogger
