@@ -11,23 +11,47 @@
  *        log.info( 'Message: %s', 'my message');
  */
 
-const LEVEL_ORDER = ['verbose', 'debug', 'info', 'warn', 'error', 'fatal'];
 
 var util = require('util');
 var DateUtil = require('./dateutil');
 
-// Static containing the time that this module was first initialized.
-// Modules are loaded only once, so this will only be set once.
-var t0 = (new Date()).getTime();
+/**
+ * Create a new log object with methods to log to the transport that is attached to logger.
+ * This log object can be attached to another object, for example an express response object,
+ * in order to next the log call and thereby carry context down thru the calling stack.
+ * If a context is passed in, various properties may be harvested off of the req property. These
+ * include: req._reqId (populates reqId column), req.sid?req.session.id|req.sessionId (populates sid column),
+ * req._startTime and req._hrStartTime (can be used to determine response time for a request).
+ * @param logger {Logger} The parent Logger object that specifies the transport and provides output methods
+ * @param opt_modulename {string} The name of the module, used to populate the module column of logger output.
+ * This can be modified to show the calling stack by calling pushRouteInfo and popRouteInfo.
+ * @param opt_context {object} A context object. For Express or koa this would have 'req' and 'res' properties.
+ * @constructor
+ */
+var ModuleLogger = function (logger, opt_modulename, opt_context) {
 
-
-var ModuleLogger = function (modulename,logger) {
+    // The common Logger object thru which output will be written
     this.logger = logger;
-    this.name = modulename + " logger";     // Displayed in some IDE debuggers to identify this object
-    this.moduleName = modulename;
+
+    // Displayed in some IDE debuggers to identify this object. No other use.
+    this.name = opt_modulename + " logger";
+
+    // module column
+    this.stack = opt_modulename ? [opt_modulename] : [];
+
+    // Contains Express and koa req and res properties
+    // If ctx.req.sessionId, ctx.req.sid or ctx.req.session.id are set, these are used for sid column.
+    // If ctx.req._reqId, this is used as reqId column
+    this.ctx = opt_context;
+
+    // Min log level required to create output, overrides logger.logLevel if set
     this.logLevel;
-    this.logData;
-    this.logAction;
+
+
+    this.data;
+
+    // action column
+    this.action;
 };
 
 ModuleLogger.prototype = {
@@ -77,11 +101,11 @@ ModuleLogger.prototype = {
      */
     action: function () {
         if (arguments[0] instanceof Array) {
-            this.logAction = arguments[0].join('.');
+            this.action = arguments[0].join('.');
         } else if (arguments.length > 1) {
-            this.logAction = Array.prototype.join.call(arguments, '.');
+            this.action = Array.prototype.join.call(arguments, '.');
         } else {
-            this.logAction = arguments[0];
+            this.action = arguments[0];
         }
         return this;
     },
@@ -96,12 +120,12 @@ ModuleLogger.prototype = {
      */
     logObj: function (key, value) {
         if (typeof key === 'string' || typeof key === 'number') {
-            if (!this.logData) {
-                this.logData = {};
+            if (!this.data) {
+                this.data = {};
             }
-            this.logData[key] = value;
+            this.data[key] = value;
         } else {
-            this.logData = key;
+            this.data = key;
         }
         return this;
     },
@@ -110,12 +134,65 @@ ModuleLogger.prototype = {
      * Deprecated. Used error() instead.
      */
     logErr: function (err) {
-        if (!this.logData) {
-            this.logData = {};
+        if (!this.data) {
+            this.data = {};
         }
-        this.logData.error = err;
+        this.data.error = err;
         return this;
     },
+
+    /**
+     * A method to add context to the method stack that has gotten us to this point in code.
+     * The context is pushed into a stack, and the full stack is output as the 'module' property
+     * of the log message.
+     * Usually called at the entry point of a function.
+     * Can also be called by submodules, in which case the submodules should call popRouteInfo when returning
+     * Note that it is not necessary to call popRouteInfo when terminating a request with a response.
+     * @param name (required) String in the form 'api.org.create' (route.method or route.object.method).
+     * @return Response object
+     */
+    pushRouteInfo: function (name) {
+        this._logging.stack.push(name);
+        return this;
+    },
+
+    /**
+     * See pushRouteInfo. Should be called if returning back up a function chain. Does not need to be
+     * called if the function terminates the request with a response.
+     * @param options Available options are 'all' if all action contexts are to be removed from the _logging stack.
+     * @return Response object
+     */
+    popRouteInfo: function (options) {
+        if (options && options.all === true) {
+            this._logging.stack = [];
+        } else {
+            this._logging.stack.pop();
+        }
+        return this;
+    },
+
+    /**
+     * The time used since this request object was initialized.
+     * Requirement: request object must set it's _startTime for this to work.
+     * @returns {number}
+     */
+    responseTime: function () {
+        return this.ctx.req._startTime ? ( new Date() - this.ctx.req._startTime ) : 0;
+    },
+
+    /**
+     * High resolution response time.
+     * Returns the response time in milliseconds with two digits after the decimal.
+     * @returns {number} Response time in milliseconds
+     */
+    hrResponseTime: function () {
+        if (this.ctx.req._hrStartTime) {
+            //var parts = process.hrtime(this.ctx.req._hrStartTime);
+            return ( parts[0] * 100000 + Math.round(parts[1] / 10000) ) / 100;
+        }
+        return 0;
+    },
+
 
     /**
      * Deprecated. Used logObj instead.
@@ -127,15 +204,13 @@ ModuleLogger.prototype = {
     date: function (d, s) {
         if (this.isAboveLevel('info')) {
             d = d || new Date();
-            this.logAction = s || 'currentTime';
+            this.action = s || 'currentTime';
             this.logObj({
                 localtime: DateUtil.toISOLocalString(d),
                 utctime: d.toISOString(),
-                uptime: DateUtil.formatMS(d - t0)
+                uptime: DateUtil.formatMS(d - this.logger.getStartTime())
             });
             this.logArgs('info', []);
-//			var logMsg = util.format( "[%s] INFO: %s - === CURRENT TIME  %s ====", DateUtil.formatMS(d.getTime()-t0,0), (moduleName ? this.moduleName : ""), DateUtil.toISOLocalString(d) );
-//			writeMessage( logMsg );
         }
         return this;
     },
@@ -177,26 +252,75 @@ ModuleLogger.prototype = {
     _writeMessage: function (level, msg) {
         var args = Array.prototype.slice.call(arguments);
         if (args.length > 1) {
-            var params = {module: this.moduleName};
-            params.level = args.shift();
-            if (this.logData) {
-                params.data = this.logData;
-                delete this.logData;
+            var params = {
+                level: args.shift(),
+                module: this.stack.join('.')
+            };
+            if (this.data) {
+                params.data = this.data;
+                delete this.data;
             }
-            if (this.logAction) {
-                params.action = this.logAction;
-                delete this.logAction;
+            if (this.action) {
+                params.action = this.action;
+                delete this.action;
+            }
+            if (this.truncateLength) {
+                params.length = this.truncateLength;
+                delete this.truncateLength;
             }
             if (args.length === 1 && (args[0] instanceof Array)) {
                 params.message = [];
                 for (var idx = 0; idx < args[0].length; ++idx) {
                     params.message.push(util.format.apply(this, (args[0][idx] instanceof Array) ? args[0][idx] : [args[0][idx]]));
                 }
-            } else {
-                params.message = util.format.apply(this, args);
+            } else if (args && args.length) {
+                if (typeof args[0] === 'string') {
+                    params.message = util.format.apply(this, args);
+                } else {
+                    var arr = [];
+                    args.forEach(function (arg) {
+                        arr.push(JSON.stringify(arg));
+                    });
+                    params.message = arr.join(' ');
+                }
             }
-            this.logger.logParams(params);
+            if( this.ctx ) {
+                this.logParams(params);
+            } else {
+                this.logger.logParams(params);
+            }
         }
+    },
+
+    /**
+     * Log a raw message in the spirit of Logger.logMessage, adding sid and reqId columns from this.ctx.req
+     * Looks for sessionID in req.session.id or req.sessionId, otherwise uses the passed in values for sid and reqId (if any).
+     * This is the method that calls the underlying logging outputter. If you want to use your own logging tool,
+     * you can replace this method, or provide your own transport.
+     * @param params
+     * @return {*}
+     */
+    logParams: function (params) {
+        if (this.ctx && this.ctx.req) {
+            if (this.ctx.req._reqId) {
+                params.reqId = this.ctx.req._reqId;
+            }
+            if (this.ctx.req.session && this.ctx.req.session.id) {
+                params.sid = this.ctx.req.session.id;
+            } else if (this.ctx.req.sessionId) {
+                params.sid = this.ctx.req.sessionId;
+            } else if (this.ctx.req.sid) {
+                params.sid = this.ctx.req.sid;
+            }
+        }
+        this.logger.logParams(params);
+        return this;
+    },
+
+
+    setTruncate: function (len) {
+        this.truncateLength = len;
+        return this;
     },
 
     /**
@@ -216,30 +340,7 @@ ModuleLogger.prototype = {
             return true;
         }
         return false;
-    },
-
-    /**
-     * Tests for fatal or error conditions and exits the app if either is found.
-     * @param options { warn: true } Set if we should exit on warnings as well.
-     * @param callback Called if there are no fatal or error conditions.
-     */
-    exitOnError: function (options, callback) {
-        if (this.logger.logCount.error || this.logger.logCount.fatal) {
-            doExit();
-        } else if (options.warn && this.logger.logCount.warn) {
-            doExit();
-        } else {
-            this.action('exit').logObj('exit', 0).logObj('counts', this.logger.logCount).info();
-            callback && callback();
-        }
-
-        function doExit() {
-            this.action('exit').logObj('exit', 1).logObj('counts', this.logger.logCount).fatal();
-            process.exit(1);
-        }
     }
-
-
 };
 
 module.exports = ModuleLogger;

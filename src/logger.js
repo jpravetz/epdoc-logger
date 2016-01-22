@@ -167,13 +167,21 @@ Logger.prototype = {
         }
     },
 
+    /**
+     * Set automatically when this moduel is initialized, but can be set manually to the earliest known
+     * time that the application was started.
+     * @param d
+     */
+    setStartTime: function(d) {
+        this.t0 = (new Date(d)).getTime();
+    },
 
     /**
      * Get the time at which the module was initialized
      * @return {Number} Start time in milliseconds
      */
     getStartTime: function () {
-        return t0;
+        return this.t0;
     },
 
     /**
@@ -181,10 +189,13 @@ Logger.prototype = {
      * Although it's a new logger instance, it still uses the same underlying
      * 'writeMessageParams' method, and whatever transport is set globally.
      * @param moduleName Name of module or file, added as a column to log output
+     * @param opt_context {object} A context object. For Express or koa this would have 'req' and 'res' properties.
+     * The context.req may also have reqId and sid/sessionId/session.id properties that are used to populate their
+     * respective columns of output. Otherwise these columns are left blank on output.
      * @return A new logger object.
      */
-    get: function (moduleName) {
-        return new ModuleLogger(moduleName,this);
+    get: function (moduleName,opt_context) {
+        return new ModuleLogger(this,moduleName,opt_context);
     },
 
     /**
@@ -239,12 +250,16 @@ Logger.prototype = {
         this.flushQueue();
     },
 
+    /**
+     * Set the Logger objects's minimum log level
+     * @param level {string} Must be one of LEVEL_ORDER
+     */
     setLogLevel: function (level) {
         this.logLevel = level;
     },
 
     /**
-     * Return true if the level is equal to or greater then the globally set log level
+     * Return true if the level is equal to or greater then the Logger's logLevel property.
      */
     isAboveLevel: function (level) {
         if (this.LEVEL_ORDER.indexOf(level) >= this.LEVEL_ORDER.indexOf(this.logLevel)) {
@@ -255,8 +270,8 @@ Logger.prototype = {
 
 
     /**
-     * Write a count of how many of each time of message has been output, based on levels
-     * This is a handy call to make when the application is shutdown.
+     * Write a count of how many of each level of message has been output.
+     * This is a useful function to call when the application is shutdown.
      */
     writeCount: function (opt_msg) {
         this.logParams({

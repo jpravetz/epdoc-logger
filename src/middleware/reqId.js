@@ -4,7 +4,7 @@
  **************************************************************************/
 
 /**
- * Middleware adds a unique id '_reqId' and high-resolution start time '_hrStartTime' to the request object.
+ * Express middleware adds a unique id '_reqId' and high-resolution start time '_hrStartTime' to the request object.
  * The high-resolution start time uses process.hrtime();
  */
 
