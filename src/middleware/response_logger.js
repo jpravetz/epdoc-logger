@@ -1,5 +1,5 @@
 /*************************************************************************
- * Copyright(c) 2012-2015 Jim Pravetz <jpravetz@epdoc.com>
+ * Copyright(c) 2012-2016 Jim Pravetz <jpravetz@epdoc.com>
  * May be freely distributed under the MIT license.
  **************************************************************************/
 
@@ -12,6 +12,7 @@ var ModuleLogger = require('../module_logger');
 
 /**
  * Expressjs mixin that provides logging and response methods.
+ * These methods are added to the response object.
  * Most logging methods can be chained. State is added to a _logging property that is added to the response object.
  * For example, the action state is stored as res._logging.action. The full list of _logging state properties
  * is:
@@ -27,14 +28,14 @@ var ModuleLogger = require('../module_logger');
  *      errorCode - An internal errorCode to be included in response object, maps to JSON API error.code
  */
 
-var ReponseLogger = function () {
+var ResponseLogger = function () {
 };
 
-util.inherits(ReponseLogger, ModuleLogger);
+// util.inherits(ResponseLogger, ModuleLogger);
 
-ReponseLogger.prototype = {
+ResponseLogger.prototype = {
 
-    constructor: ModuleLogger,
+    constructor: ResponseLogger,
 
     /**
      * Replace express's res.send() method with our own, so that we can add a couple of log messages, but then
@@ -43,30 +44,34 @@ ReponseLogger.prototype = {
      * @returns this
      */
     send: function (body) {
-        var obj = {status: this.statusCode, responseTime: this.hrResponseTime()};
-        if (this.req._delayTime) {
-            obj.delay = this.req._delayTime;
+        var res = this;
+        var req = this.log.ctx.req;
+        var log = this.log;
+        // obj is the object that will be returned in the HTTP response
+        var obj = {status: this.statusCode, responseTime: log.hrResponseTime()};
+        if (res._delayTime) {
+            obj.delay = res._delayTime;
         }
-        obj = _.extend(obj, this._logging.data);
-        if (!this._origSendCalled) {
+        obj = _.extend(obj, this._resData);
+        if (!res._origSendCalled) {
             this.action('response.send').logObj(obj).info();
         }
         // Trap case where res.json is called, which will result in res.send being called again
         if (typeof body === 'object' && body !== null && !Buffer.isBuffer(body)) {
             // settings
-            var app = this.app;
+            var app = req.app;
             var replacer = app.get('json replacer');
             var spaces = app.get('json spaces');
             var s = JSON.stringify(body, replacer, spaces);
 
             // content-type
-            if (!this.get('Content-Type')) {
-                this.set('Content-Type', 'application/json');
+            if (!req.get('Content-Type')) {
+                req.set('Content-Type', 'application/json');
             }
-            return this._origSend(s);
+            return res._origSend(s);
         }
-        this._origSendCalled = true;
-        return this._origSend.apply(this, arguments);
+        res._origSendCalled = true;
+        return res._origSend.apply(this, arguments);
     },
 
     /**
@@ -76,17 +81,29 @@ ReponseLogger.prototype = {
      * @returns this
      */
     end: function (body) {
-        if (!this._origSendCalled) {
-            var obj = {status: this.statusCode, responseTime: this.hrResponseTime()};
-            if (this.req._delayTime) {
-                obj.delay = this.req._delayTime;
+        var res = this;
+        var log = this.log;
+        if (!res._origSendCalled) {
+            var obj = {status: res.statusCode, responseTime: log.hrResponseTime()};
+            if (res._delayTime) {
+                obj.delay = res._delayTime;
             }
-            obj = _.extend(obj, this._logging.data);
+            obj = _.extend(obj, this._resData);
             this.action('response.end').logObj(obj).info();
         }
         return this._origEnd.apply(this, arguments);
     },
 
+
+    /**
+     * Delay time is a field you can set manually to indicate a process 'paused' for whatever reason, perhaps to
+     * back off on processing too many requests at the same time, or to randomize password verification
+     * response time (the later being for security reasons).
+     * @returns {number} Delay time in milliseconds
+     */
+    delayTime: function () {
+        return this._delayTime;
+    },
 
 
     /**
@@ -97,14 +114,14 @@ ReponseLogger.prototype = {
      * @return {*}
      */
     message: function () {
-        var i18n = this.ctx.req.i18n;
-        this._logging.message = i18n ? i18n.__.apply(i18n, arguments) : util.format.apply(this, arguments);
+        var i18n = this.req.i18n;
+        this._resMessage = i18n ? i18n.__.apply(i18n, arguments) : util.format.apply(this, arguments);
         return this;
     },
 
 // For weird situations, when we want to use the formatter, then get the string back
     getMessage: function () {
-        return this._logging.message;
+        return this._resMessage;
     },
 
 
@@ -113,7 +130,7 @@ ReponseLogger.prototype = {
      * Note: If you want to respond with a specific json object, use res.json().
      */
     data: function (data) {
-        this._logging.resData = data;
+        this._resData = data;
         return this;
     },
 
@@ -320,4 +337,4 @@ ReponseLogger.prototype = {
     }
 };
 
-module.exports = ReponseLogger;
+module.exports = ResponseLogger;

@@ -186,7 +186,7 @@ ModuleLogger.prototype = {
      * @returns {number} Response time in milliseconds
      */
     hrResponseTime: function () {
-        if (this.ctx.req._hrStartTime) {
+        if (this.ctx.req._delayTime) {
             //var parts = process.hrtime(this.ctx.req._hrStartTime);
             return ( parts[0] * 100000 + Math.round(parts[1] / 10000) ) / 100;
         }

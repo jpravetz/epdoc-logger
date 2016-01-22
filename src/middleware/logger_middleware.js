@@ -6,6 +6,7 @@
 var util = require('util');
 _ = require('underscore');
 var ResponseLogger = require('./response_logger');
+var ModuleLogger = require('../modulelogger');
 
 
 /**
@@ -13,7 +14,6 @@ var ResponseLogger = require('./response_logger');
  * This middleware creates a new ResponseLogger object with attached methods, then adds these methods
  * to the Express response object (mixins).
  */
-
 
 
 /**
@@ -36,8 +36,8 @@ module.exports = function (opt_options) {
 
         // Add a privately used state object added to the res object to track state when method chaining.
         // The 'stack' property is used internally by pushRouteInfo and popRouteInfo.
-        var ctx = { req: req, res, res };
-        res[objName] = new ResponseLogger(logger, null, ctx );
+        var ctx = {req: req, res, res};
+        res[objName] = new ModuleLogger(logger, null, ctx);
 
         // We need the super's send method
         res._origSend = res.send;
@@ -45,18 +45,11 @@ module.exports = function (opt_options) {
         // We need the super's send method
         res._origEnd = res.end;
 
-        if (_.isString(objName)) {
-            res[objName] = new ResponseLogger(logger, null, ctx );
-            // Add all the methods directly to the response object
-            for (var funcName in ResponseLogger) {
-                res[options.logger][funcName] = ResponseLogger[funcName];
-            }
-        } else {
-            // Add all the methods directly to the response object
-            for (var funcName in ResponseLogger) {
-                res[funcName] = ResponseLogger[funcName];
-            }
-        }
+        // Add all the methods directly to the response object
+        _.extend(res,ResponseLogger);
+        //for (var funcName in ResponseLogger) {
+        //    res[funcName] = ResponseLogger[funcName];
+        //}
 
         // Can override function that generates response object
         if (typeof options.responseBuilder === 'function') {
