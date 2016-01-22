@@ -1,7 +1,7 @@
-/*************************************************************************
- * Copyright(c) 2012-2016 Jim Pravetz <jpravetz@epdoc.com>
- * May be freely distributed under the MIT license.
- **************************************************************************/
+/*****************************************************************************
+ * dateutil.js
+ * CONFIDENTIAL Copyright 2012-2016 Jim Pravetz. All Rights Reserved.
+ *****************************************************************************/
 
 exports.toISOLocalString = toISOLocalString;
 exports.formatMS = formatMS;

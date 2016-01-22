@@ -1,7 +1,7 @@
-/*************************************************************************
- * Copyright(c) 2012-2015 Jim Pravetz <jpravetz@epdoc.com>
- * May be freely distributed under the MIT license.
- **************************************************************************/
+/*****************************************************************************
+ * file.js
+ * CONFIDENTIAL Copyright 2012-2016 Jim Pravetz. All Rights Reserved.
+ *****************************************************************************/
 
 var dateutil = require('../dateutil');
 var _ = require('underscore');

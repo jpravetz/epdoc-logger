@@ -1,7 +1,7 @@
-/*************************************************************************
- * Copyright(c) 2012-2016 Jim Pravetz <jpravetz@epdoc.com>
- * May be freely distributed under the MIT license.
- **************************************************************************/
+/*****************************************************************************
+ * module_logger.js
+ * CONFIDENTIAL Copyright 2012-2016 Jim Pravetz. All Rights Reserved.
+ *****************************************************************************/
 
 /**
  * Logging module. Shows time and log level (debug, info, warn, error).

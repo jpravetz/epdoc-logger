@@ -1,7 +1,7 @@
-/*************************************************************************
- * Copyright(c) 2012-2014 Jim Pravetz <jpravetz@epdoc.com>
- * May be freely distributed under the MIT license.
- **************************************************************************/
+/*****************************************************************************
+ * reqId.js
+ * CONFIDENTIAL Copyright 2012-2016 Jim Pravetz. All Rights Reserved.
+ *****************************************************************************/
 
 /**
  * Express middleware adds a unique id '_reqId' and high-resolution start time '_hrStartTime' to the request object.
