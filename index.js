@@ -11,8 +11,14 @@ var self = {
         return self._gLogger;
     },
 
-    get: function (name) {
-        return self.logger().get(name);
+    /**
+     * Get a log object upon which logging calls can be made
+     * @param name {string|Array} Name of module. If an array, then joined by '.'.
+     * @param context {Object} Context object, with optional req and res properties.
+     * @returns New Log object
+     */
+    get: function (name,context) {
+        return self.logger().get(name,context);
     },
 
     /**
