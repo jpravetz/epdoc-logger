@@ -211,7 +211,7 @@ ModuleLogger.prototype = {
 
 
     /**
-     * Deprecated. Used logObj instead.
+     * Alternative to data method.
      */
     data: function (key, value) {
         return this.logObj(key, value);
