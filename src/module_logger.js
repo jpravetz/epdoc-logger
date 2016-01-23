@@ -14,6 +14,7 @@
 
 var util = require('util');
 var DateUtil = require('./dateutil');
+var _ = require('underscore');
 
 /**
  * Create a new log object with methods to log to the transport that is attached to logger.
@@ -23,7 +24,7 @@ var DateUtil = require('./dateutil');
  * include: req._reqId (populates reqId column), req.sid?req.session.id|req.sessionId (populates sid column),
  * req._startTime and req._hrStartTime (can be used to determine response time for a request).
  * @param logger {Logger} The parent Logger object that specifies the transport and provides output methods
- * @param opt_modulename {string} The name of the module, used to populate the module column of logger output.
+ * @param opt_modulename {string|Array} The name of the module, used to populate the module column of logger output.
  * This can be modified to show the calling stack by calling pushRouteInfo and popRouteInfo.
  * @param opt_context {object} A context object. For Express or koa this would have 'req' and 'res' properties.
  * @constructor
@@ -34,10 +35,17 @@ var ModuleLogger = function (logger, opt_modulename, opt_context) {
     this.logger = logger;
 
     // Displayed in some IDE debuggers to identify this object. No other use.
-    this.name = opt_modulename + " logger";
+    this.name = "logger";
 
     // module column
-    this.stack = opt_modulename ? [opt_modulename] : [];
+    this.stack = [];
+    if (_.isString(opt_modulename)) {
+        this.name = opt_modulename + " " + this.name;
+        this.stack = [opt_modulename];
+    } else if (_.isArray(opt_modulename)) {
+        this.name = opt_modulename.join('.') + " " + this.name;
+        this.stack = opt_modulename;
+    }
 
     // Contains Express and koa req and res properties
     // If ctx.req.sessionId, ctx.req.sid or ctx.req.session.id are set, these are used for sid column.
@@ -58,6 +66,10 @@ ModuleLogger.prototype = {
 
     constructor: ModuleLogger,
 
+    setContext: function(ctx) {
+        this.ctx = ctx;
+        return this;
+    },
 
     /**
      * Log an info message. The message can contain arguments (e.g 'Hello %s', 'world')
@@ -78,8 +90,12 @@ ModuleLogger.prototype = {
         return this.logArgs('verbose', Array.prototype.slice.call(arguments));
     },
 
-    error: function () {
-        return this.logArgs('error', Array.prototype.slice.call(arguments));
+    error: function (err) {
+        if (err instanceof Error) {
+            return this.logArgs('error', [err.message]);
+        } else {
+            return this.logArgs('error', Array.prototype.slice.call(arguments));
+        }
     },
 
     fatal: function () {
@@ -151,8 +167,8 @@ ModuleLogger.prototype = {
      * @param name (required) String in the form 'api.org.create' (route.method or route.object.method).
      * @return Response object
      */
-    pushRouteInfo: function (name) {
-        this._logging.stack.push(name);
+    pushStack: function (name) {
+        this.stack.push(name);
         return this;
     },
 
@@ -162,13 +178,17 @@ ModuleLogger.prototype = {
      * @param options Available options are 'all' if all action contexts are to be removed from the _logging stack.
      * @return Response object
      */
-    popRouteInfo: function (options) {
+    popStack: function (options) {
         if (options && options.all === true) {
-            this._logging.stack = [];
+            this.stack = [];
         } else {
-            this._logging.stack.pop();
+            this.stack.pop();
         }
         return this;
+    },
+
+    getStack: function() {
+        return this.stack;
     },
 
     /**
@@ -195,7 +215,7 @@ ModuleLogger.prototype = {
 
 
     /**
-     * Deprecated. Used logObj instead.
+     * Alternative to data method.
      */
     data: function (key, value) {
         return this.logObj(key, value);
@@ -284,7 +304,7 @@ ModuleLogger.prototype = {
                     params.message = arr.join(' ');
                 }
             }
-            if( this.ctx ) {
+            if (this.ctx) {
                 this.logParams(params);
             } else {
                 this.logger.logParams(params);
