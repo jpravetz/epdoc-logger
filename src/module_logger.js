@@ -66,6 +66,10 @@ ModuleLogger.prototype = {
 
     constructor: ModuleLogger,
 
+    setContext: function(ctx) {
+        this.ctx = ctx;
+        return this;
+    },
 
     /**
      * Log an info message. The message can contain arguments (e.g 'Hello %s', 'world')
