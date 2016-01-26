@@ -2,6 +2,8 @@
 
 A logging module supporting built-in and custom transports, Express 4 response mixins, rich message and data syntax, and chainable methods for creating log events.
 
+Note: express middleware is not yet working in this alpha version.
+
 ## Install
 
 Install
