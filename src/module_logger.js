@@ -167,7 +167,7 @@ ModuleLogger.prototype = {
      * @param name (required) String in the form 'api.org.create' (route.method or route.object.method).
      * @return Response object
      */
-    pushStack: function (name) {
+    pushName: function (name) {
         this.stack.push(name);
         return this;
     },
@@ -178,7 +178,7 @@ ModuleLogger.prototype = {
      * @param options Available options are 'all' if all action contexts are to be removed from the _logging stack.
      * @return Response object
      */
-    popStack: function (options) {
+    popName: function (options) {
         if (options && options.all === true) {
             this.stack = [];
         } else {
