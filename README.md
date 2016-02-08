@@ -1,8 +1,11 @@
 # Logger #
 
-A logging module supporting built-in and custom transports, Express 4 response mixins, rich message and data syntax, and chainable methods for creating log events.
+A logging module supporting built-in and custom transports, Express 4 response mixins, 
+rich message and data syntax, and chainable methods for creating log events.
+Generally follows [Winston's](https://github.com/winstonjs/winston) logging method calls, but with the addition of calls to set other
+output columns and to chain calls.
 
-Note: express middleware is not yet working in this alpha version.
+**Note: express middleware is not yet working in this alpha version.**
 
 ## Install
 
