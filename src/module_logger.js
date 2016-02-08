@@ -56,7 +56,7 @@ var ModuleLogger = function (logger, opt_modulename, opt_context) {
     this.logLevel;
 
 
-    this.data;
+    this.logData;
 
     // action column
     this.action;
@@ -136,12 +136,12 @@ ModuleLogger.prototype = {
      */
     logObj: function (key, value) {
         if (typeof key === 'string' || typeof key === 'number') {
-            if (!this.data) {
-                this.data = {};
+            if (!this.logData) {
+                this.logData = {};
             }
-            this.data[key] = value;
+            this.logData[key] = value;
         } else {
-            this.data = key;
+            this.logData = key;
         }
         return this;
     },
@@ -150,10 +150,10 @@ ModuleLogger.prototype = {
      * Deprecated. Used error() instead.
      */
     logErr: function (err) {
-        if (!this.data) {
-            this.data = {};
+        if (!this.logData) {
+            this.logData = {};
         }
-        this.data.error = err;
+        this.logData.error = err;
         return this;
     },
 
@@ -276,9 +276,9 @@ ModuleLogger.prototype = {
                 level: args.shift(),
                 module: this.stack.join('.')
             };
-            if (this.data) {
-                params.data = this.data;
-                delete this.data;
+            if (this.logData) {
+                params.data = this.logData;
+                delete this.logData;
             }
             if (this.action) {
                 params.action = this.action;
