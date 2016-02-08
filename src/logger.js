@@ -7,7 +7,7 @@
 var _ = require('underscore');
 var util = require('util');
 var Path = require('path');
-var ModuleLogger = require('./module_logger');
+var ModuleLogger = require('./log');
 var ConsoleStream = require('./transports/console');
 
 
