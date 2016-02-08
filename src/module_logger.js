@@ -247,12 +247,15 @@ ModuleLogger.prototype = {
     },
 
     /**
-     * Output a log message. This function is suitable for providing to classes that require logging callbacks.
-     * It can also be used for multiline (folded) log messages.
-     * Example: log.log( 'info', req, "Found %d lines", iLines );
-     * @param level One of warn, debug, error or info. Defaults to info if not present.
-     * @param object Optional object that has a callback gGetSessionIdCallback
-     * @param msg The message String, or an array of strings. Will be formatted
+     * Output a log message, specifying the log level as the first parameter, and a string
+     * with util.format syntax as a second parameter,
+     * for example myLogger.log('info', 'test message %s', 'my string');
+     * The second parameter can optionally be an array of strings or arrays, each one of which
+     * will be treated as input to util.format. This is useful for loggers that support
+     * folding (muli-line output).
+     * Example: log.log( 'info', [["Found %d lines", iLines],"My second line",["My %s line",'third']]); );
+     * @param level {string} One of Logger.LEVEL_ORDER. Defaults to info if not present.
+     * @param msg The message String, or an array of strings, to be formatted with util.format.
      */
     log: function () {
         var args = Array.prototype.slice.call(arguments);
@@ -268,7 +271,16 @@ ModuleLogger.prototype = {
     },
 
 
-    // Expects level, msg params
+    /**
+     * Calls the logger interface to output the log message.
+     * Rolls in all previous calls to set data and action, and resets those values.
+     * @param level {string} Required
+     * @param msg {array|string ...} Normally a string, providing the same string
+     * interpolation format as util.format. May also be an array of strings,
+     * in which case each entry in the array is treated as arguments to util.format.
+     * This later situation is useful for loggers that support multi-line formatting.
+     * @private
+     */
     _writeMessage: function (level, msg) {
         var args = Array.prototype.slice.call(arguments);
         if (args.length > 1) {
