@@ -23,6 +23,7 @@ Log to the console.
 var log = require('epdoc-logger').get();
 
 log.info("Hello world");
+log.log('debug',"Hello %s","world");
 ```
 
 Log to a file, and buffer any messages until the logger is set up
@@ -38,7 +39,7 @@ logger.setTransport('file',{path:config.logFile});
 log.info("Hello world");
 ```
 
-Log to loggly, buffering and making batch calls.
+Log to loggly, buffering and making batch calls to loggly.
 
 ```javascript
 var logger = require('epdoc-logger').logger({autoRun:false);
@@ -49,8 +50,10 @@ logger.setTransport('loggly',{token:'MyToken'});
 
 log.info("Hello world");
 
-// Shutdown properly so loggly message buffer is flushed
+// log a message count for all the different log levels
 logger.writeCount();
+
+// Shutdown properly so loggly message buffer is flushed
 logger.destroying().then(function() {
     done();
 }, function(err) {
@@ -75,7 +78,7 @@ The module has built-in support for the following transports:
 * [SOS Max](http://www.sos.powerflasher.com/developer-tools/sosmax/home/) - _SOS max is the POWERFLASHER Socket Output Server - a fast and helpful programmer tool with graphical
 user interface to display log messages for debugging purpose._
 * line - A line buffer used for automatic testing
-* loggly - coming soon!
+* loggly - See [loggly.com](http://loggly.com).
 
 On startup the logger can wait for a transport to be initialized before logging, or it can being writing log messages
 immediately. By default the logger auto-starts and uses the Console Transport.
@@ -177,7 +180,7 @@ The ```setLogger(type,options)``` has the following parameters:
     * ```bIncludeSid``` - Indicates whether the sessionId should be included in the output, defaults to true
 
 To build your own custom transport class it
-is recommended that you subclass the console transport (obtained using ```Logger.getLoggerClass('console')```)
+just copy or subclass the console transport (obtained using ```Logger.getLoggerClass('console')```)
 and modify as has been done for the file and sos transports.
 
 Loggly has these additional options:
@@ -202,7 +205,7 @@ If you are creating your own logging object, use Logger's logging object as an e
 at ```middleware/responseLogger.js``` for an example of a module that extends the express.js response object
 with logging methods.
 
-### The logMessage Function ##
+### Logging using Logger Object and logMessage method ##
 
 The ```logParams``` function directly adds a log message object to the log message queue.
 The ```logParams``` function is used by the _Logging Object_ (next section) and by any
@@ -238,7 +241,7 @@ are then passed to the transport by calling the transport's ```write``` method a
 as a method parameter. The transport then formats and outputs the data. You can layer your own logging library underneath
 epdoc-logger by wrapping your library as a transport.
 
-### Logging using Logger's Module Logging Object ###
+### Logging using Log Object ###
 
 A new Module Logging object is obtained by calling ```get``` on the logger. A shortcut is to use 
 ```require('epdoc-logger').get()``` to obtain the object.
@@ -323,6 +326,8 @@ The following methods all add column values to the message that is output but do
 * ```action``` - Sets the action column value to this string.
 * ```logObj``` - Sets the data column value. Either pass in a key value pair, which is then added to the data
 object, or an object, which the data object is then set to.
+* ```set``` - Sets a value in a ```custom``` column and keeps this value for the duration of the Log object's
+lifespan. This column is currently only output to the loggly transport.
 
 The following methods result in a message being output with the corresponding log level set:
 
@@ -344,6 +349,8 @@ The following methods result in a message output with log level set to INFO:
 
 
 ## Express Middleware ##
+
+_Note: This section needs to be updated._
 
 The included express middleware are instantiated as follows:
 
@@ -400,7 +407,7 @@ Adds an information line to the log file for each new route.
 ### More Information
 
 It would be nice if there were more documentation for the logging methods, but in the meantime,
-please refer to the source code in responseLogger.js.
+please refer to the source code in src/log.js.
 
 ## Test
 
@@ -410,7 +417,7 @@ Tests have not been updated, however I have started migrating these to mocha.
 
 * The express middleware has not been tested since version 2.0.0 has been started.
 * Add koa middleware (I don't currently have a koa project going, so this may not happen for awhile)
-* Loggly support (highest priority for me right now)
+* Loggly support - DONE!
 
 ## Author
 
