@@ -48,19 +48,21 @@ var protoProps = {
         this.socket.write(msg);
     },
 
-    end: function() {
+    end: function(cb) {
         if( this.socket ) {
             this.socket.end();
         }
         this.bReady = false;
+        cb && cb();
     },
 
-    destroy: function() {
+    destroy: function(cb) {
         this.end();
         if( this.socket ) {
             this.socket.destroy();
         }
         this.socket = undefined;
+        cb && cb();
     },
 
     toString: function() {

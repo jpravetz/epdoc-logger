@@ -2,8 +2,8 @@
 
 A logging module supporting built-in and custom transports, Express 4 response mixins, 
 rich message and data syntax, and chainable methods for creating log events.
-Generally follows [Winston's](https://github.com/winstonjs/winston) logging method calls, but with the addition of calls to set other
-output columns and to chain calls.
+Generally follows [Winston's](https://github.com/winstonjs/winston) logging method calls
+for simpler messages, but with the addition of chainable calls to set other output columns.
 
 **Note: express middleware is not yet working in this alpha version.**
 
@@ -37,6 +37,28 @@ logger.setTransport('file',{path:config.logFile});
 
 log.info("Hello world");
 ```
+
+Log to loggly, buffering and making batch calls.
+
+```javascript
+var logger = require('epdoc-logger').logger({autoRun:false);
+var log = logger.get('main');
+log.info("Starting application");
+
+logger.setTransport('loggly',{token:'MyToken'}); 
+
+log.info("Hello world");
+
+// Shutdown properly so loggly message buffer is flushed
+logger.writeCount();
+logger.destroying().then(function() {
+    done();
+}, function(err) {
+    done(err);
+});
+
+```
+
 
 In the above we are using two different objects:
  
@@ -115,6 +137,11 @@ logger.setTransport( { type: 'sos', bIncludeSessionId: false } );
 log.info("Return value for %s is %s", "hello", "world" );
 ```
 
+### Logging to Loggly ###
+
+Loggly output is buffered and sent in batches. As a result it is important to shutdown logging before exiting.
+See the example earlier in this readme showing how this is done.
+
 ### Advanced
 
 Transports can also be closed using ```unsetLogger```. In this event logging will revert to the previously 
@@ -144,13 +171,20 @@ The ```setLogger(type,options)``` has the following parameters:
  * ```type``` - The transport type, which is either a string (one of the built-in transports 'console', 'file' or
  'sos') or the class of a custom transport.
  * ```options``` - An object with the following optional parameters
-    * ```path``` - 'path/to/myfile.log', used when type is file
-    * ```dateFormat``` - one of 'ISO' or 'formatMS', default is dependent on the transport but is usually 'formatMS'
-    * ```bIncludeSessionId``` - Indicates whether the sessionId should be included in the output, defaults to true
+    * ```path``` - 'path/to/myfile.log', used when type is ```file```
+    * ```dateFormat``` - one of 'ISO' or 'formatMS', default is dependent on the transport but is 
+    usually 'formatMS' (not used with loggly)
+    * ```bIncludeSid``` - Indicates whether the sessionId should be included in the output, defaults to true
 
 To build your own custom transport class it
 is recommended that you subclass the console transport (obtained using ```Logger.getLoggerClass('console')```)
 and modify as has been done for the file and sos transports.
+
+Loggly has these additional options:
+
+- ```token``` (required) Token issued by [loggly.com] for your account
+- ```bufferSize``` (optional, default 100 messages) Number of messages to buffer
+- ```flushInterval``` (optional, default 5000 ms) An interval timer that flushes messages if there are any
 
 
 ## Log Messages

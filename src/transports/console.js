@@ -55,7 +55,8 @@ ConsoleTransport.prototype = {
     clear: function () {
     },
 
-    flush: function () {
+    flush: function (cb) {
+        cb && cb();
     },
 
     /**
@@ -75,12 +76,14 @@ ConsoleTransport.prototype = {
         console.log(msg);
     },
 
-    end: function (onClose) {
+    end: function (cb) {
         this.bReady = false;
+        cb && cb();
     },
 
-    destroy: function () {
+    destroy: function (cb) {
         this.end();
+        cb && cb();
     },
 
     toString: function () {
