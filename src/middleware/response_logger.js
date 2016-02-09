@@ -6,7 +6,7 @@
 var util = require('util');
 _ = require('underscore');
 var Logger = require('../logger');
-var ModuleLogger = require('../module_logger');
+var ModuleLogger = require('../log');
 
 
 
