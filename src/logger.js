@@ -67,7 +67,7 @@ Logger.prototype = {
             };
 
             function onClose() {
-                self.logMessage("info", "logger.push.close", "Transport " + stream + " closed");
+                self.logMessage("info", "logger.push.close", "Transport " + transportName + " closed");
                 self.unsetTransport();
             }
         } else {
@@ -105,7 +105,7 @@ Logger.prototype = {
 
         if (Transport) {
             var newTransport = new Transport(options);
-            var err = transport.validateOptions(newTransport);
+            var err = newTransport.validateOptions(newTransport);
             if (!err) {
                 var newTransportName = newTransport.toString();
                 this.logMessage("info", "logger.push", "Setting logger to " + newTransportName, {transport: newTransportName});
@@ -132,7 +132,7 @@ Logger.prototype = {
             var discardTransport = this.transports.shift();
             discardTransport.destroy();
         }
-        this._startTransport();
+        this.start();
     },
 
     /**
@@ -290,15 +290,25 @@ Logger.prototype = {
         return this.logCount;
     },
 
-    // Not called. Placeholder in case we ever support managed shutdown
-    destroy: function () {
+    // Do a managed shutdown. This is important if using a buffered logger such as our loggly implementation.
+    destroying: function () {
+        var jobs = [];
         while (this.transports.length) {
-            var transport = transports.shift();
+            var transport = this.transports.shift();
             if (transport) {
-                transport.end();
-                transport.destroy();
+                var job = new Promise(function(resolve,reject) {
+                    transport.destroy(function(err) {
+                        if(err) {
+                            reject(err);
+                        } else {
+                            resolve();
+                        }
+                    });
+                });
+                jobs.push(job);
             }
         }
+        return Promise.all(jobs)
     },
 
     /**

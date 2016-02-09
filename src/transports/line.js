@@ -61,7 +61,8 @@ LineTransport.prototype = {
         this.data = [];
     },
 
-    flush: function () {
+    flush: function (cb) {
+        cb && cb();
     },
 
     /**
@@ -82,12 +83,14 @@ LineTransport.prototype = {
         lines.push(msg);
     },
 
-    end: function (onClose) {
+    end: function (cb) {
         this.bReady = false;
+        cb && cb();
     },
 
-    destroy: function () {
+    destroy: function (cb) {
         this.end();
+        cb && cb();
     },
 
     toString: function () {

@@ -70,7 +70,7 @@ var protoProps = {
      * Flushes everything in the buffer and starts a timer to automatically
      * flush again after options.buffer time
      */
-    flush: function () {
+    flush: function (cb) {
         if (this.buffer.length) {
             var flushing = this.buffer;
             this.buffer = [];
@@ -78,22 +78,25 @@ var protoProps = {
                 this._write(flushing[idx]);
             }
         }
+        cb && cb();
     },
 
-    end: function () {
+    end: function (cb) {
         this.flush();
         this.bReady = false;
         if (this.stream) {
             this.stream.end();
         }
+        cb && cb();
     },
 
-    destroy: function () {
+    destroy: function (cb) {
         this.end();
         if (this.stream) {
             this.stream.destroy();
         }
         this.stream = undefined;
+        cb && cb();
     },
 
     _formatLogMessage: function (params) {
