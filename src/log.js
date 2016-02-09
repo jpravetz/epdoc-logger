@@ -146,14 +146,15 @@ ModuleLogger.prototype = {
         return this;
     },
 
-    /**
-     * Deprecated. Used error() instead.
-     */
-    logErr: function (err) {
-        if (!this.logData) {
-            this.logData = {};
+    set: function (key, value) {
+        if (typeof key === 'string' || typeof key === 'number') {
+            if (!this.customData) {
+                this.customData = {};
+            }
+            this.customData[key] = value;
+        } else {
+            this.customData = key;
         }
-        this.logData.error = err;
         return this;
     },
 
@@ -215,7 +216,9 @@ ModuleLogger.prototype = {
 
 
     /**
-     * Alternative to data method.
+     * Set a property in the data column, or set the value of the data object.
+     * @param key {string|object} If a string then sets data[key] to value. Otherwise sets data to key.
+     * @param value If key is a string then sets data[key] to this value.
      */
     data: function (key, value) {
         return this.logObj(key, value);
@@ -292,6 +295,9 @@ ModuleLogger.prototype = {
                 params.data = this.logData;
                 delete this.logData;
             }
+            if (this.customData) {
+                params.custom = this.customData;
+            }
             if (this.action) {
                 params.action = this.action;
                 delete this.action;
@@ -348,7 +354,6 @@ ModuleLogger.prototype = {
         this.logger.logParams(params);
         return this;
     },
-
 
     setTruncate: function (len) {
         this.truncateLength = len;

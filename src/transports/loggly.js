@@ -164,7 +164,8 @@ LogglyTransport.prototype = {
             module: params.module,
             action: params.action,
             data: params.data,
-            message: params.message
+            message: params.message,
+            custom: params.custom
         };
         if (this.bIncludeSid) {
             json.sid = params.sid;
