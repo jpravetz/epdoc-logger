@@ -11,6 +11,10 @@ var self = {
         return self._gLogManager;
     },
 
+    start: function() {
+        return self.logMgr().start();
+    },
+
     /**
      * Get a log object upon which logging calls can be made
      * @param name {string|Array} Name of module. If an array, then joined by '.'.

@@ -12,9 +12,9 @@ var ConsoleStream = require('./transports/console');
 
 
 /**
- * Create a new LogManager using the default ConsoleTransport. The logger will automatically begin writing
- * to the transport unless autoRun = false. To use a different transport, start with autoRun false,
- * then set the transport using setTransport('file').
+ * Create a new LogManager using the default ConsoleTransport. The logger will not begin writing
+ * to the transport unless you set autoRun = true or call setTransport or call start.
+ * To use a different transport, set the transport using setTransport('file').
  * You will likely have one LogManager per application, then call logMgr.get() to get a log
  * object which you will use for logging messages.
  * @param options {Object} { autoRun: true } is default
@@ -34,7 +34,7 @@ var LogManager = function (options) {
     this.queue = [];
     // Indicates whether we have started logging or not
     this.running = false;
-    if( options.autoRun !== false ) {
+    if( options.autoRun === true ) {
         this.start();
     }
 };
@@ -44,36 +44,38 @@ LogManager.prototype = {
     constructor: LogManager,
 
     /**
-     * Starts the tranport at the head of the transport stack. This start logging.
+     * Starts the transport at the head of the transport stack, if not already started. This starts logging.
      * This is done manually because we may hold of logging until the transport is set.
      * @private
      */
     start: function () {
         var self = this;
-        var currentTransport = this.getCurrentTransport();
+        if( !self.running ) {
+            var currentTransport = this.getCurrentTransport();
 
-        if (currentTransport) {
-            var transportName = currentTransport.toString();
-            currentTransport.open(onSuccess, onError, onClose);
+            if (currentTransport) {
+                var transportName = currentTransport.toString();
+                currentTransport.open(onSuccess, onError, onClose);
 
-            function onSuccess() {
-                currentTransport.clear();
-                self.logMessage("info", "logger.push.success", "Set logger to " + transportName, {transport: transportName});
-                self.running = true;
-                self.flushQueue();
-            };
+                function onSuccess() {
+                    self.running = true;
+                    currentTransport.clear();
+                    self.logMessage("info", "logger.push.success", "Set logger to " + transportName, {transport: transportName});
+                    self.flushQueue();
+                };
 
-            function onError(err) {
-                self.logMessage("warn", "logger.push.warn", "Tried but failed to set logger to " + transportName + ": " + err);
-                self.unsetTransport();
-            };
+                function onError(err) {
+                    self.logMessage("warn", "logger.push.warn", "Tried but failed to set logger to " + transportName + ": " + err);
+                    self.unsetTransport();
+                };
 
-            function onClose() {
-                self.logMessage("info", "logger.push.close", "Transport " + transportName + " closed");
-                self.unsetTransport();
+                function onClose() {
+                    self.logMessage("info", "logger.push.close", "Transport " + transportName + " closed");
+                    self.unsetTransport();
+                }
+            } else {
+                this.logMessage("warn", "logger.start.error", "Cannot start current transport because no more transports in stack");
             }
-        } else {
-            this.logMessage("warn", "logger.start.error", "Cannot start current transport because no more transports in stack");
         }
         return self;
     },
@@ -117,6 +119,7 @@ LogManager.prototype = {
                     currentTransport.end();
                 }
                 this.transports.unshift(newTransport);
+                this.running = false;
 
                 this.start();
 

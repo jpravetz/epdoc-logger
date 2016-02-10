@@ -83,7 +83,7 @@ user interface to display log messages for debugging purpose._
 On startup the logger can wait for a transport to be initialized before logging, or it can being writing log messages
 immediately. By default the logger auto-starts and uses the Console Transport.
 
-To use a different transport, initialize the logger with ```autoRun``` set to false, then set the transport. 
+A call to ```setTransport``` call ```start``` to begin logging. 
 Successfully setting the transport will also start writing log messages. Messages are buffered prior to the
 transport being intitialized, so prior to this event no messages will be lost.
 
@@ -92,8 +92,8 @@ transport being intitialized, so prior to this event no messages will be lost.
 Main File
 
 ```javascript 
-var Logger = require('logger');
-var log = Logger.get('main');
+var gLogMgr = require('epdoc-logger').logMgr(a).start();
+var log = gLogMgr.get('main');
 
 log.info("Return value for %s is %s", "hello", "world" );
 log.data('req',{a:3}).info();
@@ -113,8 +113,8 @@ log.info("Hello world");
 This shows the more general use of the logger object.
 
 ```javascript
-var logger = require('epdoc-logger').logger({autoRun:false});
-var log = logger.get('MyModule');
+var gLogMgr = require('epdoc-logger').logger();
+var log = gLogMgr.get('MyModule');
 logger.setTransport( 'file', { path: 'path/to/myfile.log' } );
 
 log.info("Return value for %s is %s", "hello", "world" );
