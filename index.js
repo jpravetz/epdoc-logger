@@ -1,14 +1,14 @@
 var self = {
     
-    _gLogger: undefined,
+    _gLogManager: undefined,
 
-    Logger: require('./src/logger'),
+    LogManager: require('./src/log_mgr'),
 
-    logger: function (options) {
-        if (!self._gLogger) {
-            self._gLogger = new self.Logger(options);
+    logMgr: function (options) {
+        if (!self._gLogManager) {
+            self._gLogManager = new self.LogManager(options);
         }
-        return self._gLogger;
+        return self._gLogManager;
     },
 
     /**
@@ -18,7 +18,7 @@ var self = {
      * @returns New Log object
      */
     get: function (name,context) {
-        return self.logger().get(name,context);
+        return self.logMgr().get(name,context);
     },
 
     /**

@@ -3,7 +3,7 @@
  * CONFIDENTIAL Copyright 2012-2016 Jim Pravetz. All Rights Reserved.
  *****************************************************************************/
 
-var ModuleLogger = require('../log');
+var Logger = require('../logger');
 
 /**
  * Stub for express.request object, used when passing request object around when simulating req/res/next flow.
@@ -19,7 +19,7 @@ var Request = function(options) {
             this[propName] = options[propName];
         }
     }
-    this.log = new ModuleLogger()
+    this.log = new Logger()
 };
 
 module.exports = Request;

@@ -29,13 +29,13 @@ describe("Logger test", function () {
         var opts = {
             token: token
         };
-        var logger = Logger.logger();
-        logger.setTransport('loggly',opts);
-        log = logger.get('module3');
+        var logMgr = Logger.logMgr();
+        logMgr.setTransport('loggly',opts);
+        log = logMgr.get('module3');
         log.info("Doing even more");
         log.action('myaction').info("end");
-        logger.writeCount();
-        logger.destroying().then(function() {
+        logMgr.writeCount();
+        logMgr.destroying().then(function() {
             done();
         }, function(err) {
             done(err);
