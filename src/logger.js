@@ -1,323 +1,401 @@
 /*****************************************************************************
- * logger.js
+ * log.js
  * CONFIDENTIAL Copyright 2012-2016 Jim Pravetz. All Rights Reserved.
  *****************************************************************************/
 
+/**
+ * Logging module. Shows time and log level (debug, info, warn, error).
+ * Time is shown in milliseconds since this module was first initialized.
+ * Usage:
+ *        var log = require('../lib/logger').get('logtest');
+ *        log.info( 'Message: %s', 'my message');
+ */
 
-var _ = require('underscore');
+
 var util = require('util');
-var Path = require('path');
-var ModuleLogger = require('./log');
-var ConsoleStream = require('./transports/console');
-
+var DateUtil = require('./dateutil');
+var _ = require('underscore');
 
 /**
- * Create a new logger using the default ConsoleTransport. The logger will automatically begin writing
- * to the transport unless autoRun = false. To use a different transport, start with autoRun false,
- * then set the transport using setTransport('file').
- * @param options {Object} { autoRun: true } is default
+ * Create a new log object with methods to log to the transport that is attached to logger.
+ * This log object can be attached to another object, for example an express response object,
+ * in order to next the log call and thereby carry context down thru the calling stack.
+ * If a context is passed in, various properties may be harvested off of the req property. These
+ * include: req._reqId (populates reqId column), req.sid?req.session.id|req.sessionId (populates sid column),
+ * req._startTime and req._hrStartTime (can be used to determine response time for a request).
+ * @param logger {Logger} The parent Logger object that specifies the transport and provides output methods
+ * @param opt_modulename {string|Array} The name of the module, used to populate the module column of logger output.
+ * This can be modified to show the calling stack by calling pushRouteInfo and popRouteInfo.
+ * @param opt_context {object} A context object. For Express or koa this would have 'req' and 'res' properties.
  * @constructor
  */
-var Logger = function (options) {
+var Logger = function (logger, opt_modulename, opt_context) {
 
-    options || (options = {});
-    this.t0 = (new Date()).getTime();
-    this.logLevel = 'debug';
-    // Count of how many errors, warnings, etc
-    this.logCount = {};
-    this.LEVEL_ORDER = ['verbose', 'debug', 'info', 'warn', 'error', 'fatal'];
-    // A stack of tranports, with the console transport installed by default
-    this.transports = [new ConsoleStream()];
-    // A queue of messages that may build up while we are switching streams
-    this.queue = [];
-    // Indicates whether we have started logging or not
-    this.running = false;
-    if( options.autoRun !== false ) {
-        this.start();
+    // The common Logger object thru which output will be written
+    this.logger = logger;
+
+    // Displayed in some IDE debuggers to identify this object. No other use.
+    this.name = "logger";
+
+    // module column
+    this.stack = [];
+    if (_.isString(opt_modulename)) {
+        this.name = opt_modulename + " " + this.name;
+        this.stack = [opt_modulename];
+    } else if (_.isArray(opt_modulename)) {
+        this.name = opt_modulename.join('.') + " " + this.name;
+        this.stack = opt_modulename;
     }
+
+    // Contains Express and koa req and res properties
+    // If ctx.req.sessionId, ctx.req.sid or ctx.req.session.id are set, these are used for sid column.
+    // If ctx.req._reqId, this is used as reqId column
+    this.ctx = opt_context;
+
+    // Min log level required to create output, overrides logger.logLevel if set
+    this.logLevel;
+
+
+    this.logData;
+
+    // action column
+    this.action;
 };
 
 Logger.prototype = {
 
     constructor: Logger,
 
+    setContext: function (ctx) {
+        this.ctx = ctx;
+        return this;
+    },
+
     /**
-     * Starts the tranport at the head of the transport stack. This start logging.
-     * This is done manually because we may hold of logging until the transport is set.
+     * Log an info message. The message can contain arguments (e.g 'Hello %s', 'world')
+     */
+    info: function () {
+        return this.logArgs('info', Array.prototype.slice.call(arguments));
+    },
+
+    warn: function () {
+        return this.logArgs('warn', Array.prototype.slice.call(arguments));
+    },
+
+    debug: function () {
+        return this.logArgs('debug', Array.prototype.slice.call(arguments));
+    },
+
+    verbose: function () {
+        return this.logArgs('verbose', Array.prototype.slice.call(arguments));
+    },
+
+    error: function (err) {
+        if (err instanceof Error) {
+            return this.logArgs('error', [err.message]);
+        } else {
+            return this.logArgs('error', Array.prototype.slice.call(arguments));
+        }
+    },
+
+    fatal: function () {
+        return this.logArgs('fatal', Array.prototype.slice.call(arguments));
+    },
+
+    separator: function () {
+        if (this.isAboveLevel('info')) {
+            this._writeMessage('info', "######################################################################");
+        }
+        return this;
+    },
+
+    /**
+     * Action is a unique column in the log output and is a machine-searchable verb that uniquely
+     * describes the type of log event.
+     * @param arguments String or comma separated list of strings that are then joined with a '.'
+     * @returns {*}
+     */
+    action: function () {
+        if (arguments[0] instanceof Array) {
+            this.action = arguments[0].join('.');
+        } else if (arguments.length > 1) {
+            this.action = Array.prototype.join.call(arguments, '.');
+        } else {
+            this.action = arguments[0];
+        }
+        return this;
+    },
+
+    /**
+     * Log a key,value or an object. If an object the any previous logged objects
+     * are overwritten. If a key,value then add to the existing logged object.
+     * Objects are written when a call to info, etc is made
+     * @param key If a string or number then key,value is added, else key is added
+     * @param value If key is a string or number then data.key is set to value
+     * @return The logging object, for chaining
+     */
+    logObj: function (key, value) {
+        if (typeof key === 'string' || typeof key === 'number') {
+            if (!this.logData) {
+                this.logData = {};
+            }
+            this.logData[key] = value;
+        } else {
+            this.logData = key;
+        }
+        return this;
+    },
+
+    set: function (key, value) {
+        if (typeof key === 'string' || typeof key === 'number') {
+            if (!this.customData) {
+                this.customData = {};
+            }
+            this.customData[key] = value;
+        } else {
+            this.customData = key;
+        }
+        return this;
+    },
+
+    /**
+     * A method to add context to the method stack that has gotten us to this point in code.
+     * The context is pushed into a stack, and the full stack is output as the 'module' property
+     * of the log message.
+     * Usually called at the entry point of a function.
+     * Can also be called by submodules, in which case the submodules should call popRouteInfo when returning
+     * Note that it is not necessary to call popRouteInfo when terminating a request with a response.
+     * @param name (required) String in the form 'api.org.create' (route.method or route.object.method).
+     * @return Response object
+     */
+    pushName: function (name) {
+        this.stack.push(name);
+        return this;
+    },
+
+    /**
+     * See pushRouteInfo. Should be called if returning back up a function chain. Does not need to be
+     * called if the function terminates the request with a response.
+     * @param options Available options are 'all' if all action contexts are to be removed from the _logging stack.
+     * @return Response object
+     */
+    popName: function (options) {
+        if (options && options.all === true) {
+            this.stack = [];
+        } else {
+            this.stack.pop();
+        }
+        return this;
+    },
+
+    getStack: function () {
+        return this.stack;
+    },
+
+    /**
+     * Used for requests.
+     * The time used since this request object was initialized.
+     * Requirement: request object must set it's _startTime for this to work.
+     * @returns {number}
+     */
+    responseTime: function () {
+        return (this.ctx && this.ctx.req && this.ctx.req._startTime) ? ( new Date() - this.ctx.req._startTime ) : 0;
+    },
+
+    /**
+     * Used for requests.
+     * High resolution response time.
+     * Returns the response time in milliseconds with two digits after the decimal.
+     * @returns {number} Response time in milliseconds
+     */
+    hrResponseTime: function () {
+        if (this.ctx && this.ctx.req && this.ctx.req._delayTime) {
+            //var parts = process.hrtime(this.ctx.req._hrStartTime);
+            return ( parts[0] * 100000 + Math.round(parts[1] / 10000) ) / 100;
+        }
+        return 0;
+    },
+
+
+    resetTimer: function () {
+        this.t0 = (new Date()).getTime();
+    },
+
+    elapsed: function (args) {
+        var elapsed = (this.t0) ? ((new Date()).getTime() - this.t0) : 0;
+        this.logObj('elapsed', elapsed);
+        if( args ) {
+            return this.log.apply(this,Array.prototype.slice.call(arguments));
+        }
+        return this;
+    },
+
+    /**
+     * Set a property in the data column, or set the value of the data object.
+     * @param key {string|object} If a string then sets data[key] to value. Otherwise sets data to key.
+     * @param value If key is a string then sets data[key] to this value.
+     */
+    data: function (key, value) {
+        return this.logObj(key, value);
+    },
+
+    date: function (d, s) {
+        if (this.isAboveLevel('info')) {
+            d = d || new Date();
+            this.action = s || 'currentTime';
+            this.logObj({
+                localtime: DateUtil.toISOLocalString(d),
+                utctime: d.toISOString(),
+                uptime: DateUtil.formatMS(d - this.logger.getStartTime())
+            });
+            this.logArgs('info', []);
+        }
+        return this;
+    },
+
+    // Helper, level must be set, args must be an array, but can be empty
+    logArgs: function (level, args) {
+        if (!args.length) {
+            args.unshift('');
+        } else if (args.length && ( args[0] === undefined || args[0] === null )) {
+            args.shift();
+        }
+        args.unshift(level);
+        return this.log.apply(this, args);
+    },
+
+    /**
+     * Output a log message, specifying the log level as the first parameter, and a string
+     * with util.format syntax as a second parameter,
+     * for example myLogger.log('info', 'test message %s', 'my string');
+     * The second parameter can optionally be an array of strings or arrays, each one of which
+     * will be treated as input to util.format. This is useful for loggers that support
+     * folding (muli-line output).
+     * Example: log.log( 'info', [["Found %d lines", iLines],"My second line",["My %s line",'third']]); );
+     * @param level {string} One of Logger.LEVEL_ORDER. Defaults to info if not present.
+     * @param msg The message String, or an array of strings, to be formatted with util.format.
+     */
+    log: function () {
+        var args = Array.prototype.slice.call(arguments);
+        if (args.length) {
+            if (args.length === 1) {
+                args.unshift('info');
+            }
+            if (this.isAboveLevel(args[0])) {
+                this._writeMessage.apply(this, args);
+            }
+        }
+        return this;
+    },
+
+
+    /**
+     * Calls the logger interface to output the log message.
+     * Rolls in all previous calls to set data and action, and resets those values.
+     * @param level {string} Required
+     * @param msg {array|string ...} Normally a string, providing the same string
+     * interpolation format as util.format. May also be an array of strings,
+     * in which case each entry in the array is treated as arguments to util.format.
+     * This later situation is useful for loggers that support multi-line formatting.
      * @private
      */
-    start: function () {
-        var self = this;
-        var currentTransport = this.getCurrentTransport();
-
-        if (currentTransport) {
-            var transportName = currentTransport.toString();
-            currentTransport.open(onSuccess, onError, onClose);
-
-            function onSuccess() {
-                currentTransport.clear();
-                self.logMessage("info", "logger.push.success", "Set logger to " + transportName, {transport: transportName});
-                self.running = true;
-                self.flushQueue();
+    _writeMessage: function (level, msg) {
+        var args = Array.prototype.slice.call(arguments);
+        if (args.length > 1) {
+            var params = {
+                level: args.shift(),
+                module: this.stack.join('.')
             };
-
-            function onError(err) {
-                self.logMessage("warn", "logger.push.warn", "Tried but failed to set logger to " + transportName + ": " + err);
-                self.unsetTransport();
-            };
-
-            function onClose() {
-                self.logMessage("info", "logger.push.close", "Transport " + transportName + " closed");
-                self.unsetTransport();
+            if (this.logData) {
+                params.data = this.logData;
+                delete this.logData;
             }
-        } else {
-            this.logMessage("warn", "logger.start.error", "Cannot start current transport because no more transports in stack");
-        }
-    },
-
-    /**
-     * Set log target by unshifting the provided transport object onto the list of transports.
-     * The default transport, before any is unshifted onto the list of transports, is the console transport.
-     * If you add a transport (eg. file transport) then later remove it, the previously set logger (eg. console)
-     * will be used.
-     * @param type - For the provided loggers, one of 'sos', 'file', 'line', or 'console'. For a custom transport this hsould be a
-     * transport class object that can be instantiated with 'new'.
-     * To create your own transport class, use getLoggerClass('console') and then subclass this class.
-     * @param options are passed to the transport when constructing the new transport object. Options for the
-     * predefined transports are:
-     *      path - path to file, used by file transport
-     *      bIncludeSid - whether to include sessionId and reqId columns in log output (used with express and other request/response apps)
-     *      dateFormat - one of 'ISO' or 'formatMS', defaults to 'formatMS'
-     */
-    setTransport: function (type, options) {
-
-        var Transport;
-
-        if (_.isString(type)) {
-            var p = Path.resolve(__dirname, 'transports', type);
-            Transport = require(p);
-        } else if (_.isObject(type)) {
-            Transport = type;
-        } else {
-            var p = Path.resolve(__dirname, 'transports/console');
-            Transport = require(p);
-        }
-
-        if (Transport) {
-            var newTransport = new Transport(options);
-            var err = newTransport.validateOptions(newTransport);
-            if (!err) {
-                var newTransportName = newTransport.toString();
-                this.logMessage("info", "logger.push", "Setting logger to " + newTransportName, {transport: newTransportName});
-                var currentTransport = this.getCurrentTransport();
-                if (currentTransport) {
-                    currentTransport.end();
+            if (this.customData) {
+                params.custom = this.customData;
+            }
+            if (this.action) {
+                params.action = this.action;
+                delete this.action;
+            }
+            if (this.truncateLength) {
+                params.length = this.truncateLength;
+                delete this.truncateLength;
+            }
+            if (args.length === 1 && (args[0] instanceof Array)) {
+                params.message = [];
+                for (var idx = 0; idx < args[0].length; ++idx) {
+                    params.message.push(util.format.apply(this, (args[0][idx] instanceof Array) ? args[0][idx] : [args[0][idx]]));
                 }
-                this.transports.unshift(newTransport);
-
-                this.start();
-
+            } else if (args && args.length) {
+                if (typeof args[0] === 'string') {
+                    params.message = util.format.apply(this, args);
+                } else {
+                    var arr = [];
+                    args.forEach(function (arg) {
+                        arr.push(JSON.stringify(arg));
+                    });
+                    params.message = arr.join(' ');
+                }
+            }
+            if (this.ctx) {
+                this.logParams(params);
             } else {
-                this.logMessage("warn", "logger.push.warn", ("Unsupported setLogger operation: " + err.message ), {options: options});
+                this.logger.logParams(params);
             }
         }
     },
 
     /**
-     * Unset the last logger. The latest logger is shifted off the list of loggers.
+     * Log a raw message in the spirit of Logger.logMessage, adding sid and reqId columns from this.ctx.req
+     * Looks for sessionID in req.session.id or req.sessionId, otherwise uses the passed in values for sid and reqId (if any).
+     * This is the method that calls the underlying logging outputter. If you want to use your own logging tool,
+     * you can replace this method, or provide your own transport.
+     * @param params
+     * @return {*}
      */
-    unsetTransport: function () {
-        this.running = false;
-        if (this.transports.length > 1) {
-            var discardTransport = this.transports.shift();
-            discardTransport.destroy();
-        }
-        this.start();
-    },
-
-    /**
-     * Return one of the predefined transport objects. If you want to define your own class,
-     * it is suggested you subclass the console logger class, just as file and SOS have done.
-     * @returns {*} Logger Class for which you should call new with options, or if creating your own transport
-     * you may subclass this object.
-     */
-    getTransportByName: function (type) {
-        if (_.isString(type)) {
-            return require('./transports/' + type);
-        }
-    },
-
-    /**
-     * Get the current transport logger.
-     * @returns {*} The current transport, a subclass of console.js. Call type() on the return value
-     * to determine it's type.
-     */
-    getCurrentTransport: function () {
-        return this.transports[0];
-    },
-
-    flushQueue: function () {
-        var currentTransport = this.getCurrentTransport();
-        if (this.running && currentTransport && currentTransport.ready()) {
-            var nextMsg = this.queue.shift();
-            if (nextMsg) {
-                currentTransport.write(nextMsg);
-                this.flushQueue();
+    logParams: function (params) {
+        if (this.ctx && this.ctx.req) {
+            if (this.ctx.req._reqId) {
+                params.reqId = this.ctx.req._reqId;
+            }
+            if (this.ctx.req.session && this.ctx.req.session.id) {
+                params.sid = this.ctx.req.session.id;
+            } else if (this.ctx.req.sessionId) {
+                params.sid = this.ctx.req.sessionId;
+            } else if (this.ctx.req.sid) {
+                params.sid = this.ctx.req.sid;
             }
         }
+        this.logger.logParams(params);
+        return this;
+    },
+
+    setTruncate: function (len) {
+        this.truncateLength = len;
+        return this;
     },
 
     /**
-     * Set automatically when this moduel is initialized, but can be set manually to the earliest known
-     * time that the application was started.
-     * @param d
-     */
-    setStartTime: function(d) {
-        this.t0 = (new Date(d)).getTime();
-    },
-
-    /**
-     * Get the time at which the module was initialized
-     * @return {Number} Start time in milliseconds
-     */
-    getStartTime: function () {
-        return this.t0;
-    },
-
-    /**
-     * Return a new module logger object instance using the specified module name.
-     * Although it's a new logger instance, it still uses the same underlying
-     * 'writeMessageParams' method, and whatever transport is set globally.
-     * @param moduleName Name of module or file, added as a column to log output
-     * @param opt_context {object} A context object. For Express or koa this would have 'req' and 'res' properties.
-     * The context.req may also have reqId and sid/sessionId/session.id properties that are used to populate their
-     * respective columns of output. Otherwise these columns are left blank on output.
-     * @return A new logger object.
-     */
-    get: function (moduleName,opt_context) {
-        return new ModuleLogger(this,moduleName,opt_context);
-    },
-
-    /**
-     * Same as logParams with just these parameters set.
-     * @param level
-     * @param action
-     * @param msg
-     * @param data
-     */
-    logMessage: function (level, action, message, data) {
-        var params = {module: 'logger', level: level, action: action, message: message};
-        if (data) {
-            params.data = data;
-        }
-        this.logParams(params);
-    },
-
-    /**
-     * Write a raw message. We queue messages to handle the moment in time while we are switching
-     * streams and the new stream is not ready yet. We do queuing while we wait for it to be ready.
-     * You can completely bypass creating a logger instance in your class if you use this call directly,
-     * In this situation the log level filtering will be established by the log level (this.logLevel).
-     * @param msgParams includes:
-     *      level - Must be one of LEVEL_ORDER values, all lower case
-     *      sid - (Optional) sessionID to display
-     *      module - (Optional) Module descriptor to display (usually of form route.obj.function)
-     *      time - (Optional) A date object with the current time, will be filled in if not provided
-     *      timeDiff - (Optional) The difference in milliseconds between 'time' and when the application was
-     *          started, based on reading Logger.getStartTime()
-     *      message - A string or an array of strings. If an array the string will be printed on multiple lines
-     *          where supported (e.g. SOS). The string must already formatted (e.g.. no '%s')
-     */
-    logParams: function (msgParams) {
-        if (msgParams) {
-            if (!msgParams.level) {
-                msgParams.level = 'info';
-            }
-            if (this.isAboveLevel(msgParams.level)) {
-                if (!msgParams.time) {
-                    msgParams.time = new Date();
-                }
-                if (!msgParams.timeDiff) {
-                    msgParams.timeDiff = msgParams.time.getTime() - this.t0;
-                }
-                this.queue.push(msgParams);
-            }
-            if (msgParams.length && msgParams.message && msgParams.message.length > msgParams.length) {
-                msgParams.message = msgParams.message.substr(0, msgParams.length) + "...";
-            }
-            this.logCount[msgParams.level] = 1 + (this.logCount[msgParams.level] || 0);
-        }
-        this.flushQueue();
-    },
-
-    /**
-     * Set the Logger objects's minimum log level
-     * @param level {string} Must be one of LEVEL_ORDER
+     * Set the log level for this object. This overrides the global log level for this object.
      */
     setLogLevel: function (level) {
         this.logLevel = level;
+        return this;
     },
 
     /**
-     * Return true if the level is equal to or greater then the Logger's logLevel property.
+     * Return true if the level is equal to or greater then the reference, or if reference is null
      */
     isAboveLevel: function (level) {
-        if (this.LEVEL_ORDER.indexOf(level) >= this.LEVEL_ORDER.indexOf(this.logLevel)) {
+        var reference = this.logLevel || this.logger.logLevel;
+        if (this.logger.LEVEL_ORDER.indexOf(level) >= this.logger.LEVEL_ORDER.indexOf(reference)) {
             return true;
         }
         return false;
-    },
-
-
-    /**
-     * Write a count of how many of each level of message has been output.
-     * This is a useful function to call when the application is shutdown.
-     */
-    writeCount: function (opt_msg) {
-        this.logParams({
-            module: 'logger',
-            action: 'counts',
-            data: this.logCount,
-            message: opt_msg
-        });
-    },
-
-    /**
-     * Return a count object
-     * @returns {Object} with properties for 'warn', 'info', etc.
-     */
-    getCount: function () {
-        return this.logCount;
-    },
-
-    // Do a managed shutdown. This is important if using a buffered logger such as our loggly implementation.
-    destroying: function () {
-        var jobs = [];
-        while (this.transports.length) {
-            var transport = this.transports.shift();
-            if (transport) {
-                var job = new Promise(function(resolve,reject) {
-                    transport.destroy(function(err) {
-                        if(err) {
-                            reject(err);
-                        } else {
-                            resolve();
-                        }
-                    });
-                });
-                jobs.push(job);
-            }
-        }
-        return Promise.all(jobs)
-    },
-
-    /**
-     * Shortcut to util.format()
-     */
-    format: function () {
-        return util.format.apply(this, arguments);
     }
-
 };
 
 module.exports = Logger;
+
+
+

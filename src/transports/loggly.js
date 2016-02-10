@@ -22,10 +22,11 @@ var LogglyTransport = function (options) {
     this.token = options.token;
     this.subdomain = options.subdomain || 'logs-01';
     this.bIncludeSid = (options && options.bIncludeSid === false) ? false : true;
+    this.tags = (_.isArray(options.tags) && options.tags.length ) ? ('/tag' + options.tags.join(',')) : '';
     this.sType = 'loggly';
     this.bReady = false;
 
-    this.url = options.url || 'https://' + this.subdomain + '.loggly.com/bulk/' + this.token + '/tag/bulk';
+    this.url = options.url || 'https://' + this.subdomain + '.loggly.com/bulk/' + this.token + this.tags;
     this.bufferSize = options.bufferSize || 100;
     this.flushInterval = options.flushInterval || 5000;
     if (false !== options.host) {
@@ -97,7 +98,7 @@ LogglyTransport.prototype = {
      */
     write: function (params) {
         var msg = this._formatLogMessage(params);
-        console.log('>> %j (%s/%s)', msg, this.buffer.length, this.bufferSize);
+        // console.log('>> %j (%s/%s)', msg, this.buffer.length, this.bufferSize);
         if (this.host) {
             msg.hostname = this.host;
         }
@@ -112,7 +113,7 @@ LogglyTransport.prototype = {
         var len = Buffer.byteLength(body);
         var self = this;
 
-        console.log('>> %d messages %s bytes', msgs.length, len);
+        // console.log('>> %d messages %s bytes', msgs.length, len);
 
         var opts = {
             body: body,
@@ -125,7 +126,7 @@ LogglyTransport.prototype = {
         };
 
         request(opts, function (err, res) {
-            console.log('<< %s', res && res.statusCode);
+            // console.log('<< %s', res && res.statusCode);
             if (err && self.onError) {
                 self.onError(err);
             }
