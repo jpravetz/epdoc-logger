@@ -322,6 +322,28 @@ LogManager.prototype = {
     },
 
     /**
+     * Flush the queue of the current transport
+     * @returns {Promise}
+     */
+    flushing: function() {
+        var self = this;
+        return new Promise(function(resolve,reject) {
+            var transport = self.getCurrentTransport();
+            if( transport ) {
+                transport.flush(function(err) {
+                    if(err) {
+                        reject(err);
+                    } else {
+                        resolve();
+                    }
+                })
+            } else {
+                resolve();
+            }
+        });
+    },
+
+    /**
      * Shortcut to util.format()
      */
     format: function () {
