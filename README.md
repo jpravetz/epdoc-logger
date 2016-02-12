@@ -246,6 +246,10 @@ epdoc-logger by wrapping your library as a transport.
 A new Module Logging object is obtained by calling ```get``` on the logger. A shortcut is to use 
 ```require('epdoc-logger').get()``` to obtain the object.
 
+It is recommended that you create a new log object for each module or request. Attach your
+log object to a request object when you want to log in the context of the request. In this
+situation you should also set ```{ sid: true }``` in your LogManager.
+
 ```javascript
 // Return new logging object with property ```moduleName``` set.
 var log = require('epdoc-logger').get('MyModuleName');
@@ -270,31 +274,35 @@ log.data('key2',{type:'value2'}).info("My message");
 log.data('key1',{type:'value1'}).data('key2',{type:'value2'}).debug();
 ```
 
-The Module Logging object supports chaining. Every method except ```isAboveLevel()``` will 
-return the object.
+The Module Logging object supports chaining. Most methods will return the object.
 
 Items added with the ```data``` method are flushed when ```logArgs``` is called.
 ```logArgs``` is called directly or by any of the methods ```info```, ```debug```, ```log```, etc.
 
+You can also set per-Log Object _custom_ data using the ```log.set()``` method. 
+Data set this way remain constant for the life of the log object. For requests this might be
+useful to output something like the _messageId_ of a request. To output custom data you will also
+need to set ```{ custom: true }``` in your LogManager
+
 ## Logging Commands ##
 
-This sections shows example uses of the log object.
+This sections shows example uses of the LogManagher object.
 
 ```javascript
 // Get the global logger object
 
-var logger = require('epdoc-logger').logger({autoRun:false});
+var logMgr = require('epdoc-logger').logMgr({sid:false});
 
 // Logger static methods
 
-logger.setTransport( 'file', { path: 'path/to/myfile.log', dateFormat: 'ISO', bIncludeSid: false } );
-var loggerType = logger.getCurrentTransport().type();        // Will return the transport type of the logger
-logger.setLogLevel( 'warn' );
-var startTime = logger.getStartTime();                    // Milliseconds
+logMgr.setTransport( 'file', { path: 'path/to/myfile.log', dateFormat: 'ISO', sid: false } );
+var loggerType = logMgr.getCurrentTransport().type();        // Will return the transport type of the logger
+logMgr.setLogLevel( 'warn' );
+var startTime = logMgr.getStartTime();                    // Milliseconds
 
-// Get a log object for this file or module
+// Get a Logger object for this file or module
 
-var log = logger.get('MyModuleName');
+var log = logMgr.get('MyModuleName');
 
 // Instance methods. Each line outputs a message.
 

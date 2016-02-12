@@ -1,5 +1,5 @@
 /*****************************************************************************
- * log.js
+ * logger.js
  * CONFIDENTIAL Copyright 2012-2016 Jim Pravetz. All Rights Reserved.
  *****************************************************************************/
 
@@ -7,7 +7,7 @@
  * Logging module. Shows time and log level (debug, info, warn, error).
  * Time is shown in milliseconds since this module was first initialized.
  * Usage:
- *        var log = require('../lib/logger').get('logtest');
+ *        var log = require('../lib/logMgr').get('logtest');
  *        log.info( 'Message: %s', 'my message');
  */
 
@@ -17,25 +17,29 @@ var DateUtil = require('./dateutil');
 var _ = require('underscore');
 
 /**
- * Create a new log object with methods to log to the transport that is attached to logger.
+ * Create a new log object with methods to log to the transport that is attached to logMgr.
  * This log object can be attached to another object, for example an express response object,
  * in order to next the log call and thereby carry context down thru the calling stack.
  * If a context is passed in, various properties may be harvested off of the req property. These
- * include: req._reqId (populates reqId column), req.sid?req.session.id|req.sessionId (populates sid column),
- * req._startTime and req._hrStartTime (can be used to determine response time for a request).
- * @param logger {Logger} The parent Logger object that specifies the transport and provides output methods
- * @param opt_modulename {string|Array} The name of the module, used to populate the module column of logger output.
- * This can be modified to show the calling stack by calling pushRouteInfo and popRouteInfo.
- * @param opt_context {object} A context object. For Express or koa this would have 'req' and 'res' properties.
+ * include: req._reqId (populates reqId column), req.sid?req.session.id|req.sessionId (populates
+ * sid column), req._startTime and req._hrStartTime (can be used to determine response time for a
+ * request).
+ * @param logMgr {Logger} The parent LogManager object that specifies the transport and provides
+ *   output methods
+ * @param opt_modulename {string|Array} The name of the module, used to populate the module column
+ *   of logMgr output. This can be modified to show the calling stack by calling pushRouteInfo and
+ *   popRouteInfo.
+ * @param opt_context {object} A context object. For Express or koa this would have 'req' and 'res'
+ *   properties.
  * @constructor
  */
-var Logger = function (logger, opt_modulename, opt_context) {
+var Logger = function (logMgr, opt_modulename, opt_context) {
 
     // The common Logger object thru which output will be written
-    this.logger = logger;
+    this.logMgr = logMgr;
 
     // Displayed in some IDE debuggers to identify this object. No other use.
-    this.name = "logger";
+    this.name = "logMgr";
 
     // module column
     this.stack = [];
@@ -48,12 +52,12 @@ var Logger = function (logger, opt_modulename, opt_context) {
     }
 
     // Contains Express and koa req and res properties
-    // If ctx.req.sessionId, ctx.req.sid or ctx.req.session.id are set, these are used for sid column.
-    // If ctx.req._reqId, this is used as reqId column
+    // If ctx.req.sessionId, ctx.req.sid or ctx.req.session.id are set, these are used for sid
+    // column. If ctx.req._reqId, this is used as reqId column
     this.ctx = opt_context;
 
-    // Min log level required to create output, overrides logger.logLevel if set
-    this.logLevel;
+    // Min log level required to create output, overrides logMgr.logLevel if set
+    this.logLevel = logMgr.logLevel ? logMgr.logLevel : 'debug';
 
 
     this.logData;
@@ -146,14 +150,22 @@ Logger.prototype = {
         return this;
     },
 
+    /**
+     * Set custom data that is output in a separate column called 'custom'.
+     * This is currently only used with loggly.
+     * @param key {String|object} If a string then sets custom.key = value, otherwise extends
+     *   custom with key
+     * @param value {*} (Optional) Set key to this value
+     * @returns {Logger}
+     */
     set: function (key, value) {
+        if (!this.customData) {
+            this.customData = {};
+        }
         if (typeof key === 'string' || typeof key === 'number') {
-            if (!this.customData) {
-                this.customData = {};
-            }
             this.customData[key] = value;
         } else {
-            this.customData = key;
+            this.customData = _.extend(this.customData, key);
         }
         return this;
     },
@@ -161,11 +173,12 @@ Logger.prototype = {
     /**
      * A method to add context to the method stack that has gotten us to this point in code.
      * The context is pushed into a stack, and the full stack is output as the 'module' property
-     * of the log message.
-     * Usually called at the entry point of a function.
-     * Can also be called by submodules, in which case the submodules should call popRouteInfo when returning
-     * Note that it is not necessary to call popRouteInfo when terminating a request with a response.
-     * @param name (required) String in the form 'api.org.create' (route.method or route.object.method).
+     * of the log message. Usually called at the entry point of a function.
+     * Can also be called by submodules, in which case the submodules should call popRouteInfo when
+     * returning Note that it is not necessary to call popRouteInfo when terminating a request with
+     * a response.
+     * @param name (required) String in the form 'api.org.create' (route.method or
+     *   route.object.method).
      * @return Response object
      */
     pushName: function (name) {
@@ -174,9 +187,10 @@ Logger.prototype = {
     },
 
     /**
-     * See pushRouteInfo. Should be called if returning back up a function chain. Does not need to be
-     * called if the function terminates the request with a response.
-     * @param options Available options are 'all' if all action contexts are to be removed from the _logging stack.
+     * See pushRouteInfo. Should be called if returning back up a function chain. Does not need to
+     * be called if the function terminates the request with a response.
+     * @param options Available options are 'all' if all action contexts are to be removed from the
+     *   _logging stack.
      * @return Response object
      */
     popName: function (options) {
@@ -202,6 +216,15 @@ Logger.prototype = {
         return (this.ctx && this.ctx.req && this.ctx.req._startTime) ? ( new Date() - this.ctx.req._startTime ) : 0;
     },
 
+    logResponseTime: function (args) {
+        var elapsed = this.responseTime();
+        this.logObj('responseTime', elapsed);
+        if (args) {
+            return this.log.apply(this, Array.prototype.slice.call(arguments));
+        }
+        return this;
+    },
+
     /**
      * Used for requests.
      * High resolution response time.
@@ -216,6 +239,15 @@ Logger.prototype = {
         return 0;
     },
 
+    logHrResponseTime: function (args) {
+        var elapsed = this.hrResponseTime();
+        this.logObj('responseTime', elapsed);
+        if (args) {
+            return this.log.apply(this, Array.prototype.slice.call(arguments));
+        }
+        return this;
+    },
+
 
     resetTimer: function () {
         this.t0 = (new Date()).getTime();
@@ -224,15 +256,16 @@ Logger.prototype = {
     elapsed: function (args) {
         var elapsed = (this.t0) ? ((new Date()).getTime() - this.t0) : 0;
         this.logObj('elapsed', elapsed);
-        if( args ) {
-            return this.log.apply(this,Array.prototype.slice.call(arguments));
+        if (args) {
+            return this.log.apply(this, Array.prototype.slice.call(arguments));
         }
         return this;
     },
 
     /**
      * Set a property in the data column, or set the value of the data object.
-     * @param key {string|object} If a string then sets data[key] to value. Otherwise sets data to key.
+     * @param key {string|object} If a string then sets data[key] to value. Otherwise sets data to
+     *   key.
      * @param value If key is a string then sets data[key] to this value.
      */
     data: function (key, value) {
@@ -246,7 +279,7 @@ Logger.prototype = {
             this.logObj({
                 localtime: DateUtil.toISOLocalString(d),
                 utctime: d.toISOString(),
-                uptime: DateUtil.formatMS(d - this.logger.getStartTime())
+                uptime: DateUtil.formatMS(d - this.logMgr.getStartTime())
             });
             this.logArgs('info', []);
         }
@@ -269,9 +302,10 @@ Logger.prototype = {
      * with util.format syntax as a second parameter,
      * for example myLogger.log('info', 'test message %s', 'my string');
      * The second parameter can optionally be an array of strings or arrays, each one of which
-     * will be treated as input to util.format. This is useful for loggers that support
+     * will be treated as input to util.format. This is useful for logMgrs that support
      * folding (muli-line output).
-     * Example: log.log( 'info', [["Found %d lines", iLines],"My second line",["My %s line",'third']]); );
+     * Example: log.log( 'info', [["Found %d lines", iLines],"My second line",["My %s
+     * line",'third']]); );
      * @param level {string} One of Logger.LEVEL_ORDER. Defaults to info if not present.
      * @param msg The message String, or an array of strings, to be formatted with util.format.
      */
@@ -290,13 +324,13 @@ Logger.prototype = {
 
 
     /**
-     * Calls the logger interface to output the log message.
+     * Calls the logMgr interface to output the log message.
      * Rolls in all previous calls to set data and action, and resets those values.
      * @param level {string} Required
      * @param msg {array|string ...} Normally a string, providing the same string
      * interpolation format as util.format. May also be an array of strings,
      * in which case each entry in the array is treated as arguments to util.format.
-     * This later situation is useful for loggers that support multi-line formatting.
+     * This later situation is useful for logMgrs that support multi-line formatting.
      * @private
      */
     _writeMessage: function (level, msg) {
@@ -340,16 +374,17 @@ Logger.prototype = {
             if (this.ctx) {
                 this.logParams(params);
             } else {
-                this.logger.logParams(params);
+                this.logMgr.logParams(params);
             }
         }
     },
 
     /**
-     * Log a raw message in the spirit of Logger.logMessage, adding sid and reqId columns from this.ctx.req
-     * Looks for sessionID in req.session.id or req.sessionId, otherwise uses the passed in values for sid and reqId (if any).
-     * This is the method that calls the underlying logging outputter. If you want to use your own logging tool,
-     * you can replace this method, or provide your own transport.
+     * Log a raw message in the spirit of Logger.logMessage, adding sid and reqId columns from
+     * this.ctx.req Looks for sessionID in req.session.id or req.sessionId, otherwise uses the
+     * passed in values for sid and reqId (if any). This is the method that calls the underlying
+     * logging outputter. If you want to use your own logging tool, you can replace this method, or
+     * provide your own transport.
      * @param params
      * @return {*}
      */
@@ -366,7 +401,7 @@ Logger.prototype = {
                 params.sid = this.ctx.req.sid;
             }
         }
-        this.logger.logParams(params);
+        this.logMgr.logParams(params);
         return this;
     },
 
@@ -387,8 +422,8 @@ Logger.prototype = {
      * Return true if the level is equal to or greater then the reference, or if reference is null
      */
     isAboveLevel: function (level) {
-        var reference = this.logLevel || this.logger.logLevel;
-        if (this.logger.LEVEL_ORDER.indexOf(level) >= this.logger.LEVEL_ORDER.indexOf(reference)) {
+        var reference = this.logLevel || this.logMgr.logLevel;
+        if (this.logMgr.LEVEL_ORDER.indexOf(level) >= this.logMgr.LEVEL_ORDER.indexOf(reference)) {
             return true;
         }
         return false;
