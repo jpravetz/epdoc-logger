@@ -248,18 +248,21 @@ Logger.prototype = {
         return this;
     },
 
-
-    resetTimer: function () {
+    /**
+     * Reset the elapsed time timer.
+     */
+    resetElapsed: function () {
         this.t0 = (new Date()).getTime();
+        return this;
     },
 
-    elapsed: function (args) {
+    /**
+     * Add an 'elapsed' attribute to data being output.
+     * @returns {this}
+     */
+    elapsed: function () {
         var elapsed = (this.t0) ? ((new Date()).getTime() - this.t0) : 0;
-        this.logObj('elapsed', elapsed);
-        if (args) {
-            return this.log.apply(this, Array.prototype.slice.call(arguments));
-        }
-        return this;
+        return this.logObj('elapsed', elapsed);
     },
 
     /**
