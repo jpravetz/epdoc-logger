@@ -11,9 +11,10 @@ var request = require('request');
 /**
  * Create a new console transport.
  * @param options Output options include:
- *      dateFormat = If "ISO" then output time as an ISO Date, otherwise output as time offset from app launch
- *      bIncludeSid = If true then output express request and session IDs, otherwise do not output these values
- *      buffer = Interval in milliseconds to flush buffer (used for transports that buffer)
+ *      dateFormat = If "ISO" then output time as an ISO Date, otherwise output as time offset from
+ *   app launch bIncludeSid = If true then output express request and session IDs, otherwise do not
+ *   output these values buffer = Interval in milliseconds to flush buffer (used for transports
+ *   that buffer)
  * @constructor
  */
 var LogglyTransport = function (options) {
@@ -21,7 +22,8 @@ var LogglyTransport = function (options) {
     this.options = options;
     this.token = options.token;
     this.subdomain = options.subdomain || 'logs-01';
-    this.bIncludeSid = (options && options.bIncludeSid === false) ? false : true;
+    this.bIncludeSid = (options && ( options.sid === false || options.bIncludeSid === false)) ? false : true;
+    this.bIncludeCustom = (options && options.custom === false ) ? false : true;
     this.tags = (_.isArray(options.tags) && options.tags.length ) ? ('/tag' + options.tags.join(',')) : '';
     this.sType = 'loggly';
     this.bReady = false;
@@ -81,7 +83,7 @@ LogglyTransport.prototype = {
     flush: function (opt_cb) {
         var msgs = this.buffer;
         this.buffer = [];
-        this._send(msgs,opt_cb);
+        this._send(msgs, opt_cb);
     },
 
     /**
@@ -133,14 +135,14 @@ LogglyTransport.prototype = {
             if (res && res.statusCode >= 400 && self.onError) {
                 self.onError(new Error(res.statusCode + ' response'));
             }
-            cb && cb(err,res);
+            cb && cb(err, res);
         });
     },
 
 
     end: function (cb) {
-        this.flush(function(err,res) {
-            if(err) {
+        this.flush(function (err, res) {
+            if (err) {
                 console.error(err.message);
             }
             clearInterval(this.timer);
@@ -172,7 +174,9 @@ LogglyTransport.prototype = {
             json.sid = params.sid;
             json.reqId = params.reqId;
         }
-
+        if (this.bIncludeCustom) {
+            json.custom = params.custom;
+        }
         if (params.message instanceof Array) {
             json.message = params.message.join('\n');
         }

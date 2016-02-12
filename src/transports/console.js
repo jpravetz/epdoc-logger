@@ -9,14 +9,16 @@ var dateutil = require('../dateutil');
 /**
  * Create a new console transport.
  * @param options Output options include:
- *      dateFormat = If "ISO" then output time as an ISO Date, otherwise output as time offset from app launch
- *      bIncludeSid = If true then output express request and session IDs, otherwise do not output these values
- *      buffer = Interval in milliseconds to flush buffer (used for transports that buffer)
+ *   dateFormat = If "ISO" then output time as an ISO Date, otherwise output as time offset from
+ *        app launch
+ *   sid = If true then output express request and session IDs, otherwise do not output these values
+ *   buffer = Interval in milliseconds to flush buffer (used for transports that buffer)
  * @constructor
  */
 var ConsoleTransport = function (options) {
     this.options = options || {};
-    this.bIncludeSid = (options && options.bIncludeSid === false) ? false : true;
+    this.bIncludeSid = (options && ( options.sid === false || options.bIncludeSid === false) ) ? false : true;
+    this.bIncludeCustom = (options && options.custom === false ) ? false : true;
     this.bISODate = ( options && options.dateFormat === 'ISO') ? true : false;
     this.sType = 'console';
     this.bReady = true;
@@ -101,6 +103,9 @@ ConsoleTransport.prototype = {
         msg.push(params.action ? params.action : "");
         msg.push(params.message);
         //msg = msg.concat(params.message?params.message:"");
+        if (this.bIncludeCustom) {
+            msg.push(params.custom ? params.custom : {});
+        }
         if (params.data) {
             msg.push(params.data);
         }

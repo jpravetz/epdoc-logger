@@ -1,5 +1,5 @@
 /*****************************************************************************
- * logger.js
+ * log_mgr.js
  * CONFIDENTIAL Copyright 2012-2016 Jim Pravetz. All Rights Reserved.
  *****************************************************************************/
 
@@ -17,25 +17,32 @@ var ConsoleStream = require('./transports/console');
  * To use a different transport, set the transport using setTransport('file').
  * You will likely have one LogManager per application, then call logMgr.get() to get a log
  * object which you will use for logging messages.
- * @param options {Object} { autoRun: true } is default
+ * @param options {Object} { autoRun: false, sid: false, custom: boolean, level: string,
+ *   transport: { string } Note that if transport has any parameters, you should set it using the
+ *   setTransport method.
  * @constructor
  */
 var LogManager = function (options) {
 
-    options || (options = {});
+    options || ( options = {} );
     this.t0 = (new Date()).getTime();
-    this.logLevel = 'debug';
+    this.logLevel = options.level ? options.level : 'debug';
+    this.sid = ( options.sid === true ) ? true : false;
+    this.custom = ( options.custom === true ) ? true : false;
     // Count of how many errors, warnings, etc
     this.logCount = {};
     this.LEVEL_ORDER = ['verbose', 'debug', 'info', 'warn', 'error', 'fatal'];
-    // A stack of tranports, with the console transport installed by default
+    // A stack of tranports, with the console transport always installed by default as a fallback
     this.transports = [new ConsoleStream()];
     // A queue of messages that may build up while we are switching streams
     this.queue = [];
     // Indicates whether we have started logging or not
     this.running = false;
-    if( options.autoRun === true ) {
+    if (options.autoRun === true) {
         this.start();
+    }
+    if (options.transport) {
+        this.setTransport(options.transport);
     }
 };
 
@@ -44,32 +51,32 @@ LogManager.prototype = {
     constructor: LogManager,
 
     /**
-     * Starts the transport at the head of the transport stack, if not already started. This starts logging.
-     * This is done manually because we may hold of logging until the transport is set.
+     * Starts the transport at the head of the transport stack, if not already started. This starts
+     * logging. This is done manually because we may hold of logging until the transport is set.
      * @private
      */
     start: function () {
         var self = this;
-        if( !self.running ) {
+        if (!self.running) {
             var currentTransport = this.getCurrentTransport();
 
             if (currentTransport) {
                 var transportName = currentTransport.toString();
                 currentTransport.open(onSuccess, onError, onClose);
 
-                function onSuccess() {
+                function onSuccess () {
                     self.running = true;
                     currentTransport.clear();
-                    self.logMessage("info", "logger.push.success", "Set logger to " + transportName, {transport: transportName});
+                    self.logMessage("info", "logger.push.success", "Set logger to " + transportName, { transport: transportName });
                     self.flushQueue();
                 };
 
-                function onError(err) {
+                function onError (err) {
                     self.logMessage("warn", "logger.push.warn", "Tried but failed to set logger to " + transportName + ": " + err);
                     self.unsetTransport();
                 };
 
-                function onClose() {
+                function onClose () {
                     self.logMessage("info", "logger.push.close", "Transport " + transportName + " closed");
                     self.unsetTransport();
                 }
@@ -82,19 +89,31 @@ LogManager.prototype = {
 
     /**
      * Set log target by unshifting the provided transport object onto the list of transports.
-     * The default transport, before any is unshifted onto the list of transports, is the console transport.
-     * If you add a transport (eg. file transport) then later remove it, the previously set logger (eg. console)
-     * will be used.
-     * @param type - For the provided loggers, one of 'sos', 'file', 'line', or 'console'. For a custom transport this hsould be a
-     * transport class object that can be instantiated with 'new'.
-     * To create your own transport class, use getLoggerClass('console') and then subclass this class.
-     * @param options are passed to the transport when constructing the new transport object. Options for the
-     * predefined transports are:
-     *      path - path to file, used by file transport
-     *      bIncludeSid - whether to include sessionId and reqId columns in log output (used with express and other request/response apps)
-     *      dateFormat - one of 'ISO' or 'formatMS', defaults to 'formatMS'
+     * The default transport, before any is unshifted onto the list of transports, is the console
+     * transport. If you add a transport (eg. file transport) then later remove it, the previously
+     * set logger (eg. console) will be used.
+     * @param type - For the provided loggers, one of 'sos', 'file', 'line', or 'console'. For a
+     *   custom transport this hsould be a transport class object that can be instantiated with
+     *   'new'. To create your own transport class, use getLoggerClass('console') and then subclass
+     *   this class.
+     * @param options are passed to the transport when constructing the new transport object.
+     *   Options for the predefined transports are:
+     *      path {string} path to file, used by file transport
+     *      dateFormat {string} one of 'ISO' or 'formatMS', defaults to 'formatMS'
+     *      sid {boolean} whether to include sessionId and reqId columns in log output (used with
+     *          express and other request/response apps), overrides LogMgr setting.
+     *      custom {boolean} Indicates whether to include 'custom' column or not, overrides LogMgr
+     *          setting.
+     *
      */
     setTransport: function (type, options) {
+
+        if (!options.sid) {
+            options.sid = this.sid;
+        }
+        if (!options.custom) {
+            options.custom = this.custom;
+        }
 
         var Transport;
 
@@ -113,7 +132,7 @@ LogManager.prototype = {
             var err = newTransport.validateOptions(newTransport);
             if (!err) {
                 var newTransportName = newTransport.toString();
-                this.logMessage("info", "logger.push", "Setting logger to " + newTransportName, {transport: newTransportName});
+                this.logMessage("info", "logger.push", "Setting logger to " + newTransportName, { transport: newTransportName });
                 var currentTransport = this.getCurrentTransport();
                 if (currentTransport) {
                     currentTransport.end();
@@ -124,7 +143,7 @@ LogManager.prototype = {
                 this.start();
 
             } else {
-                this.logMessage("warn", "logger.push.warn", ("Unsupported setLogger operation: " + err.message ), {options: options});
+                this.logMessage("warn", "logger.push.warn", ("Unsupported setLogger operation: " + err.message ), { options: options });
             }
         }
         return this;
@@ -145,8 +164,8 @@ LogManager.prototype = {
     /**
      * Return one of the predefined transport objects. If you want to define your own class,
      * it is suggested you subclass the console logger class, just as file and SOS have done.
-     * @returns {*} LogManager Class for which you should call new with options, or if creating your own transport
-     * you may subclass this object.
+     * @returns {*} LogManager Class for which you should call new with options, or if creating
+     *   your own transport you may subclass this object.
      */
     getTransportByName: function (type) {
         if (_.isString(type)) {
@@ -176,11 +195,11 @@ LogManager.prototype = {
     },
 
     /**
-     * Set automatically when this moduel is initialized, but can be set manually to the earliest known
-     * time that the application was started.
+     * Set automatically when this moduel is initialized, but can be set manually to the earliest
+     * known time that the application was started.
      * @param d
      */
-    setStartTime: function(d) {
+    setStartTime: function (d) {
         this.t0 = (new Date(d)).getTime();
         return this;
     },
@@ -198,13 +217,14 @@ LogManager.prototype = {
      * Although it's a new logger instance, it still uses the same underlying
      * 'writeMessageParams' method, and whatever transport is set globally.
      * @param moduleName Name of module or file, added as a column to log output
-     * @param opt_context {object} A context object. For Express or koa this would have 'req' and 'res' properties.
-     * The context.req may also have reqId and sid/sessionId/session.id properties that are used to populate their
-     * respective columns of output. Otherwise these columns are left blank on output.
+     * @param opt_context {object} A context object. For Express or koa this would have 'req' and
+     *   'res' properties. The context.req may also have reqId and sid/sessionId/session.id
+     *   properties that are used to populate their respective columns of output. Otherwise these
+     *   columns are left blank on output.
      * @return A new logger object.
      */
-    get: function (moduleName,opt_context) {
-        return new Logger(this,moduleName,opt_context);
+    get: function (moduleName, opt_context) {
+        return new Logger(this, moduleName, opt_context );
     },
 
     /**
@@ -215,7 +235,7 @@ LogManager.prototype = {
      * @param data
      */
     logMessage: function (level, action, message, data) {
-        var params = {module: 'logger', level: level, action: action, message: message};
+        var params = { module: 'logger', level: level, action: action, message: message };
         if (data) {
             params.data = data;
         }
@@ -225,17 +245,19 @@ LogManager.prototype = {
     /**
      * Write a raw message. We queue messages to handle the moment in time while we are switching
      * streams and the new stream is not ready yet. We do queuing while we wait for it to be ready.
-     * You can completely bypass creating a logger instance in your class if you use this call directly,
-     * In this situation the log level filtering will be established by the log level (this.logLevel).
+     * You can completely bypass creating a logger instance in your class if you use this call
+     * directly, In this situation the log level filtering will be established by the log level
+     * (this.logLevel).
      * @param msgParams includes:
      *      level - Must be one of LEVEL_ORDER values, all lower case
      *      sid - (Optional) sessionID to display
      *      module - (Optional) Module descriptor to display (usually of form route.obj.function)
-     *      time - (Optional) A date object with the current time, will be filled in if not provided
-     *      timeDiff - (Optional) The difference in milliseconds between 'time' and when the application was
-     *          started, based on reading LogManager.getStartTime()
-     *      message - A string or an array of strings. If an array the string will be printed on multiple lines
-     *          where supported (e.g. SOS). The string must already formatted (e.g.. no '%s')
+     *      time - (Optional) A date object with the current time, will be filled in if not
+     *   provided
+     *      timeDiff - (Optional) The difference in milliseconds between 'time' and when the
+     *   application was started, based on reading LogManager.getStartTime() message - A string or
+     *   an array of strings. If an array the string will be printed on multiple lines where
+     *   supported (e.g. SOS). The string must already formatted (e.g.. no '%s')
      */
     logParams: function (msgParams) {
         if (msgParams) {
@@ -300,15 +322,16 @@ LogManager.prototype = {
         return this.logCount;
     },
 
-    // Do a managed shutdown. This is important if using a buffered logger such as our loggly implementation.
+    // Do a managed shutdown. This is important if using a buffered logger such as our loggly
+    // implementation.
     destroying: function () {
         var jobs = [];
         while (this.transports.length) {
             var transport = this.transports.shift();
             if (transport) {
-                var job = new Promise(function(resolve,reject) {
-                    transport.destroy(function(err) {
-                        if(err) {
+                var job = new Promise(function (resolve, reject) {
+                    transport.destroy(function (err) {
+                        if (err) {
                             reject(err);
                         } else {
                             resolve();
@@ -325,13 +348,13 @@ LogManager.prototype = {
      * Flush the queue of the current transport
      * @returns {Promise}
      */
-    flushing: function() {
+    flushing: function () {
         var self = this;
-        return new Promise(function(resolve,reject) {
+        return new Promise(function (resolve, reject) {
             var transport = self.getCurrentTransport();
-            if( transport ) {
-                transport.flush(function(err) {
-                    if(err) {
+            if (transport) {
+                transport.flush(function (err) {
+                    if (err) {
                         reject(err);
                     } else {
                         resolve();

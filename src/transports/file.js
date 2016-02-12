@@ -110,6 +110,9 @@ var protoProps = {
         msg.push(params.action ? params.action : "");
         msg.push(params.message);
         //msg = msg.concat(params.message?params.message:"");
+        if (this.bIncludeCustom) {
+            msg.push(params.custom ? params.custom : {});
+        }
         if (params.data) {
             msg.push(params.data);
         }
