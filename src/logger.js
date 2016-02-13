@@ -96,7 +96,13 @@ Logger.prototype = {
 
     error: function (err) {
         if (err instanceof Error) {
-            return this.logArgs('error', [err.message]);
+            var msgs = [err.message];
+            if (_.isArray(err.errors)) {
+                for (var idx = 0; idx < err.errors.length; ++idx) {
+                    msgs.push(err.errors[idx]);
+                }
+            }
+            return this.logArgs('error', msgs);
         } else {
             return this.logArgs('error', Array.prototype.slice.call(arguments));
         }
@@ -208,42 +214,28 @@ Logger.prototype = {
 
     /**
      * Used for requests.
-     * The time used since this request object was initialized.
-     * Requirement: request object must set it's _startTime for this to work.
-     * @returns {number}
+     * Adds the time used since this request object was initialized to date as 'responseTime'.
+     * Requirement: request object must set it's _startTime (ms) for this to work.
+     * @returns {Object} this
      */
     responseTime: function () {
-        return (this.ctx && this.ctx.req && this.ctx.req._startTime) ? ( new Date() - this.ctx.req._startTime ) : 0;
-    },
-
-    logResponseTime: function (args) {
-        var elapsed = this.responseTime();
-        this.logObj('responseTime', elapsed);
-        if (args) {
-            return this.log.apply(this, Array.prototype.slice.call(arguments));
+        if (this.ctx && this.ctx.req && this.ctx.req._startTime) {
+            var val = (new Date()).getTime() - this.ctx.req._startTime;
+            return this.logObj('responseTime', val);
         }
         return this;
     },
 
     /**
      * Used for requests.
-     * High resolution response time.
-     * Returns the response time in milliseconds with two digits after the decimal.
-     * @returns {number} Response time in milliseconds
+     * High resolution response time in milliseconds with two digits after the decimal
+     * Adds the time used since this request object was initialized to date as 'responseTime'.
+     * @returns {Object} this
      */
     hrResponseTime: function () {
         if (this.ctx && this.ctx.req && this.ctx.req._delayTime) {
-            //var parts = process.hrtime(this.ctx.req._hrStartTime);
-            return ( parts[0] * 100000 + Math.round(parts[1] / 10000) ) / 100;
-        }
-        return 0;
-    },
-
-    logHrResponseTime: function (args) {
-        var elapsed = this.hrResponseTime();
-        this.logObj('responseTime', elapsed);
-        if (args) {
-            return this.log.apply(this, Array.prototype.slice.call(arguments));
+            var val = ( parts[0] * 100000 + Math.round(parts[1] / 10000) ) / 100;
+            return this.logObj('responseTime', val);
         }
         return this;
     },
