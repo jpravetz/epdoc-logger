@@ -14,6 +14,7 @@
 
 var util = require('util');
 var DateUtil = require('./dateutil');
+var moment = require('moment');
 var _ = require('underscore');
 
 /**
@@ -83,7 +84,17 @@ Logger.prototype = {
     },
 
     warn: function () {
-        return this.logArgs('warn', Array.prototype.slice.call(arguments));
+        if (err instanceof Error) {
+            var msgs = [err.message];
+            if (_.isArray(err.errors)) {
+                for (var idx = 0; idx < err.errors.length; ++idx) {
+                    msgs.push(err.errors[idx]);
+                }
+            }
+            return this.logArgs('warn', msgs);
+        } else {
+            return this.logArgs('warn', Array.prototype.slice.call(arguments));
+        }
     },
 
     debug: function () {
@@ -145,15 +156,7 @@ Logger.prototype = {
      * @return The logging object, for chaining
      */
     logObj: function (key, value) {
-        if (typeof key === 'string' || typeof key === 'number') {
-            if (!this.logData) {
-                this.logData = {};
-            }
-            this.logData[key] = value;
-        } else {
-            this.logData = key;
-        }
-        return this;
+        return this._setData('data', key, value);
     },
 
     /**
@@ -165,13 +168,40 @@ Logger.prototype = {
      * @returns {Logger}
      */
     set: function (key, value) {
-        if (!this.customData) {
-            this.customData = {};
+        return this._setData('customData', key, value);
+    },
+
+    /**
+     * Set a property in the data column, or set the value of the data object.
+     * @param key {string|object} If a string then sets data[key] to value. Otherwise sets data to
+     *   key.
+     * @param value If key is a string then sets data[key] to this value.
+     */
+    data: function (key, value) {
+        return this._setData('logData', key, value);
+    },
+
+    /**
+     * Set a property in the log data column, or set the value of the log data object.
+     * Also sets the response data with the same value. This is used if you are using express
+     * middleware, to set data that will be logged for the response (not sent with the reponse).
+     * By using this method you can set data that is used in res.send() and in logging.
+     * @param key {string|object} If a string then sets data[key] to value. Otherwise sets data to
+     *   key.
+     * @param value If key is a string then sets data[key] to this value.
+     */
+    resData: function (key, value) {
+        return this._setData('data', key, value)._setData('resData', key, value);
+    },
+
+    _setData: function (field, key, value) {
+        if (!this[field]) {
+            this[field] = {};
         }
         if (typeof key === 'string' || typeof key === 'number') {
-            this.customData[key] = value;
+            this[field][key] = value;
         } else {
-            this.customData = _.extend(this.customData, key);
+            this[field] = _.extend(this[field], key);
         }
         return this;
     },
@@ -219,11 +249,14 @@ Logger.prototype = {
      * @returns {Object} this
      */
     responseTime: function () {
+        return this.logObj('responseTime', this.getResponseTime());
+    },
+
+    getResponseTime: function () {
         if (this.ctx && this.ctx.req && this.ctx.req._startTime) {
-            var val = (new Date()).getTime() - this.ctx.req._startTime;
-            return this.logObj('responseTime', val);
+            return (new Date()).getTime() - this.ctx.req._startTime;
         }
-        return this;
+        return 0;
     },
 
     /**
@@ -233,11 +266,14 @@ Logger.prototype = {
      * @returns {Object} this
      */
     hrResponseTime: function () {
+        return this.logObj('responseTime', this.getHrResponseTime());
+    },
+
+    getHrResponseTime: function () {
         if (this.ctx && this.ctx.req && this.ctx.req._delayTime) {
-            var val = ( parts[0] * 100000 + Math.round(parts[1] / 10000) ) / 100;
-            return this.logObj('responseTime', val);
+            return ( parts[0] * 100000 + Math.round(parts[1] / 10000) ) / 100;
         }
-        return this;
+        return 0;
     },
 
     /**
@@ -257,22 +293,12 @@ Logger.prototype = {
         return this.logObj('elapsed', elapsed);
     },
 
-    /**
-     * Set a property in the data column, or set the value of the data object.
-     * @param key {string|object} If a string then sets data[key] to value. Otherwise sets data to
-     *   key.
-     * @param value If key is a string then sets data[key] to this value.
-     */
-    data: function (key, value) {
-        return this.logObj(key, value);
-    },
-
     date: function (d, s) {
         if (this.isAboveLevel('info')) {
-            d = d || new Date();
+            d || ( d = new Date() );
             this.action = s || 'currentTime';
-            this.logObj({
-                localtime: DateUtil.toISOLocalString(d),
+            this.data({
+                localtime: moment(d).format('YYYY-MM-DDTHH:mm:ss.SSSZ'),
                 utctime: d.toISOString(),
                 uptime: DateUtil.formatMS(d - this.logMgr.getStartTime())
             });

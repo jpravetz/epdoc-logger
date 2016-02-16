@@ -1,5 +1,5 @@
 var self = {
-    
+
     _gLogManager: undefined,
 
     LogManager: require('./src/log_mgr'),
@@ -35,10 +35,10 @@ var self = {
     middleware: function () {
         return {
             reqId: require('./src/middleware/reqId'),
-            responseLogger: require('./src/middleware/responseLogger'),
-            routeLogger: require('./src/middleware/routeLogger'),
-            routeSeparator: require('./src/middleware/routeSeparator'),
-            errorHandler: require('./src/middleware/errorHandler')
+            responseLogger: require('./src/middleware/response_logger'),
+            routeLogger: require('./src/middleware/route_logger'),
+            routeSeparator: require('./src/middleware/route_separator'),
+            errorHandler: require('./src/middleware/error_handler')
         };
     },
 

@@ -1,11 +1,11 @@
 /*****************************************************************************
- * routeLogger.js
+ * route_logger.js
  * CONFIDENTIAL Copyright 2012-2016 Jim Pravetz. All Rights Reserved.
  *****************************************************************************/
 
 /**
  * Middleware outputs a log message for every route
- * Depends on responseLogger, must be run after router
+ * Depends on responseLogger being installed, must be run after router
  */
 module.exports = function() {
 
@@ -14,8 +14,8 @@ module.exports = function() {
         //var rawCookie = req.cookies['connect.sid'];
 
         var d = req._startTime || new Date();
-        res.pushRouteInfo('app');
-        var logObj = {
+        res.log.pushName('app');
+        var data = {
             method: req.method,
             path: req.path,
             protocol: req.protocol,
@@ -26,10 +26,10 @@ module.exports = function() {
             utctime: (d).toISOString()
         };
         if( req.method && req.method.toLowerCase() === 'post' ) {
-            logObj['content-length'] = req.get('Content-Length');
+            data['content-length'] = req.get('Content-Length');
         }
-        res.action('routeInfo').logObj(logObj).info();
-        res.popRouteInfo();
+        res.log.action('routeInfo').data(data).info();
+        res.log.popName();
 
         next();
     }

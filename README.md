@@ -20,7 +20,7 @@ npm install --save epdoc-logger
 Log to the console.
 
 ```javascript
-var log = require('epdoc-logger').get();
+var log = require('epdoc-logger').start().get();
 
 log.info("Hello world");
 log.log('debug',"Hello %s","world");
@@ -29,8 +29,8 @@ log.log('debug',"Hello %s","world");
 Log to a file, and buffer any messages until the logger is set up
 
 ```javascript
-var logger = require('epdoc-logger').logger({autoRun:false);
-var log = logger.get('main');
+var logMgr = require('epdoc-logger').logMgr();
+var log = logMgr.get('main');
 log.info("Starting application");
 
 var config = require('config.json');
@@ -363,7 +363,7 @@ _Note: This section needs to be updated._
 The included express middleware are instantiated as follows:
 
 ```javascript
-var Logger = require('epdoc-logger');
+var LogMgr = require('epdoc-logger');
 
 var reqId = Logger.middleware().reqId;
 var responseLogger = Logger.middleware().responseLogger;
