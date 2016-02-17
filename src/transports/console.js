@@ -19,7 +19,7 @@ var ConsoleTransport = function (options) {
     this.options = options || {};
     this.bIncludeSid = (options && ( options.sid === false || options.bIncludeSid === false) ) ? false : true;
     this.bIncludeCustom = (options && options.custom === false ) ? false : true;
-    this.bISODate = ( options && options.dateFormat === 'ISO') ? true : false;
+    this.bISODate = ( options && options.timestamp.match(/^iso$/i) ) ? true : false;
     this.sType = 'console';
     this.bReady = true;
 };

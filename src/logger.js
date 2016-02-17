@@ -434,7 +434,7 @@ Logger.prototype = {
     /**
      * Set the log level for this object. This overrides the global log level for this object.
      */
-    setLogLevel: function (level) {
+    setLevel: function (level) {
         this.logLevel = level;
         return this;
     },

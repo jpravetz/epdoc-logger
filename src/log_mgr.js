@@ -99,7 +99,7 @@ LogManager.prototype = {
      * @param options are passed to the transport when constructing the new transport object.
      *   Options for the predefined transports are:
      *      path {string} path to file, used by file transport
-     *      dateFormat {string} one of 'ISO' or 'formatMS', defaults to 'formatMS'
+     *      timestamp {string} one of 'iso' or 'ms', defaults to 'ms' but may be overriden by transport (e.g. loggly uses iso)
      *      sid {boolean} whether to include sessionId and reqId columns in log output (used with
      *          express and other request/response apps), overrides LogMgr setting.
      *      custom {boolean} Indicates whether to include 'custom' column or not, overrides LogMgr
@@ -161,9 +161,16 @@ LogManager.prototype = {
         return this.start();
     },
 
+    isValidTransport: function(s) {
+        if(_.isString(s) && ['console','file','line','loggly','sos'].indexOf(s) >= 0 ) {
+            return true;
+        }
+        return false;
+    },
+
     /**
      * Return one of the predefined transport objects. If you want to define your own class,
-     * it is suggested you subclass the console logger class, just as file and SOS have done.
+     * it is suggested you subclass or copy one of the existing transports.
      * @returns {*} LogManager Class for which you should call new with options, or if creating
      *   your own transport you may subclass this object.
      */
@@ -285,7 +292,7 @@ LogManager.prototype = {
      * Set the LogManager objects's minimum log level
      * @param level {string} Must be one of LEVEL_ORDER
      */
-    setLogLevel: function (level) {
+    setLevel: function (level) {
         this.logLevel = level;
         return this;
     },

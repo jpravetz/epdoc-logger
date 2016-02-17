@@ -11,6 +11,10 @@ var self = {
         return self._gLogManager;
     },
 
+    hasLogMgr: function() {
+        return self._gLogManager ? true : false;
+    },
+
     start: function() {
         return self.logMgr().start();
     },

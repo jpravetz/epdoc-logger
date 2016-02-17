@@ -212,9 +212,9 @@ The ```logParams``` function is used by the _Logging Object_ (next section) and 
 custom logging objects that you may choose to create.
 
 ```javascript
-var logger = require('epdoc-logger').logger({autoRun:false});
+var logger = require('epdoc-logger').logger();
 logger.setLogger( { type: 'sos', bIncludeSessionId: true } );
-logger.setLogLevel( 'info' );
+logger.setLevel( 'info' );
 logger.logParams( {
         level: 'info',
         sid: '123',
@@ -297,7 +297,7 @@ var logMgr = require('epdoc-logger').logMgr({sid:false});
 
 logMgr.setTransport( 'file', { path: 'path/to/myfile.log', dateFormat: 'ISO', sid: false } );
 var loggerType = logMgr.getCurrentTransport().type();        // Will return the transport type of the logger
-logMgr.setLogLevel( 'warn' );
+logMgr.setLevel( 'warn' );
 var startTime = logMgr.getStartTime();                    // Milliseconds
 
 // Get a Logger object for this file or module
@@ -322,7 +322,7 @@ log.separator();        // Output a line separator
 log.log( 'info', "This method %s supports formatting", "also" );
 
 // Enable verbose messages to be output for this log object (overrides global setting)
-log.setLogLevel( "verbose" );
+log.setLevel( "verbose" );
 ```
 
 ### Chaining ###
