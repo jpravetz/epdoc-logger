@@ -243,35 +243,26 @@ Logger.prototype = {
     },
 
     /**
-     * Used for requests.
-     * Adds the time used since this request object was initialized to date as 'responseTime'.
-     * Requirement: request object must set it's _startTime (ms) for this to work.
+     * Used to measure the duration of requests or other events.
+     * Add an 'elapsed' attribute to data being output, which is the time
+     * since this request object was initialized.
+     * Requirement: One of the following three must be initialized:
+     *      1. request object must set it's _delayTime
+     *      2. request object must set it's _startTime (ms)
+     *      3. must have called resetElapsed() to reset this.t0
      * @returns {Object} this
      */
-    responseTime: function () {
-        return this.logObj('responseTime', this.getResponseTime());
+    elapsed: function () {
+        return this._setData('logData', 'elapsed', this.getElapsed());
     },
 
-    getResponseTime: function () {
-        if (this.ctx && this.ctx.req && this.ctx.req._startTime) {
-            return (new Date()).getTime() - this.ctx.req._startTime;
-        }
-        return 0;
-    },
-
-    /**
-     * Used for requests.
-     * High resolution response time in milliseconds with two digits after the decimal
-     * Adds the time used since this request object was initialized to date as 'responseTime'.
-     * @returns {Object} this
-     */
-    hrResponseTime: function () {
-        return this.logObj('responseTime', this.getHrResponseTime());
-    },
-
-    getHrResponseTime: function () {
+    getElapsed: function () {
         if (this.ctx && this.ctx.req && this.ctx.req._delayTime) {
             return ( parts[0] * 100000 + Math.round(parts[1] / 10000) ) / 100;
+        } else if (this.ctx && this.ctx.req && this.ctx.req._startTime) {
+            return (new Date()).getTime() - this.ctx.req._startTime;
+        } else if( this.t0 ) {
+            return ((new Date()).getTime() - this.t0)
         }
         return 0;
     },
@@ -282,15 +273,6 @@ Logger.prototype = {
     resetElapsed: function () {
         this.t0 = (new Date()).getTime();
         return this;
-    },
-
-    /**
-     * Add an 'elapsed' attribute to data being output.
-     * @returns {this}
-     */
-    elapsed: function () {
-        var elapsed = (this.t0) ? ((new Date()).getTime() - this.t0) : 0;
-        return this.logObj('elapsed', elapsed);
     },
 
     date: function (d, s) {
