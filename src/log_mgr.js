@@ -44,6 +44,7 @@ var LogManager = function (options) {
     if (options.transport) {
         this.setTransport(options.transport);
     }
+    this.bErrorStack = (options.errorStack === true) ? true : false;
 };
 
 LogManager.prototype = {
@@ -319,6 +320,11 @@ LogManager.prototype = {
             data: this.logCount,
             message: opt_msg
         });
+    },
+
+    errorStack: function (bShow) {
+        this.bErrorStack = (bShow === false) ? false : true;
+        return this;
     },
 
     /**

@@ -60,6 +60,7 @@ var Logger = function (logMgr, opt_modulename, opt_context) {
     // Min log level required to create output, overrides logMgr.logLevel if set
     this.logLevel = logMgr.logLevel ? logMgr.logLevel : 'debug';
 
+    this.bErrorStack = logMgr.bErrorStack ? logMgr.bErrorStack : false;
 
     this.logData;
 
@@ -73,6 +74,11 @@ Logger.prototype = {
 
     setContext: function (ctx) {
         this.ctx = ctx;
+        return this;
+    },
+
+    errorStack: function (bShow) {
+        this.bErrorStack = (bShow === false) ? false : true;
         return this;
     },
 
@@ -112,6 +118,12 @@ Logger.prototype = {
                 for (var idx = 0; idx < err.errors.length; ++idx) {
                     msgs.push(err.errors[idx]);
                 }
+            }
+            if (this.errorStack && err.stack) {
+                var items = err.stack.split(/\n\s*/);
+                this.data({ error: { code: err.code, stack: items } });
+            } else if (!_.isUndefined(err.code)) {
+                this.data({ error: { code: err.code } });
             }
             return this.logArgs('error', msgs);
         } else {
@@ -261,7 +273,7 @@ Logger.prototype = {
             return ( parts[0] * 100000 + Math.round(parts[1] / 10000) ) / 100;
         } else if (this.ctx && this.ctx.req && this.ctx.req._startTime) {
             return (new Date()).getTime() - this.ctx.req._startTime;
-        } else if( this.t0 ) {
+        } else if (this.t0) {
             return ((new Date()).getTime() - this.t0)
         }
         return 0;
