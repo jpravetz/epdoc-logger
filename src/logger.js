@@ -329,6 +329,11 @@ Logger.prototype = {
         if (args.length) {
             if (args.length === 1) {
                 args.unshift('info');
+            } else if( this.logMgr.LEVEL_ORDER.indexOf(args[0]) <= 0 ) {
+                // Add a check of the first parameter to make sure it is a log level.
+                // This is done so we can use this method with AWS
+                // Ref http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/Config.html#logger-property
+                args.unshift('info');
             }
             if (this.isAboveLevel(args[0])) {
                 this._writeMessage.apply(this, args);
@@ -442,6 +447,24 @@ Logger.prototype = {
             return true;
         }
         return false;
+    },
+
+  /**
+   * Simulate a stream.write method, so this logger can be dropped in to applications that execute
+   * this capability.
+   // Ref http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/Config.html#logger-property
+   * @param chunk
+   * @param encoding Optional {string}
+   * @param callback
+   * @return True
+   */
+    write: function (chunk, encoding, callback) {
+        if (_.isFunction(encoding)) {
+            callback = encoding;
+        }
+        this.info(String(chunk));
+      callback && callback();
+      return true;
     }
 };
 
