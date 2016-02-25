@@ -65,7 +65,7 @@ var Logger = function (logMgr, opt_modulename, opt_context) {
     this.logData;
 
     // action column
-    this.action;
+    this.logAction;
 };
 
 Logger.prototype = {
@@ -150,11 +150,11 @@ Logger.prototype = {
      */
     action: function () {
         if (arguments[0] instanceof Array) {
-            this.action = arguments[0].join('.');
+            this.logAction = arguments[0].join('.');
         } else if (arguments.length > 1) {
-            this.action = Array.prototype.join.call(arguments, '.');
+            this.logAction = Array.prototype.join.call(arguments, '.');
         } else {
-            this.action = arguments[0];
+            this.logAction = arguments[0];
         }
         return this;
     },
@@ -290,7 +290,7 @@ Logger.prototype = {
     date: function (d, s) {
         if (this.isAboveLevel('info')) {
             d || ( d = new Date() );
-            this.action = s || 'currentTime';
+            this.logAction = s || 'currentTime';
             this.data({
                 localtime: moment(d).format('YYYY-MM-DDTHH:mm:ss.SSSZ'),
                 utctime: d.toISOString(),
@@ -362,9 +362,9 @@ Logger.prototype = {
             if (this.customData) {
                 params.custom = this.customData;
             }
-            if (this.action) {
-                params.action = this.action;
-                delete this.action;
+            if (this.logAction) {
+                params.action = this.logAction;
+                delete this.logAction;
             }
             if (this.truncateLength) {
                 params.length = this.truncateLength;
