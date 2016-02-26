@@ -89,7 +89,7 @@ Logger.prototype = {
         return this.logArgs('info', Array.prototype.slice.call(arguments));
     },
 
-    warn: function () {
+    warn: function (err) {
         if (err instanceof Error) {
             var msgs = [err.message];
             if (_.isArray(err.errors)) {
