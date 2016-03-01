@@ -21,10 +21,10 @@ var LogglyTransport = function (options) {
     options || (options = {});
     this.options = options;
     this.token = options.token;
-    this.subdomain = options.subdomain || 'logs-01';
+    this.subdomain = 'logs-01';
     this.bIncludeSid = (options && ( options.sid === false || options.bIncludeSid === false)) ? false : true;
     this.bIncludeCustom = (options && options.custom === false ) ? false : true;
-    this.tags = (_.isArray(options.tags) && options.tags.length ) ? ('/tag' + options.tags.join(',')) : '';
+    this.tags = (_.isArray(options.tags) && options.tags.length ) ? ('/tag/' + options.tags.join(',') + '/') : '';
     this.sType = 'loggly';
     this.bReady = false;
 
