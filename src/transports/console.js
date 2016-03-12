@@ -19,7 +19,7 @@ var ConsoleTransport = function (options) {
     this.options = options || {};
     this.bIncludeSid = (options && ( options.sid === false || options.bIncludeSid === false) ) ? false : true;
     this.bIncludeCustom = (options && options.custom === false ) ? false : true;
-    this.bISODate = ( options && options.timestamp.match(/^iso$/i) ) ? true : false;
+    this.bISODate = ( options && options.timestamp && options.timestamp.match(/^iso$/i) ) ? true : false;
     this.sType = 'console';
     this.bReady = true;
 };
@@ -93,23 +93,63 @@ ConsoleTransport.prototype = {
     },
 
     _formatLogMessage: function (params) {
-        var d = this.bISODate ? params.time.toISOString() : dateutil.formatMS(params.timeDiff);
-        var msg = [d, params.level.toUpperCase()];
-        if (this.bIncludeSid) {
-            msg.push(params.reqId ? params.reqId : 0);
-            msg.push(params.sid ? params.sid : "");
+        if( this.options.format === 'json' ) {
+            var json = this._paramsToJson(params);
+            return JSON.stringify(json);
+        } else {
+            var json = this._paramsToJsonArray(params);
+            return JSON.stringify(json);
         }
-        msg.push(params.module ? params.module : "");
-        msg.push(params.action ? params.action : "");
-        msg.push(params.message);
-        //msg = msg.concat(params.message?params.message:"");
+    },
+
+  /**
+   * General method, not used by console, but used by other transports, to format the parameters
+   * into a JSON objecvt.
+   * @param params
+   * @returns {{timestamp: *, level: *, module: (string|*), action, data: *, message, custom: *}}
+   * @private
+   */
+    _paramsToJson: function(params) {
+        var json = {
+            timestamp: params.time.toISOString(),
+            level: params.level,
+            module: params.module,
+            action: params.action,
+            data: params.data,
+            message: params.message,
+            custom: params.custom
+        };
+        if (this.bIncludeSid) {
+            json.sid = params.sid;
+            json.reqId = params.reqId;
+        }
         if (this.bIncludeCustom) {
-            msg.push(params.custom ? params.custom : {});
+            json.custom = params.custom;
+        }
+        if (params.message instanceof Array) {
+            json.message = params.message.join('\n');
+        }
+        return json;
+    },
+
+    _paramsToJsonArray: function(params) {
+        var d = this.bISODate ? params.time.toISOString() : dateutil.formatMS(params.timeDiff);
+        var json = [d, params.level.toUpperCase()];
+        if (this.bIncludeSid) {
+            json.push(params.reqId ? params.reqId : 0);
+            json.push(params.sid ? params.sid : "");
+        }
+        json.push(params.module ? params.module : "");
+        json.push(params.action ? params.action : "");
+        json.push(params.message);
+        //json = json.concat(params.message?params.message:"");
+        if (this.bIncludeCustom) {
+            json.push(params.custom ? params.custom : {});
         }
         if (params.data) {
-            msg.push(params.data);
+            json.push(params.data);
         }
-        return JSON.stringify(msg);
+        return json;
     },
 
     pad: function (n, width, z) {

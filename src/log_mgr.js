@@ -25,7 +25,7 @@ var ConsoleStream = require('./transports/console');
 var LogManager = function (options) {
 
     options || ( options = {} );
-    this.t0 = (new Date()).getTime();
+    this.t0 = options.t0 ? options.t0.getTime() : (new Date()).getTime();
     this.logLevel = options.level ? options.level : 'debug';
     this.sid = ( options.sid === true ) ? true : false;
     this.custom = ( options.custom === true ) ? true : false;
@@ -33,18 +33,18 @@ var LogManager = function (options) {
     this.logCount = {};
     this.LEVEL_ORDER = ['verbose', 'debug', 'info', 'warn', 'error', 'fatal'];
     // A stack of tranports, with the console transport always installed by default as a fallback
-    this.transports = [new ConsoleStream()];
     // A queue of messages that may build up while we are switching streams
     this.queue = [];
     // Indicates whether we have started logging or not
     this.running = false;
-    if (options.autoRun === true) {
-        this.start();
-    }
+    this.transports = [new ConsoleStream()];
     if (options.transport) {
         this.setTransport(options.transport);
     }
     this.bErrorStack = (options.errorStack === true) ? true : false;
+    if (options.autoRun === true) {
+        this.start();
+    }
 };
 
 LogManager.prototype = {
@@ -100,14 +100,24 @@ LogManager.prototype = {
      * @param options are passed to the transport when constructing the new transport object.
      *   Options for the predefined transports are:
      *      path {string} path to file, used by file transport
-     *      timestamp {string} one of 'iso' or 'ms', defaults to 'ms' but may be overriden by transport (e.g. loggly uses iso)
-     *      sid {boolean} whether to include sessionId and reqId columns in log output (used with
-     *          express and other request/response apps), overrides LogMgr setting.
-     *      custom {boolean} Indicates whether to include 'custom' column or not, overrides LogMgr
-     *          setting.
+     *      timestamp {string} one of 'iso' or 'ms', defaults to 'ms' but may be overriden by
+     *   transport (e.g. loggly uses iso) sid {boolean} whether to include sessionId and reqId
+     *   columns in log output (used with express and other request/response apps), overrides
+     *   LogMgr setting. custom {boolean} Indicates whether to include 'custom' column or not,
+     *   overrides LogMgr setting.
      *
      */
     setTransport: function (type, options) {
+
+        if (!_.isString(type)) {
+            if (_.isObject(type) && type.hasOwnProperty('type')) {
+                options = type;
+                type = type.type;
+            } else {
+                options = type;
+                type = undefined;
+            }
+        }
 
         if (!options.sid) {
             options.sid = this.sid;
@@ -118,10 +128,10 @@ LogManager.prototype = {
 
         var Transport;
 
-        if (_.isString(type)) {
+        if (type) {
             var p = Path.resolve(__dirname, 'transports', type);
             Transport = require(p);
-        } else if (_.isObject(type)) {
+        } else if (options) {
             Transport = type;
         } else {
             var p = Path.resolve(__dirname, 'transports/console');
@@ -162,8 +172,8 @@ LogManager.prototype = {
         return this.start();
     },
 
-    isValidTransport: function(s) {
-        if(_.isString(s) && ['console','file','line','loggly','sos'].indexOf(s) >= 0 ) {
+    isValidTransport: function (s) {
+        if (_.isString(s) && ['console', 'file', 'line', 'loggly', 'sos'].indexOf(s) >= 0) {
             return true;
         }
         return false;
@@ -187,7 +197,7 @@ LogManager.prototype = {
      * to determine it's type.
      */
     getCurrentTransport: function () {
-        return this.transports[0];
+        return this.transports.length ? this.transports[0] : undefined;
     },
 
     flushQueue: function () {
@@ -232,7 +242,7 @@ LogManager.prototype = {
      * @return A new logger object.
      */
     get: function (moduleName, opt_context) {
-        return new Logger(this, moduleName, opt_context );
+        return new Logger(this, moduleName, opt_context);
     },
 
     /**
