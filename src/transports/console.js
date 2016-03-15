@@ -93,7 +93,7 @@ ConsoleTransport.prototype = {
     },
 
     _formatLogMessage: function (params) {
-        if( this.options.format === 'json' ) {
+        if (this.options.format === 'json') {
             var json = this._paramsToJson(params);
             return JSON.stringify(json);
         } else {
@@ -102,23 +102,26 @@ ConsoleTransport.prototype = {
         }
     },
 
-  /**
-   * General method, not used by console, but used by other transports, to format the parameters
-   * into a JSON objecvt.
-   * @param params
-   * @returns {{timestamp: *, level: *, module: (string|*), action, data: *, message, custom: *}}
-   * @private
-   */
-    _paramsToJson: function(params) {
+    /**
+     * General method, not used by console, but used by other transports, to format the parameters
+     * into a JSON objecvt.
+     * @param params
+     * @returns {{timestamp: *, level: *, module: (string|*), action, data: *, message, custom: *}}
+     * @private
+     */
+    _paramsToJson: function (params) {
         var json = {
             timestamp: params.time.toISOString(),
-            level: params.level,
-            module: params.module,
+            level: params.level.toUpperCase(),
+            emitter: params.module,
             action: params.action,
-            data: params.data,
+            data: JSON.stringify(params.data),
             message: params.message,
-            custom: params.custom
+            custom: JSON.stringify(params.custom)
         };
+        if (json.level === 'VERBOSE') {
+            json.level = 'TRACE';
+        }
         if (this.bIncludeSid) {
             json.sid = params.sid;
             json.reqId = params.reqId;
@@ -132,7 +135,7 @@ ConsoleTransport.prototype = {
         return json;
     },
 
-    _paramsToJsonArray: function(params) {
+    _paramsToJsonArray: function (params) {
         var d = this.bISODate ? params.time.toISOString() : dateutil.formatMS(params.timeDiff);
         var json = [d, params.level.toUpperCase()];
         if (this.bIncludeSid) {

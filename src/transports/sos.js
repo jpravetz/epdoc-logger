@@ -12,20 +12,22 @@ var Transport = require('./console');
 
 var protoProps = {
 
-    sType: 'sos',
+    sType: 'socket',
     socket: undefined,
+    port: 5000,
 
     validateOptions: function( previous ) {
-        if( previous && previous.type === 'sos' ) {
-            return new Error("Cannot switch from 'sos' logger to 'sos' logger");
+        if( previous && previous.type === 'socket' ) {
+            return new Error("Cannot switch from 'socket' logger to 'socket' logger");
         }
         return null;
     },
 
     open: function( onSuccess, onError, onClose ) {
-        console.log("SOS: Attempting connection");
-        this.socket = net.connect({port: 4444}, function() {
-            console.log("SOS: Connected");
+        var self = this;
+        console.log("Socket: Attempting connection to port " + self.port);
+        this.socket = net.connect({port: self.port}, function() {
+            console.log("Socket: Connected to port " + self.port);
             this.bReady = true;
             onSuccess && onSuccess();
         });
@@ -39,8 +41,10 @@ var protoProps = {
     },
 
     clear: function() {
-        console.log("SOS: Clearing SOS console");
-        this.socket.write("!SOS<clear/>\0");
+        console.log("Socket: Clearing Socket console");
+        if( this.options.format === 'sos' ) {
+            this.socket.write("!SOS<clear/>\0");
+        }
     },
 
     write: function( params ) {
@@ -66,10 +70,29 @@ var protoProps = {
     },
 
     toString: function() {
-        return "SOS Socket (port 4444)";
+        return "Socket (port " + this.port + ")";
     },
 
-    _formatLogMessage: function( params ) {
+    _formatLogMessage: function (params) {
+        if( this.options.format === 'sos' ) {
+            return this._paramsToSOS(params);
+        } else if (this.options.format === 'json') {
+            var json = this._paramsToJson(params);
+            return JSON.stringify(json);
+        } else {
+            var json = this._paramsToJsonArray(params);
+            return JSON.stringify(json);
+        }
+    },
+
+    /**
+     * General method, not used by console, but used by other transports, to format the parameters
+     * into a JSON objecvt.
+     * @param params
+     * @returns {{timestamp: *, level: *, module: (string|*), action, data: *, message, custom: *}}
+     * @private
+     */
+    _paramsToSOS: function (params) {
         var msg = "";
         var json = [params.module ? params.module : "", params.action ? params.action : ""];
         if( this.bIncludeSid ) {
@@ -100,17 +123,18 @@ var protoProps = {
         return msg;
     },
 
+
     last: true
 
 };
 
-var SOSTransport = function(options) {
+var LogMXSocketTransport = function(options) {
     Transport.call(this,options);
 };
 
-SOSTransport.prototype = Object.create(Transport.prototype);
-SOSTransport.prototype.constructor = SOSTransport;
+LogMXSocketTransport.prototype = Object.create(Transport.prototype);
+LogMXSocketTransport.prototype.constructor = LogMXSocketTransport;
 
-_.extend(SOSTransport.prototype, protoProps);
+_.extend(LogMXSocketTransport.prototype, protoProps);
 
-module.exports = SOSTransport;
+module.exports = LogMXSocketTransport;

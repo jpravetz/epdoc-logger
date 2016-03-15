@@ -14,7 +14,7 @@ describe.only("Logger file test", function () {
         var opts = {
             transport: {
                 type: "file",
-                path: Path.resolve(__dirname, '../log/output1.log')
+                path: Path.resolve(__dirname, '../log/output_simple.log')
             },
             autoRun: true
         };
@@ -29,7 +29,7 @@ describe.only("Logger file test", function () {
         var opts = {
             transport: {
                 type: "file",
-                path: Path.resolve(__dirname, '../log/output2.log'),
+                path: Path.resolve(__dirname, '../log/output_json.log'),
                 format: 'json'
             },
             autoRun: true
@@ -38,6 +38,25 @@ describe.only("Logger file test", function () {
         log = logMgr.get('moduleName');
         log.action('bake').info("Starting");
         log.info("Running", { a: 2, b: 3 });
+        done();
+    });
+
+    it("write file as json array", function (done) {
+        var opts = {
+            transport: {
+                type: "file",
+                path: Path.resolve(__dirname, '../log/output_jsonarray.log'),
+                timestamp: "iso",
+                custom: true,
+                sid: true
+            },
+            autoRun: true
+        };
+        var logMgr = new LogMgr(opts);
+        log = logMgr.get('moduleName');
+        log.ctx = { req: { reqId: 'reqId', sid: 'sessionId'} };
+        log.action('bake').set({custom:true}).data({ data: { a: 2, b: 3 } }).info("Starting");
+        log.info("Running");
         done();
     });
 
