@@ -19,7 +19,7 @@ var ConsoleTransport = function (options) {
     this.options = options || {};
     this.bIncludeSid = (options && ( options.sid === false || options.bIncludeSid === false) ) ? false : true;
     this.bIncludeCustom = (options && options.custom === false ) ? false : true;
-    this.bISODate = ( options && options.timestamp && options.timestamp.match(/^iso$/i) ) ? true : false;
+    this.timestampFormat = this.options.timestamp || 'ms';
     this.sType = 'console';
     this.bReady = true;
 };
@@ -111,7 +111,7 @@ ConsoleTransport.prototype = {
      */
     _paramsToJson: function (params) {
         var json = {
-            timestamp: params.time.toISOString(),
+            timestamp: this._getTimestamp(params),
             level: params.level.toUpperCase(),
             emitter: params.module,
             action: params.action,
@@ -136,8 +136,7 @@ ConsoleTransport.prototype = {
     },
 
     _paramsToJsonArray: function (params) {
-        var d = this.bISODate ? params.time.toISOString() : dateutil.formatMS(params.timeDiff);
-        var json = [d, params.level.toUpperCase()];
+        var json = [ this._getTimestamp(params), params.level.toUpperCase()];
         if (this.bIncludeSid) {
             json.push(params.reqId ? params.reqId : 0);
             json.push(params.sid ? params.sid : "");
@@ -153,6 +152,16 @@ ConsoleTransport.prototype = {
             json.push(params.data);
         }
         return json;
+    },
+
+    _getTimestamp: function (params) {
+        if (this.timestampFormat === 'smstime') {
+            return String(params.time.getTime());
+        } else if (this.timestampFormat === 'iso') {
+            return params.time.toISOString();
+        } else {
+            return dateutil.formatMS(params.timeDiff);
+        }
     },
 
     pad: function (n, width, z) {

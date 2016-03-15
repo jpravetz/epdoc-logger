@@ -100,8 +100,8 @@ LogManager.prototype = {
      * @param options are passed to the transport when constructing the new transport object.
      *   Options for the predefined transports are:
      *      path {string} path to file, used by file transport
-     *      timestamp {string} one of 'iso' or 'ms', defaults to 'ms' but may be overriden by
-     *   transport (e.g. loggly uses iso) sid {boolean} whether to include sessionId and reqId
+     *      timestamp {string} one of 'iso', 'smstime' or 'ms', defaults to 'ms' but may be overriden by
+     *   transport requirements (e.g. loggly uses iso) sid {boolean} whether to include sessionId and reqId
      *   columns in log output (used with express and other request/response apps), overrides
      *   LogMgr setting. custom {boolean} Indicates whether to include 'custom' column or not,
      *   overrides LogMgr setting.

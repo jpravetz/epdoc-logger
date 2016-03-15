@@ -30,7 +30,8 @@ describe.only("Logger file test", function () {
             transport: {
                 type: "file",
                 path: Path.resolve(__dirname, '../log/output_json.log'),
-                format: 'json'
+                format: 'json',
+                timestamp: 'smstime'
             },
             autoRun: true
         };
