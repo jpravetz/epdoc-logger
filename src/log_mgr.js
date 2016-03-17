@@ -276,13 +276,14 @@ LogManager.prototype = {
      *   application was started, based on reading LogManager.getStartTime() message - A string or
      *   an array of strings. If an array the string will be printed on multiple lines where
      *   supported (e.g. SOS). The string must already formatted (e.g.. no '%s')
+     *   @params opt_thresholdLevel {string} Specify the threshold log level above which to display this log message.
      */
-    logParams: function (msgParams) {
+    logParams: function (msgParams,opt_thresholdLevel) {
         if (msgParams) {
             if (!msgParams.level) {
                 msgParams.level = 'info';
             }
-            if (this.isAboveLevel(msgParams.level)) {
+            if (this.isAboveLevel(msgParams.level,opt_thresholdLevel)) {
                 if (!msgParams.time) {
                     msgParams.time = new Date();
                 }
@@ -311,8 +312,9 @@ LogManager.prototype = {
     /**
      * Return true if the level is equal to or greater then the LogManager's logLevel property.
      */
-    isAboveLevel: function (level) {
-        if (this.LEVEL_ORDER.indexOf(level) >= this.LEVEL_ORDER.indexOf(this.logLevel)) {
+    isAboveLevel: function (level,opt_thresholdLevel) {
+        var threshold = opt_thresholdLevel || this.logLevel;
+        if (this.LEVEL_ORDER.indexOf(level) >= this.LEVEL_ORDER.indexOf(threshold)) {
             return true;
         }
         return false;

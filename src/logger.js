@@ -389,7 +389,7 @@ Logger.prototype = {
             if (this.ctx) {
                 this.logParams(params);
             } else {
-                this.logMgr.logParams(params);
+                this.logMgr.logParams(params,this.logLevel);
             }
         }
     },
@@ -416,7 +416,7 @@ Logger.prototype = {
                 params.sid = this.ctx.req.sid;
             }
         }
-        this.logMgr.logParams(params);
+        this.logMgr.logParams(params,this.logLevel);
         return this;
     },
 
