@@ -66,13 +66,15 @@ var Logger = function (logMgr, opt_modulename, opt_context) {
 
     // Add log methods for every level supported. The log levels can be customized
     // by setting LogManager.LEVEL_ORDER.
-    for (var idx = 0; idx < logMgr.LEVEL_ORDER.length; idx++) {
-        var level = logMgr.LEVEL_ORDER[idx];
+    var self = this;
+
+    var addLevelMethod = function (level) {
         /**
-         * Log a message at one of the log levels. The message can contain arguments (e.g 'Hello %s',
+         * Log a message at one of the log levels. The message can contain arguments (e.g 'Hello
+         * %s',
          * 'world') or an Error object.
          */
-        this[level] = function(err) {
+        return function (err) {
             if (err instanceof Error) {
                 var msgs = [err.message];
                 if (_.isArray(err.errors)) {
@@ -80,17 +82,22 @@ var Logger = function (logMgr, opt_modulename, opt_context) {
                         msgs.push(err.errors[idx]);
                     }
                 }
-                if (this.errorStack() && err.stack) {
+                if (self.errorStack() && err.stack) {
                     var items = err.stack.split(/\n\s*/);
-                    this.data({ error: { code: err.code, stack: items } });
+                    self.data({ error: { code: err.code, stack: items } });
                 } else if (!_.isUndefined(err.code)) {
-                    this.data({ error: { code: err.code } });
+                    self.data({ error: { code: err.code } });
                 }
-                return this.logArgs('error', msgs);
+                return self.logArgs(level, msgs);
             } else {
-                return this.logArgs('error', Array.prototype.slice.call(arguments));
+                return self.logArgs(level, Array.prototype.slice.call(arguments));
             }
-        }
+        };
+    }
+
+    for (var idx = 0; idx < logMgr.LEVEL_ORDER.length; idx++) {
+        var level = logMgr.LEVEL_ORDER[idx];
+        self[level] = addLevelMethod(level);
     }
 
     // Set so these can be used internally
@@ -420,7 +427,7 @@ Logger.prototype = {
             if (this.ctx) {
                 this.logParams(params);
             } else {
-                this.logMgr.logParams(params,this.logLevel);
+                this.logMgr.logParams(params, this.logLevel);
             }
         }
     },
@@ -447,7 +454,7 @@ Logger.prototype = {
                 params.sid = this.ctx.req.sid;
             }
         }
-        this.logMgr.logParams(params,this.logLevel);
+        this.logMgr.logParams(params, this.logLevel);
         return this;
     },
 
@@ -477,8 +484,4 @@ Logger.prototype = {
 };
 
 
-
 module.exports = Logger;
-
-
-
