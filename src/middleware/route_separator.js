@@ -28,7 +28,7 @@ module.exports = function( options ) {
             data.localtime = moment(d).format('YYYY-MM-DDTHH:mm:ss.SSSZ');
             // data.utctime = (d).toISOString();
 
-            req.log.action(data.method).logObj(data).info("###################### " + data.path + " ######################".slice(0,Math.max(0,49 - data.path.length)) );
+            req.log.action(data.method).logObj(data)._info("###################### " + data.path + " ######################".slice(0,Math.max(0,49 - data.path.length)) );
             req.log.popName();
         }
         next();

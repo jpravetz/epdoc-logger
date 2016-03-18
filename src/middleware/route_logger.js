@@ -28,7 +28,7 @@ module.exports = function() {
         if( req.method && req.method.toLowerCase() === 'post' ) {
             data['content-length'] = req.get('Content-Length');
         }
-        res.log.action('routeInfo').data(data).info();
+        res.log.action('routeInfo').data(data)._info();
         res.log.popName();
 
         next();

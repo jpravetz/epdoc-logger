@@ -39,9 +39,6 @@ var Logger = function (logMgr, opt_modulename, opt_context) {
     // The common Logger object thru which output will be written
     this.logMgr = logMgr;
 
-    // Displayed in some IDE debuggers to identify this object. No other use.
-    this.name = "logMgr";
-
     // module column
     this.stack = [];
     if (_.isString(opt_modulename)) {
@@ -58,7 +55,7 @@ var Logger = function (logMgr, opt_modulename, opt_context) {
     this.ctx = opt_context;
 
     // Min log level required to create output, overrides logMgr.logLevel if set
-    this.logLevel = logMgr.logLevel ? logMgr.logLevel : 'debug';
+    this.logLevel = logMgr.logLevel ? logMgr.logLevel : logMgr.LEVEL_DEFAULT;
 
     this.bErrorStack = logMgr.bErrorStack ? logMgr.bErrorStack : false;
 
@@ -66,6 +63,38 @@ var Logger = function (logMgr, opt_modulename, opt_context) {
 
     // action column
     this.logAction;
+
+    // Add log methods for every level supported. The log levels can be customized
+    // by setting LogManager.LEVEL_ORDER.
+    for (var idx = 0; idx < logMgr.LEVEL_ORDER.length; idx++) {
+        var level = logMgr.LEVEL_ORDER[idx];
+        /**
+         * Log a message at one of the log levels. The message can contain arguments (e.g 'Hello %s',
+         * 'world') or an Error object.
+         */
+        this[level] = function(err) {
+            if (err instanceof Error) {
+                var msgs = [err.message];
+                if (_.isArray(err.errors)) {
+                    for (var idx = 0; idx < err.errors.length; ++idx) {
+                        msgs.push(err.errors[idx]);
+                    }
+                }
+                if (this.errorStack() && err.stack) {
+                    var items = err.stack.split(/\n\s*/);
+                    this.data({ error: { code: err.code, stack: items } });
+                } else if (!_.isUndefined(err.code)) {
+                    this.data({ error: { code: err.code } });
+                }
+                return this.logArgs('error', msgs);
+            } else {
+                return this.logArgs('error', Array.prototype.slice.call(arguments));
+            }
+        }
+    }
+
+    // Set so these can be used internally
+    this._info = this[this.logMgr.LEVEL_INFO];
 };
 
 Logger.prototype = {
@@ -83,61 +112,63 @@ Logger.prototype = {
     },
 
     /**
-     * Log an info message. The message can contain arguments (e.g 'Hello %s', 'world')
-     */
-    info: function () {
-        return this.logArgs('info', Array.prototype.slice.call(arguments));
-    },
+     * Log a message at one of the log levels. The message can contain arguments (e.g 'Hello %s',
+     * 'world') or an Error object.
+     * */
+    // info: function () {
+    //     return this.logArgs('info', Array.prototype.slice.call(arguments));
+    // },
+    //
+    // warn: function (err) {
+    //     if (err instanceof Error) {
+    //         var msgs = [err.message];
+    //         if (_.isArray(err.errors)) {
+    //             for (var idx = 0; idx < err.errors.length; ++idx) {
+    //                 msgs.push(err.errors[idx]);
+    //             }
+    //         }
+    //         return this.logArgs('warn', msgs);
+    //     } else {
+    //         return this.logArgs('warn', Array.prototype.slice.call(arguments));
+    //     }
+    // },
+    //
+    // debug: function () {
+    //     return this.logArgs('debug', Array.prototype.slice.call(arguments));
+    // },
+    //
+    // verbose: function () {
+    //     return this.logArgs('verbose', Array.prototype.slice.call(arguments));
+    // },
+    //
+    // error: function (err) {
+    //     if (err instanceof Error) {
+    //         var msgs = [err.message];
+    //         if (_.isArray(err.errors)) {
+    //             for (var idx = 0; idx < err.errors.length; ++idx) {
+    //                 msgs.push(err.errors[idx]);
+    //             }
+    //         }
+    //         if (this.errorStack() && err.stack) {
+    //             var items = err.stack.split(/\n\s*/);
+    //             this.data({ error: { code: err.code, stack: items } });
+    //         } else if (!_.isUndefined(err.code)) {
+    //             this.data({ error: { code: err.code } });
+    //         }
+    //         return this.logArgs('error', msgs);
+    //     } else {
+    //         return this.logArgs('error', Array.prototype.slice.call(arguments));
+    //     }
+    // },
+    //
+    // fatal: function () {
+    //     return this.logArgs('fatal', Array.prototype.slice.call(arguments));
+    // },
 
-    warn: function (err) {
-        if (err instanceof Error) {
-            var msgs = [err.message];
-            if (_.isArray(err.errors)) {
-                for (var idx = 0; idx < err.errors.length; ++idx) {
-                    msgs.push(err.errors[idx]);
-                }
-            }
-            return this.logArgs('warn', msgs);
-        } else {
-            return this.logArgs('warn', Array.prototype.slice.call(arguments));
-        }
-    },
-
-    debug: function () {
-        return this.logArgs('debug', Array.prototype.slice.call(arguments));
-    },
-
-    verbose: function () {
-        return this.logArgs('verbose', Array.prototype.slice.call(arguments));
-    },
-
-    error: function (err) {
-        if (err instanceof Error) {
-            var msgs = [err.message];
-            if (_.isArray(err.errors)) {
-                for (var idx = 0; idx < err.errors.length; ++idx) {
-                    msgs.push(err.errors[idx]);
-                }
-            }
-            if (this.errorStack && err.stack) {
-                var items = err.stack.split(/\n\s*/);
-                this.data({ error: { code: err.code, stack: items } });
-            } else if (!_.isUndefined(err.code)) {
-                this.data({ error: { code: err.code } });
-            }
-            return this.logArgs('error', msgs);
-        } else {
-            return this.logArgs('error', Array.prototype.slice.call(arguments));
-        }
-    },
-
-    fatal: function () {
-        return this.logArgs('fatal', Array.prototype.slice.call(arguments));
-    },
 
     separator: function () {
-        if (this.isAboveLevel('info')) {
-            this._writeMessage('info', "######################################################################");
+        if (this.isAboveLevel(this.logMgr.LEVEL_INFO)) {
+            this._writeMessage(this.logMgr.LEVEL_INFO, "######################################################################");
         }
         return this;
     },
@@ -288,7 +319,7 @@ Logger.prototype = {
     },
 
     date: function (d, s) {
-        if (this.isAboveLevel('info')) {
+        if (this.isAboveLevel(this.logMgr.LEVEL_INFO)) {
             d || ( d = new Date() );
             this.logAction = s || 'currentTime';
             this.data({
@@ -296,7 +327,7 @@ Logger.prototype = {
                 utctime: d.toISOString(),
                 uptime: DateUtil.formatMS(d - this.logMgr.getStartTime())
             });
-            this.logArgs('info', []);
+            this.logArgs(this.logMgr.LEVEL_INFO, []);
         }
         return this;
     },
@@ -328,7 +359,7 @@ Logger.prototype = {
         var args = Array.prototype.slice.call(arguments);
         if (args.length) {
             if (args.length === 1) {
-                args.unshift('info');
+                args.unshift(this.logMgr.LEVEL_INFO);
             }
             if (this.isAboveLevel(args[0])) {
                 this._writeMessage.apply(this, args);
@@ -444,6 +475,8 @@ Logger.prototype = {
         return false;
     }
 };
+
+
 
 module.exports = Logger;
 

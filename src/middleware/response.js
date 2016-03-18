@@ -54,7 +54,7 @@ Response.prototype = {
         }
         data = _.extend(data, this.log.resData);
         if (!res._origSendCalled) {
-            log.action('response.send').data(data).info();
+            log.action('response.send').data(data)._info();
         }
         // Trap case where res.json is called, which will result in res.send being called again
         if (typeof body === 'object' && body !== null && !Buffer.isBuffer(body)) {
@@ -89,7 +89,7 @@ Response.prototype = {
                 data.delay = res._delayTime;
             }
             data = _.extend(data, this.log.resData);
-            this.action('response.end').data(data).info();
+            this.action('response.end').data(data)._info();
         }
         return this._origEnd.apply(this, arguments);
     },

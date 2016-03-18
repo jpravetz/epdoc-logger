@@ -145,7 +145,7 @@ log.info("Return value for %s is %s", "hello", "world" );
 Loggly output is buffered and sent in batches. As a result it is important to shutdown logging before exiting.
 See the example earlier in this readme showing how this is done.
 
-### Advanced
+### Advanced (needs updating)
 
 Transports can also be closed using ```unsetLogger```. In this event logging will revert to the previously 
 specified transport. For example, if you specify an SOS transport and the SOS application is closed, 
@@ -192,7 +192,7 @@ Loggly has these additional options:
 
 ## Log Messages
 
-Logging is done by one of these methods, however the 2nd is the most popular for normal applications,
+Logging is done by one of these methods, however the 2nd is recommended for normal applications,
 and it is recommended that you start there.
 
 1. Directly calling the Logger's ```logMessage``` or lower level ```logParams``` functions
@@ -241,7 +241,7 @@ are then passed to the transport by calling the transport's ```write``` method a
 as a method parameter. The transport then formats and outputs the data. You can layer your own logging library underneath
 epdoc-logger by wrapping your library as a transport.
 
-### Logging using Log Object ###
+### Logging using Log Object (recommended) ###
 
 A new Module Logging object is obtained by calling ```get``` on the logger. A shortcut is to use 
 ```require('epdoc-logger').get()``` to obtain the object.
@@ -255,7 +255,7 @@ situation you should also set ```{ sid: true }``` in your LogManager.
 var log = require('epdoc-logger').get('MyModuleName');
 ```
 
-The string "MyModuleName" above should usually be set to the name of your Javascript file or module.
+The string "MyModuleName" above should usually be set to the name of your Javascript file, module, or emitter.
 It is output as a column or property of each line that is created by calling methods on the log object.
 
 The logging object provides a convenient interface that sits above the ```logParams``` function and 
@@ -274,7 +274,7 @@ log.data('key2',{type:'value2'}).info("My message");
 log.data('key1',{type:'value1'}).data('key2',{type:'value2'}).debug();
 ```
 
-The Module Logging object supports chaining. Most methods will return the object.
+The Logging object supports chaining. Most methods will return the object.
 
 Items added with the ```data``` method are flushed when ```logArgs``` is called.
 ```logArgs``` is called directly or by any of the methods ```info```, ```debug```, ```log```, etc.
@@ -310,7 +310,7 @@ log.logObj('a',1).logObj('b',[2,3]).info();
 log.logObj({a:1,b:[2,3]}).info("My message");
 log.info( "I just want to say %s to the %s", "Hello", "World" );
 log.action('obj.update').debug( "We %s formatted messages", "do" );
-log.error( "Error: %s", err );
+log.error( new Error("My error") );
 log.verbose( "The default is to not output verbose messages, so this will not by default be output" );
 log.warn( "Danger Will Robinson, danger" );
 log.fault( "Restarting server in %d seconds", 10 );
@@ -355,6 +355,20 @@ The following methods result in a message output with log level set to INFO:
     * ```msg``` - String to output, formatted with ```util.format```
 
 
+## Custom Log Levels ##
+
+Log level defaults are set in LogManager:
+
+```javascript
+    this.LEVEL_DEFAULT = 'debug';       // Default threshold level for outputting logs
+    this.LEVEL_INFO = 'info';           // If changing LEVEL_ORDER, what level should internally generated info messages be output at?
+    this.LEVEL_WARN = 'warn';           // If changing LEVEL_ORDER, what level should internally generated warn messages be output at?
+    this.LEVEL_ORDER = ['verbose', 'debug', 'info', 'warn', 'error', 'fatal'];
+```
+
+You can customize log levels by setting the value of this array after constructing your LogManager object.
+Any subsequently created Logger objects will have methods with the names you have provided. 
+Please use lowercase log level names.
 
 ## Express Middleware ##
 

@@ -26,13 +26,16 @@ var LogManager = function (options) {
 
     options || ( options = {} );
     this.t0 = options.t0 ? options.t0.getTime() : (new Date()).getTime();
-    this.logLevel = options.level ? options.level : 'debug';
     this.sid = ( options.sid === true ) ? true : false;
     this.custom = ( options.custom === true ) ? true : false;
     // Count of how many errors, warnings, etc
     this.logCount = {};
+    this.LEVEL_DEFAULT = 'debug';       // Default threshold level for outputting logs
+    this.LEVEL_INFO = 'info';           // If changing LEVEL_ORDER, what level should internally generated info messages be output at?
+    this.LEVEL_WARN = 'warn';           // If changing LEVEL_ORDER, what level should internally generated warn messages be output at?
     this.LEVEL_ORDER = ['verbose', 'debug', 'info', 'warn', 'error', 'fatal'];
-    // A stack of tranports, with the console transport always installed by default as a fallback
+    this.logLevel = options.level ? options.level : this.LEVEL_DEFAULT;
+// A stack of tranports, with the console transport always installed by default as a fallback
     // A queue of messages that may build up while we are switching streams
     this.queue = [];
     // Indicates whether we have started logging or not
@@ -68,21 +71,21 @@ LogManager.prototype = {
                 function onSuccess () {
                     self.running = true;
                     currentTransport.clear();
-                    self.logMessage("info", "logger.push.success", "Set logger to " + transportName, { transport: transportName });
+                    self.logMessage(self.LEVEL_INFO, "logger.push.success", "Set logger to " + transportName, { transport: transportName });
                     self.flushQueue();
                 };
 
                 function onError (err) {
-                    self.logMessage("warn", "logger.push.warn", "Tried but failed to set logger to " + transportName + ": " + err);
+                    self.logMessage(self.LEVEL_WARN, "logger.push.warn", "Tried but failed to set logger to " + transportName + ": " + err);
                     self.unsetTransport();
                 };
 
                 function onClose () {
-                    self.logMessage("info", "logger.push.close", "Transport " + transportName + " closed");
+                    self.logMessage(self.LEVEL_INFO, "logger.push.close", "Transport " + transportName + " closed");
                     self.unsetTransport();
                 }
             } else {
-                this.logMessage("warn", "logger.start.error", "Cannot start current transport because no more transports in stack");
+                this.logMessage(self.LEVEL_WARN, "logger.start.error", "Cannot start current transport because no more transports in stack");
             }
         }
         return self;
@@ -143,7 +146,7 @@ LogManager.prototype = {
             var err = newTransport.validateOptions(newTransport);
             if (!err) {
                 var newTransportName = newTransport.toString();
-                this.logMessage("info", "logger.push", "Setting logger to " + newTransportName, { transport: newTransportName });
+                this.logMessage(this.LEVEL_INFO, "logger.push", "Setting logger to " + newTransportName, { transport: newTransportName });
                 var currentTransport = this.getCurrentTransport();
                 if (currentTransport) {
                     currentTransport.end();
@@ -154,7 +157,7 @@ LogManager.prototype = {
                 this.start();
 
             } else {
-                this.logMessage("warn", "logger.push.warn", ("Unsupported setLogger operation: " + err.message ), { options: options });
+                this.logMessage(this.LEVEL_WARN, "logger.push.warn", ("Unsupported setLogger operation: " + err.message ), { options: options });
             }
         }
         return this;
@@ -281,7 +284,7 @@ LogManager.prototype = {
     logParams: function (msgParams,opt_thresholdLevel) {
         if (msgParams) {
             if (!msgParams.level) {
-                msgParams.level = 'info';
+                msgParams.level = this.LEVEL_INFO;
             }
             if (this.isAboveLevel(msgParams.level,opt_thresholdLevel)) {
                 if (!msgParams.time) {
