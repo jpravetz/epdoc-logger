@@ -31,6 +31,9 @@ module.exports = function (opt_options) {
     var options = opt_options || {};
     var objName = options.objName || 'log';
     var logMgr = options.logMgr;
+    if( !logMgr ) {
+        logMgr = require('../../index').logMgr();
+    }
 
     return function (req, res, next) {
 

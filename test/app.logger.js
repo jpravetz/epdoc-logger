@@ -5,7 +5,7 @@
 
 var Logger = require('../index');
 
-describe("Logger test", function () {
+describe.skip("Logger test", function () {
 
     var logger;
     var log;

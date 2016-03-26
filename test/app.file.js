@@ -6,7 +6,7 @@
 var Path = require('path');
 var LogMgr = require('../src/log_mgr');
 
-describe.only("Logger file test", function () {
+describe("Logger file test", function () {
 
     var token = '4d7f2890-1e74-4b61-9844-ffd8acc62911';
 
