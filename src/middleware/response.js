@@ -22,12 +22,7 @@
  *      errorCode - An internal errorCode to be included in response object, maps to JSON API error.code
  */
 
-var Response = function () {
-};
-
-Response.prototype = {
-
-    constructor: Response,
+module.exports = {
 
     /**
      * Replace express's res.send() method with our own, so that we can add a couple of log messages, but then
@@ -40,13 +35,13 @@ Response.prototype = {
         var req = this.log.ctx.req;
         var log = this.log;
 
-        var data = {status: this.statusCode, responseTime: this.log.getHrResponseTime()};
+        log.data({status: this.statusCode}).hrElapsed('responseTime');
         if (res._delayTime) {
-            data.delay = res._delayTime;
+            log.data('delay',res._delayTime);
         }
 
         if (!res._origSendCalled) {
-            log.action('response.send').data(data)._info();
+            log.action('response.send')._info();
         }
         // Trap case where res.json is called, which will result in res.send being called again
         if (typeof body === 'object' && body !== null && !Buffer.isBuffer(body)) {
@@ -57,13 +52,15 @@ Response.prototype = {
             var s = JSON.stringify(body, replacer, spaces);
 
             // content-type
-            if (!req.get('Content-Type')) {
-                req.set('Content-Type', 'application/json');
+            if (!res.get('Content-Type')) {
+                res.set('Content-Type', 'application/json');
             }
+            res._origSendCalled = true;
             return res._origSend(s);
+        } else {
+            res._origSendCalled = true;
+            return res._origSend.apply(this, arguments);
         }
-        res._origSendCalled = true;
-        return res._origSend.apply(this, arguments);
     },
 
     /**
@@ -74,13 +71,12 @@ Response.prototype = {
      */
     end: function (body) {
         var res = this;
-        var log = this.log;
         if (!res._origSendCalled) {
-            var data = {status: this.statusCode, responseTime: this.log.getHrResponseTime()};
+            this.log.data({status: this.statusCode}).hrElapsed('responseTime');
             if (res._delayTime) {
-                data.delay = res._delayTime;
+                this.log.data('delay',res._delayTime);
             }
-            this.action('response.end').data(data)._info();
+            this.log.action('response.end')._info();
         }
         return this._origEnd.apply(this, arguments);
     },
@@ -95,5 +91,3 @@ Response.prototype = {
         return this._delayTime;
     }
 };
-
-module.exports = Response;

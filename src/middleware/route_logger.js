@@ -19,12 +19,14 @@ module.exports = function() {
             method: req.method,
             path: req.path,
             protocol: req.protocol,
-            sid: (req.session ? req.session.id : "?"),
             //sidNew: ( rawCookie ? false : true ),
             ip: req.ip,
             query: req.query,
             utctime: (d).toISOString()
         };
+        if( req.session && req.session.id ) {
+            data.sid = req.session.id;
+        }
         if( req.method && req.method.toLowerCase() === 'post' ) {
             data['content-length'] = req.get('Content-Length');
         }

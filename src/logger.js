@@ -256,8 +256,8 @@ Logger.prototype = {
      *      3. must have called resetElapsed() to reset this.t0
      * @returns {Object} this
      */
-    elapsed: function () {
-        return this._setData('logData', 'elapsed', this.getElapsed());
+    elapsed: function (key) {
+        return this._setData('logData', key || 'elapsed', this.getElapsed());
     },
 
     getElapsed: function () {
@@ -270,6 +270,24 @@ Logger.prototype = {
         }
         return 0;
     },
+
+    hrElapsed: function (key) {
+        return this._setData('logData', key || 'elapsed', this.getHrElapsed());
+    },
+
+    /**
+     * High resolution response time.
+     * Returns the response time in milliseconds with two digits after the decimal.
+     * @returns {number} Response time in milliseconds
+     */
+    getHrElapsed: function() {
+        if( this.ctx && this.ctx.req && this.ctx.req._hrStartTime ) {
+            var parts = process.hrtime(this.ctx.req._hrStartTime);
+            return ( parts[0] * 100000 + Math.round(parts[1] / 10000) ) / 100;
+        }
+        return 0;
+    },
+
 
     /**
      * Reset the elapsed time timer.
