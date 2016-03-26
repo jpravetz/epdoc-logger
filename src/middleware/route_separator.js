@@ -13,7 +13,7 @@ module.exports = function( options ) {
 
     return function( req, res, next ) {
 
-        if( res.log ) {
+        if( req.log ) {
             var d = req._startTime || new Date();
             req.log.pushName('app');
             var data = {

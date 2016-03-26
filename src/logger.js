@@ -118,61 +118,6 @@ Logger.prototype = {
         return this;
     },
 
-    /**
-     * Log a message at one of the log levels. The message can contain arguments (e.g 'Hello %s',
-     * 'world') or an Error object.
-     * */
-    // info: function () {
-    //     return this.logArgs('info', Array.prototype.slice.call(arguments));
-    // },
-    //
-    // warn: function (err) {
-    //     if (err instanceof Error) {
-    //         var msgs = [err.message];
-    //         if (_.isArray(err.errors)) {
-    //             for (var idx = 0; idx < err.errors.length; ++idx) {
-    //                 msgs.push(err.errors[idx]);
-    //             }
-    //         }
-    //         return this.logArgs('warn', msgs);
-    //     } else {
-    //         return this.logArgs('warn', Array.prototype.slice.call(arguments));
-    //     }
-    // },
-    //
-    // debug: function () {
-    //     return this.logArgs('debug', Array.prototype.slice.call(arguments));
-    // },
-    //
-    // verbose: function () {
-    //     return this.logArgs('verbose', Array.prototype.slice.call(arguments));
-    // },
-    //
-    // error: function (err) {
-    //     if (err instanceof Error) {
-    //         var msgs = [err.message];
-    //         if (_.isArray(err.errors)) {
-    //             for (var idx = 0; idx < err.errors.length; ++idx) {
-    //                 msgs.push(err.errors[idx]);
-    //             }
-    //         }
-    //         if (this.errorStack() && err.stack) {
-    //             var items = err.stack.split(/\n\s*/);
-    //             this.data({ error: { code: err.code, stack: items } });
-    //         } else if (!_.isUndefined(err.code)) {
-    //             this.data({ error: { code: err.code } });
-    //         }
-    //         return this.logArgs('error', msgs);
-    //     } else {
-    //         return this.logArgs('error', Array.prototype.slice.call(arguments));
-    //     }
-    // },
-    //
-    // fatal: function () {
-    //     return this.logArgs('fatal', Array.prototype.slice.call(arguments));
-    // },
-
-
     separator: function () {
         if (this.isAboveLevel(this.logMgr.LEVEL_INFO)) {
             this._writeMessage(this.logMgr.LEVEL_INFO, "######################################################################");
@@ -291,6 +236,15 @@ Logger.prototype = {
     getStack: function () {
         return this.stack;
     },
+
+    /**
+     * Tell logger whether we want to log the json response that we may be sending via express.
+     * This is only used in conjunction with reponse.js
+     * @param v
+     */
+    // logResponse: function (v) {
+    //     this.logResponse = (v === false) ? false : true;
+    // },
 
     /**
      * Used to measure the duration of requests or other events.
