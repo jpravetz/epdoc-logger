@@ -5,29 +5,21 @@
 
 
 /**
- * Expressjs mixin that provides logging and response methods.
- * These methods are added to the response object.
- * Most logging methods can be chained. State is added to a log property that is added to the response object.
- * For example, the action state is stored as res.log.action. The full list of log state properties
- * is:
- *      action - The 'action' column value when outputting to log.
- *      stack - Pushed and popped using pushRouteInfo and popRouteInfo methods. Should be string parts that
- *          are separated by '.'. The full stack is concatenated with '.' when output to log as the 'module' column.
- *      message - The text 'message' that will be output to log
- *      data - The 'data' column of the log output, can be set with logObj
- *      length - Set to truncate the overall length of the log output message
- *      resData - The data to be returned in the express response, and also output to log when calling send().
- *      resLogData - An alternative value to resData that is to be output to log, if resData is too large to be logged
- *      params -
- *      errorCode - An internal errorCode to be included in response object, maps to JSON API error.code
+ * Express.js methods that are either added to or replace methods of the Express response object.
+ * @class Response
  */
 
 module.exports = {
 
     /**
-     * Replace express's res.send() method with our own, so that we can add a couple of log messages, but then
-     * call the parent (res) object's send to finish the job. Will trap calls to res.json() and prevent
-     * those from recalling res.send();
+     * Replace express's ```send``` method with our own, so that we can output a log message, but
+     * then call the parent (```res```) object's ```send``` to finish the job. Will trap calls to
+     * ```res.json()``` and prevent those from recalling ```res.send()```.
+     *
+     * Attaches a private property ```_origSendCalled``` to the ```Response``` object. Also expects
+     * the Response object's original ```send``` method to have been renamed to ```_origSend```.
+     *
+     * @param body Response body.
      * @returns this
      */
     send: function (body) {
@@ -35,9 +27,9 @@ module.exports = {
         var req = this.log.ctx.req;
         var log = this.log;
 
-        log.data({status: this.statusCode}).hrElapsed('responseTime');
+        log.data({ status: this.statusCode }).hrElapsed('responseTime');
         if (res._delayTime) {
-            log.data('delay',res._delayTime);
+            log.data('delay', res._delayTime);
         }
 
         if (!res._origSendCalled) {
@@ -64,17 +56,21 @@ module.exports = {
     },
 
     /**
-     * Replace express's res.end() method with our own, so that we can add a couple of log messages, but then
-     * call the parent (res) object's end to finish the job. Will not output a log message if this was called
-     * from res.send().
+     * Replace express's ```end``` method with our own, so that we can output a log message, but
+     * then call the parent (```res```) object's ```end``` to finish the job. Will not output a log
+     * message if this was called from ```res.send()```.
+     *
+     * Expects
+     * the Response object's original ```end``` method to have been renamed to ```_origEnd```.
+     *
      * @returns this
      */
     end: function (body) {
         var res = this;
         if (!res._origSendCalled) {
-            this.log.data({status: this.statusCode}).hrElapsed('responseTime');
+            this.log.data({ status: this.statusCode }).hrElapsed('responseTime');
             if (res._delayTime) {
-                this.log.data('delay',res._delayTime);
+                this.log.data('delay', res._delayTime);
             }
             this.log.action('response.end')._info();
         }
@@ -82,9 +78,14 @@ module.exports = {
     },
 
     /**
-     * Delay time is a field you can set manually to indicate a process 'paused' for whatever reason, perhaps to
-     * back off on processing too many requests at the same time, or to randomize password verification
-     * response time (the later being for security reasons).
+     * Delay time is a field you can set manually to indicate a process has been 'paused' for whatever
+     * reason, perhaps to back off on processing too many requests at the same time, or to
+     * randomize password verification response time (the later being for security reasons). This value
+     * can be inserted in log messages.
+     *
+     * @example
+     *  log.data({delay:res.delayTime()}).info("Response delayed for password verification randomization")
+     *
      * @returns {number} Delay time in milliseconds
      */
     delayTime: function () {

@@ -119,7 +119,7 @@ Logger.prototype = {
 
     /**
      * Log a separator line that contains a message with '#' characters.
-     * @returns {Logger}
+     * @return {Logger}
      */
     separator: function () {
         if (this.isAboveLevel(this.logMgr.LEVEL_INFO)) {

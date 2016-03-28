@@ -17,6 +17,8 @@ var Logger = require('../logger');
 
 /**
  * Add a log object to req and res objects.
+ *
+ * @class Response
  * @param opt_options {Object}
  *      responseBuilder: a method to build the response object in the event of an exception, error
  *   or success. Errors are indicated by the exception being passed in to the builder, or errorCode
@@ -26,12 +28,12 @@ var Logger = require('../logger');
  * @returns {Function}
  */
 
-module.exports = function (opt_options) {
+module.exports = function (options) {
 
-    var options = opt_options || {};
+    options || ( options = {});
     var objName = options.objName || 'log';
     var logMgr = options.logMgr;
-    if( !logMgr ) {
+    if (!logMgr) {
         logMgr = require('../../index').logMgr();
     }
 
