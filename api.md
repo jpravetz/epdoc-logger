@@ -14,40 +14,11 @@
 <dt><a href="#formatMS">formatMS(ms)</a> ⇒ <code>String</code></dt>
 <dd><p>Format ms as MM:SS.mmm</p>
 </dd>
-<dt><a href="#action">action(...arguments)</a> ⇒ <code>*</code></dt>
-<dd><p>Action is a unique column in the log output and is a machine-searchable verb that uniquely
-describes the type of log event.</p>
-</dd>
-<dt><del><a href="#logObj">logObj(key, value)</a> ⇒ <code><a href="#Logger">Logger</a></code></del></dt>
-<dd><p>Log a key,value or an object. If an object the any previous logged objects
-are overwritten. If a key,value then add to the existing logged object.
-Objects are written when a call to info, etc is made.</p>
-</dd>
-<dt><a href="#set">set(key, value)</a> ⇒ <code><a href="#Logger">Logger</a></code></dt>
-<dd><p>Set <i>custom data</i> that is output in a separate column called <code>custom</code>.
-This column must be specifically enabled via the LogManager constructor&#39;s <code>custom</code>
-option.</p>
-</dd>
-<dt><a href="#data">data(key, [value])</a> ⇒ <code><a href="#Logger">Logger</a></code></dt>
-<dd><p>Set a property in the <code>data</code> column.</p>
-</dd>
 <dt><del><a href="#resData">resData(key, value)</a> ⇒ <code><a href="#Logger">Logger</a></code></del></dt>
 <dd><p>Set a property in the log data column, or set the value of the log data object.
 Also sets the response data with the same value. This is used if you are using express
 middleware, to set data that will be logged for the response (not sent with the reponse).
 By using this method you can set data that is used in res.send() and in logging.</p>
-</dd>
-<dt><a href="#pushName">pushName(name)</a> ⇒</dt>
-<dd><p>A method to add context to the method stack that has gotten us to this point in code.
-The context is pushed into a stack, and the full stack is output as the &#39;module&#39; property
-of the log message. Usually called at the entry point of a function.
-Can also be called by submodules, in which case the submodules should call popRouteInfo when
-returning Note that it is not necessary to call popRouteInfo when terminating a request with
-a response.</p>
-</dd>
-<dt><a href="#popName">popName(options)</a> ⇒</dt>
-<dd><p>See pushRouteInfo. Should be called if returning back up a function chain. Does not need to
-be called if the function terminates the request with a response.</p>
 </dd>
 </dl>
 
@@ -241,7 +212,14 @@ Logger
 **Kind**: global class  
 
 * [Logger](#Logger)
-    * [new Logger(logMgr, opt_modulename, opt_context)](#new_Logger_new)
+    * [new Logger(logMgr, [modulename], [context])](#new_Logger_new)
+    * [.separator()](#Logger+separator) ⇒ <code>[Logger](#Logger)</code>
+    * [.action(...arguments)](#Logger+action) ⇒ <code>\*</code>
+    * ~~[.logObj(key, [value])](#Logger+logObj) ⇒ <code>[Logger](#Logger)</code>~~
+    * [.set(key, value)](#Logger+set) ⇒ <code>[Logger](#Logger)</code>
+    * [.data(key, [value])](#Logger+data) ⇒ <code>[Logger](#Logger)</code>
+    * [.pushName(name)](#Logger+pushName) ⇒
+    * [.popName(options)](#Logger+popName) ⇒
     * [.elapsed()](#Logger+elapsed) ⇒ <code>Object</code>
     * [.hrElapsed([key])](#Logger+hrElapsed) ⇒ <code>[Logger](#Logger)</code>
     * [.getHrElapsed()](#Logger+getHrElapsed) ⇒ <code>number</code>
@@ -253,21 +231,9 @@ Logger
 
 <a name="new_Logger_new"></a>
 
-### new Logger(logMgr, opt_modulename, opt_context)
+### new Logger(logMgr, [modulename], [context])
 Logging module. Shows time and log level (debug, info, warn, error).
 Time is shown in milliseconds since this module was first initialized.
-
-
-| Param | Type | Description |
-| --- | --- | --- |
-| logMgr | <code>[Logger](#Logger)</code> | The parent LogManager object that specifies the transport and provides   output methods |
-| opt_modulename | <code>string</code> &#124; <code>Array</code> | The name of the module or emitter that is emitting the log   message, used to populate the module column of logMgr output. This can be modified to show the   calling stack by calling pushName and popName. |
-| opt_context | <code>object</code> | A context object. For Express or koa this would have 'req' and 'res'   properties. |
-
-**Example**  
-```js
-var log = require('../lib/logMgr').get('logtest');
-       log.info( 'Message: %s', 'my message');
 
 Create a new log object with methods to log to the transport that is attached to `logMgr`.
 This log object can be attached to another object, for example an express response object,
@@ -276,7 +242,113 @@ If a context is passed in, various properties may be harvested off of the req pr
 include: req._reqId (populates reqId column), req.sid?req.session.id|req.sessionId (populates
 sid column), req._startTime and req._hrStartTime (can be used to determine response time for a
 request).
+
+
+| Param | Type | Description |
+| --- | --- | --- |
+| logMgr | <code>[LogManager](#LogManager)</code> | The parent LogManager object that specifies the transport and   provides lower-level output methods |
+| [modulename] | <code>string</code> &#124; <code>Array.&lt;string&gt;</code> | The name of the module or emitter that is emitting the   log message, used to populate the module column of logMgr output. This can be modified to show   the calling stack by calling pushName and popName. |
+| [context] | <code>object</code> | A context object. For [Express](http://expressjs.com/) or   [koa](http://koajs.com/) this would have ```req``` and ```res``` properties. |
+
+**Example**  
+```js
+var log = require('epdoc-logger').get('logtest');
+       log.info( 'Message: %s', 'my message');
 ```
+<a name="Logger+separator"></a>
+
+### logger.separator() ⇒ <code>[Logger](#Logger)</code>
+Log a separator line that contains a message with '#' characters.
+
+**Kind**: instance method of <code>[Logger](#Logger)</code>  
+<a name="Logger+action"></a>
+
+### logger.action(...arguments) ⇒ <code>\*</code>
+Set the value of the action column. Action is a unique column in the log output and is a
+machine-searchable verb that uniquely describes the type of log event.
+
+**Kind**: instance method of <code>[Logger](#Logger)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| ...arguments | <code>string</code> | Single string or multiple strings that are then joined with a   '.'. |
+
+**Example**  
+```js
+log.action('message.sent').info("Message has been sent");
+```
+<a name="Logger+logObj"></a>
+
+### ~~logger.logObj(key, [value]) ⇒ <code>[Logger](#Logger)</code>~~
+***Deprecated***
+
+Log a key,value or an object. If an object the any previous logged objects
+are overwritten. If a key,value then add to the existing logged object.
+Objects are written when a call to info, etc is made.
+
+**Kind**: instance method of <code>[Logger](#Logger)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| key | <code>string</code> &#124; <code>number</code> &#124; <code>object</code> | If a string or number then key,value is added, else the   object ```key``` is added |
+| [value] |  | If key is a string or number then data.key is set to value |
+
+<a name="Logger+set"></a>
+
+### logger.set(key, value) ⇒ <code>[Logger](#Logger)</code>
+Set <i>custom data</i> that is output in a separate column called ```custom```.
+This column must be specifically enabled via the LogManager constructor's ```custom```
+option.
+
+**Kind**: instance method of <code>[Logger](#Logger)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| key | <code>String</code> &#124; <code>object</code> | If a string then sets custom.key = value, otherwise extends   custom with key |
+| value | <code>\*</code> | (Optional) Set key to this value |
+
+<a name="Logger+data"></a>
+
+### logger.data(key, [value]) ⇒ <code>[Logger](#Logger)</code>
+Set a property in the ```data``` column.
+
+**Kind**: instance method of <code>[Logger](#Logger)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| key | <code>string</code> &#124; <code>object</code> | If a string then sets ```data[key]``` to ```value```. Otherwise   extend the object ```data``` the object ```key```. |
+| [value] | <code>string</code> | If key is a string then sets data[key] to this value. |
+
+<a name="Logger+pushName"></a>
+
+### logger.pushName(name) ⇒
+A method to add context to the method stack that has gotten us to this point in code.
+The context is pushed into a stack, and the full stack is output as the 'module' property
+of the log message. Usually called at the entry point of a function.
+Can also be called by submodules, in which case the submodules should call popRouteInfo when
+returning Note that it is not necessary to call popRouteInfo when terminating a request with
+a response.
+
+**Kind**: instance method of <code>[Logger](#Logger)</code>  
+**Returns**: Response object  
+
+| Param | Description |
+| --- | --- |
+| name | (required) String in the form 'api.org.create' (route.method or   route.object.method). |
+
+<a name="Logger+popName"></a>
+
+### logger.popName(options) ⇒
+See pushRouteInfo. Should be called if returning back up a function chain. Does not need to
+be called if the function terminates the request with a response.
+
+**Kind**: instance method of <code>[Logger](#Logger)</code>  
+**Returns**: Response object  
+
+| Param | Description |
+| --- | --- |
+| options | Available options are 'all' if all action contexts are to be removed from the   _logging stack. |
+
 <a name="Logger+elapsed"></a>
 
 ### logger.elapsed() ⇒ <code>Object</code>
@@ -387,60 +459,6 @@ Format ms as MM:SS.mmm
 | --- |
 | ms | 
 
-<a name="action"></a>
-
-## action(...arguments) ⇒ <code>\*</code>
-Action is a unique column in the log output and is a machine-searchable verb that uniquely
-describes the type of log event.
-
-**Kind**: global function  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| ...arguments | <code>string</code> | Single string or multiple strings that are then joined with a   '.'. |
-
-<a name="logObj"></a>
-
-## ~~logObj(key, value) ⇒ <code>[Logger](#Logger)</code>~~
-***Deprecated***
-
-Log a key,value or an object. If an object the any previous logged objects
-are overwritten. If a key,value then add to the existing logged object.
-Objects are written when a call to info, etc is made.
-
-**Kind**: global function  
-
-| Param | Description |
-| --- | --- |
-| key | If a string or number then key,value is added, else key is added |
-| value | If key is a string or number then data.key is set to value |
-
-<a name="set"></a>
-
-## set(key, value) ⇒ <code>[Logger](#Logger)</code>
-Set <i>custom data</i> that is output in a separate column called ```custom```.
-This column must be specifically enabled via the LogManager constructor's ```custom```
-option.
-
-**Kind**: global function  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| key | <code>String</code> &#124; <code>object</code> | If a string then sets custom.key = value, otherwise extends   custom with key |
-| value | <code>\*</code> | (Optional) Set key to this value |
-
-<a name="data"></a>
-
-## data(key, [value]) ⇒ <code>[Logger](#Logger)</code>
-Set a property in the ```data``` column.
-
-**Kind**: global function  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| key | <code>string</code> &#124; <code>object</code> | If a string then sets ```data[key]``` to ```value```. Otherwise   extend the object ```data``` the object ```key```. |
-| [value] | <code>string</code> | If key is a string then sets data[key] to this value. |
-
 <a name="resData"></a>
 
 ## ~~resData(key, value) ⇒ <code>[Logger](#Logger)</code>~~
@@ -457,34 +475,4 @@ By using this method you can set data that is used in res.send() and in logging.
 | --- | --- | --- |
 | key | <code>string</code> &#124; <code>object</code> | If a string then sets data[key] to value. Otherwise sets data to   key. |
 | value |  | If key is a string then sets data[key] to this value. |
-
-<a name="pushName"></a>
-
-## pushName(name) ⇒
-A method to add context to the method stack that has gotten us to this point in code.
-The context is pushed into a stack, and the full stack is output as the 'module' property
-of the log message. Usually called at the entry point of a function.
-Can also be called by submodules, in which case the submodules should call popRouteInfo when
-returning Note that it is not necessary to call popRouteInfo when terminating a request with
-a response.
-
-**Kind**: global function  
-**Returns**: Response object  
-
-| Param | Description |
-| --- | --- |
-| name | (required) String in the form 'api.org.create' (route.method or   route.object.method). |
-
-<a name="popName"></a>
-
-## popName(options) ⇒
-See pushRouteInfo. Should be called if returning back up a function chain. Does not need to
-be called if the function terminates the request with a response.
-
-**Kind**: global function  
-**Returns**: Response object  
-
-| Param | Description |
-| --- | --- |
-| options | Available options are 'all' if all action contexts are to be removed from the   _logging stack. |
 

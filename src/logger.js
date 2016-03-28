@@ -11,10 +11,6 @@ var _ = require('underscore');
  * Logging module. Shows time and log level (debug, info, warn, error).
  * Time is shown in milliseconds since this module was first initialized.
  *
- * @example
- *        var log = require('../lib/logMgr').get('logtest');
- *        log.info( 'Message: %s', 'my message');
- *
  * Create a new log object with methods to log to the transport that is attached to `logMgr`.
  * This log object can be attached to another object, for example an express response object,
  * in order to next the log call and thereby carry context down thru the calling stack.
@@ -23,35 +19,39 @@ var _ = require('underscore');
  * sid column), req._startTime and req._hrStartTime (can be used to determine response time for a
  * request).
  *
+ * @example
+ *        var log = require('epdoc-logger').get('logtest');
+ *        log.info( 'Message: %s', 'my message');
+ *
  * @class Logger
- * @param  {Logger} logMgr - The parent LogManager object that specifies the transport and provides
- *   output methods
- * @param opt_modulename {string|Array} The name of the module or emitter that is emitting the log
- *   message, used to populate the module column of logMgr output. This can be modified to show the
- *   calling stack by calling pushName and popName.
- * @param opt_context {object} A context object. For Express or koa this would have 'req' and 'res'
- *   properties.
+ * @param  {LogManager} logMgr - The parent LogManager object that specifies the transport and
+ *   provides lower-level output methods
+ * @param [modulename] {string|string[]} The name of the module or emitter that is emitting the
+ *   log message, used to populate the module column of logMgr output. This can be modified to show
+ *   the calling stack by calling pushName and popName.
+ * @param [context] {object} A context object. For [Express](http://expressjs.com/) or
+ *   [koa](http://koajs.com/) this would have ```req``` and ```res``` properties.
  * @constructor
  */
-var Logger = function (logMgr, opt_modulename, opt_context) {
+var Logger = function (logMgr, modulename, context) {
 
     // The common Logger object thru which output will be written
     this.logMgr = logMgr;
 
     // module column
     this.stack = [];
-    if (_.isString(opt_modulename)) {
-        this.name = opt_modulename + " " + this.name;
-        this.stack = [opt_modulename];
-    } else if (_.isArray(opt_modulename)) {
-        this.name = opt_modulename.join('.') + " " + this.name;
-        this.stack = opt_modulename;
+    if (_.isString(modulename)) {
+        this.name = modulename + " " + this.name;
+        this.stack = [modulename];
+    } else if (_.isArray(modulename)) {
+        this.name = modulename.join('.') + " " + this.name;
+        this.stack = modulename;
     }
 
     // Contains Express and koa req and res properties
     // If ctx.req.sessionId, ctx.req.sid or ctx.req.session.id are set, these are used for sid
     // column. If ctx.req._reqId, this is used as reqId column
-    this.ctx = opt_context;
+    this.ctx = context;
 
     // Min log level required to create output, overrides logMgr.logLevel if set
     this.logLevel = logMgr.logLevel ? logMgr.logLevel : logMgr.LEVEL_DEFAULT;
@@ -117,6 +117,10 @@ Logger.prototype = {
         return this;
     },
 
+    /**
+     * Log a separator line that contains a message with '#' characters.
+     * @returns {Logger}
+     */
     separator: function () {
         if (this.isAboveLevel(this.logMgr.LEVEL_INFO)) {
             this._writeMessage(this.logMgr.LEVEL_INFO, "######################################################################");
@@ -125,10 +129,12 @@ Logger.prototype = {
     },
 
     /**
-     * Action is a unique column in the log output and is a machine-searchable verb that uniquely
-     * describes the type of log event.
+     * Set the value of the action column. Action is a unique column in the log output and is a
+     * machine-searchable verb that uniquely describes the type of log event.
      *
-     * @method action
+     * @example
+     *      log.action('message.sent').info("Message has been sent");
+     *
      * @param {...string} arguments - Single string or multiple strings that are then joined with a
      *   '.'.
      * @return {*}
@@ -148,10 +154,11 @@ Logger.prototype = {
      * Log a key,value or an object. If an object the any previous logged objects
      * are overwritten. If a key,value then add to the existing logged object.
      * Objects are written when a call to info, etc is made.
-     * @method logObj
-     * @deprecated Use `data` instead.
-     * @param key If a string or number then key,value is added, else key is added
-     * @param value If key is a string or number then data.key is set to value
+     *
+     * @deprecated Use ```data``` method instead.
+     * @param key {string|number|object} If a string or number then key,value is added, else the
+     *   object ```key``` is added
+     * @param [value] If key is a string or number then data.key is set to value
      * @return {Logger}
      */
     logObj: function (key, value) {
@@ -163,7 +170,6 @@ Logger.prototype = {
      * This column must be specifically enabled via the LogManager constructor's ```custom```
      * option.
      *
-     * @method set
      * @param key {String|object} If a string then sets custom.key = value, otherwise extends
      *   custom with key
      * @param value {*} (Optional) Set key to this value
@@ -175,7 +181,6 @@ Logger.prototype = {
 
     /**
      * Set a property in the ```data``` column.
-     * @method data
      * @param {string|object} key - If a string then sets ```data[key]``` to ```value```. Otherwise
      *   extend the object ```data``` the object ```key```.
      * @param [value] {string} If key is a string then sets data[key] to this value.
@@ -201,14 +206,13 @@ Logger.prototype = {
         return this._setData('data', key, value)._setData('resData', key, value);
     },
 
-  /**
-   * @method _setData
-   * @param field
-   * @param key
-   * @param value
-   * @returns {Logger}
-   * @private
-   */
+    /**
+     * @param field
+     * @param key
+     * @param value
+     * @returns {Logger}
+     * @private
+     */
     _setData: function (field, key, value) {
         if (!this[field]) {
             this[field] = {};
@@ -228,7 +232,6 @@ Logger.prototype = {
      * Can also be called by submodules, in which case the submodules should call popRouteInfo when
      * returning Note that it is not necessary to call popRouteInfo when terminating a request with
      * a response.
-     * @method pushName
      * @param name (required) String in the form 'api.org.create' (route.method or
      *   route.object.method).
      * @return Response object
@@ -241,7 +244,6 @@ Logger.prototype = {
     /**
      * See pushRouteInfo. Should be called if returning back up a function chain. Does not need to
      * be called if the function terminates the request with a response.
-     * @method popName
      * @param options Available options are 'all' if all action contexts are to be removed from the
      *   _logging stack.
      * @return Response object
