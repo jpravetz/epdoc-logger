@@ -1,15 +1,5 @@
-/*****************************************************************************
- * logger.js
- * CONFIDENTIAL Copyright 2012-2016 Jim Pravetz. All Rights Reserved.
- *****************************************************************************/
-
-/**
- * Logging module. Shows time and log level (debug, info, warn, error).
- * Time is shown in milliseconds since this module was first initialized.
- * Usage:
- *        var log = require('../lib/logMgr').get('logtest');
- *        log.info( 'Message: %s', 'my message');
- */
+// logger.js
+// CONFIDENTIAL Copyright 2012-2016 Jim Pravetz. All Rights Reserved.
 
 
 var util = require('util');
@@ -18,18 +8,27 @@ var moment = require('moment');
 var _ = require('underscore');
 
 /**
- * Create a new log object with methods to log to the transport that is attached to logMgr.
+ * Logging module. Shows time and log level (debug, info, warn, error).
+ * Time is shown in milliseconds since this module was first initialized.
+ *
+ * @example
+ *        var log = require('../lib/logMgr').get('logtest');
+ *        log.info( 'Message: %s', 'my message');
+ *
+ * Create a new log object with methods to log to the transport that is attached to `logMgr`.
  * This log object can be attached to another object, for example an express response object,
  * in order to next the log call and thereby carry context down thru the calling stack.
  * If a context is passed in, various properties may be harvested off of the req property. These
  * include: req._reqId (populates reqId column), req.sid?req.session.id|req.sessionId (populates
  * sid column), req._startTime and req._hrStartTime (can be used to determine response time for a
  * request).
- * @param logMgr {Logger} The parent LogManager object that specifies the transport and provides
+ *
+ * @class Logger
+ * @param  {Logger} logMgr - The parent LogManager object that specifies the transport and provides
  *   output methods
- * @param opt_modulename {string|Array} The name of the module, used to populate the module column
- *   of logMgr output. This can be modified to show the calling stack by calling pushRouteInfo and
- *   popRouteInfo.
+ * @param opt_modulename {string|Array} The name of the module or emitter that is emitting the log
+ *   message, used to populate the module column of logMgr output. This can be modified to show the
+ *   calling stack by calling pushName and popName.
  * @param opt_context {object} A context object. For Express or koa this would have 'req' and 'res'
  *   properties.
  * @constructor
@@ -128,8 +127,11 @@ Logger.prototype = {
     /**
      * Action is a unique column in the log output and is a machine-searchable verb that uniquely
      * describes the type of log event.
-     * @param arguments String or comma separated list of strings that are then joined with a '.'
-     * @returns {*}
+     *
+     * @method action
+     * @param {...string} arguments - Single string or multiple strings that are then joined with a
+     *   '.'.
+     * @return {*}
      */
     action: function () {
         if (arguments[0] instanceof Array) {
@@ -145,32 +147,39 @@ Logger.prototype = {
     /**
      * Log a key,value or an object. If an object the any previous logged objects
      * are overwritten. If a key,value then add to the existing logged object.
-     * Objects are written when a call to info, etc is made
+     * Objects are written when a call to info, etc is made.
+     * @method logObj
+     * @deprecated Use `data` instead.
      * @param key If a string or number then key,value is added, else key is added
      * @param value If key is a string or number then data.key is set to value
-     * @return The logging object, for chaining
+     * @return {Logger}
      */
     logObj: function (key, value) {
         return this._setData('data', key, value);
     },
 
     /**
-     * Set custom data that is output in a separate column called 'custom'.
-     * This is currently only used with loggly.
+     * Set <i>custom data</i> that is output in a separate column called ```custom```.
+     * This column must be specifically enabled via the LogManager constructor's ```custom```
+     * option.
+     *
+     * @method set
      * @param key {String|object} If a string then sets custom.key = value, otherwise extends
      *   custom with key
      * @param value {*} (Optional) Set key to this value
-     * @returns {Logger}
+     * @return {Logger}
      */
     set: function (key, value) {
         return this._setData('customData', key, value);
     },
 
     /**
-     * Set a property in the data column, or set the value of the data object.
-     * @param key {string|object} If a string then sets data[key] to value. Otherwise sets data to
-     *   key.
-     * @param value If key is a string then sets data[key] to this value.
+     * Set a property in the ```data``` column.
+     * @method data
+     * @param {string|object} key - If a string then sets ```data[key]``` to ```value```. Otherwise
+     *   extend the object ```data``` the object ```key```.
+     * @param [value] {string} If key is a string then sets data[key] to this value.
+     * @return {Logger}
      */
     data: function (key, value) {
         return this._setData('logData', key, value);
@@ -181,14 +190,25 @@ Logger.prototype = {
      * Also sets the response data with the same value. This is used if you are using express
      * middleware, to set data that will be logged for the response (not sent with the reponse).
      * By using this method you can set data that is used in res.send() and in logging.
+     * @method resData
      * @param key {string|object} If a string then sets data[key] to value. Otherwise sets data to
      *   key.
      * @param value If key is a string then sets data[key] to this value.
+     * @deprecated
+     * @return {Logger}
      */
     resData: function (key, value) {
         return this._setData('data', key, value)._setData('resData', key, value);
     },
 
+  /**
+   * @method _setData
+   * @param field
+   * @param key
+   * @param value
+   * @returns {Logger}
+   * @private
+   */
     _setData: function (field, key, value) {
         if (!this[field]) {
             this[field] = {};
@@ -208,6 +228,7 @@ Logger.prototype = {
      * Can also be called by submodules, in which case the submodules should call popRouteInfo when
      * returning Note that it is not necessary to call popRouteInfo when terminating a request with
      * a response.
+     * @method pushName
      * @param name (required) String in the form 'api.org.create' (route.method or
      *   route.object.method).
      * @return Response object
@@ -220,6 +241,7 @@ Logger.prototype = {
     /**
      * See pushRouteInfo. Should be called if returning back up a function chain. Does not need to
      * be called if the function terminates the request with a response.
+     * @method popName
      * @param options Available options are 'all' if all action contexts are to be removed from the
      *   _logging stack.
      * @return Response object
@@ -254,7 +276,7 @@ Logger.prototype = {
      *      1. request object must set it's _delayTime
      *      2. request object must set it's _startTime (ms)
      *      3. must have called resetElapsed() to reset this.t0
-     * @returns {Object} this
+     * @return {Object} this
      */
     elapsed: function (key) {
         return this._setData('logData', key || 'elapsed', this.getElapsed());
@@ -271,6 +293,11 @@ Logger.prototype = {
         return 0;
     },
 
+    /**
+     * Adds the High Resolution response time to the data column.
+     * @param {string} [key=elapsed] Name of property in the data column.
+     * @return {Logger} Self.
+     */
     hrElapsed: function (key) {
         return this._setData('logData', key || 'elapsed', this.getHrElapsed());
     },
@@ -278,10 +305,10 @@ Logger.prototype = {
     /**
      * High resolution response time.
      * Returns the response time in milliseconds with two digits after the decimal.
-     * @returns {number} Response time in milliseconds
+     * @return {number} Response time in milliseconds
      */
-    getHrElapsed: function() {
-        if( this.ctx && this.ctx.req && this.ctx.req._hrStartTime ) {
+    getHrElapsed: function () {
+        if (this.ctx && this.ctx.req && this.ctx.req._hrStartTime) {
             var parts = process.hrtime(this.ctx.req._hrStartTime);
             return ( parts[0] * 100000 + Math.round(parts[1] / 10000) ) / 100;
         }
@@ -291,6 +318,7 @@ Logger.prototype = {
 
     /**
      * Reset the elapsed time timer.
+     * @return {Logger} Self
      */
     resetElapsed: function () {
         this.t0 = (new Date()).getTime();
@@ -331,10 +359,11 @@ Logger.prototype = {
      * folding (muli-line output).
      * Example: log.log( 'info', [["Found %d lines", iLines],"My second line",["My %s
      * line",'third']]); );
-     * @param level {string} One of Logger.LEVEL_ORDER. Defaults to info if not present.
-     * @param msg The message String, or an array of strings, to be formatted with util.format.
+     * @param {string} [level=info] - One of Logger.LEVEL_ORDER. Defaults to `info` if not present.
+     * @param {string} msg - The message String, or an array of strings, to be formatted with
+     *   util.format.
      */
-    log: function () {
+    log: function (level, msg) {
         var args = Array.prototype.slice.call(arguments);
         if (args.length) {
             if (args.length === 1) {
@@ -351,8 +380,8 @@ Logger.prototype = {
     /**
      * Calls the logMgr interface to output the log message.
      * Rolls in all previous calls to set data and action, and resets those values.
-     * @param level {string} Required
-     * @param msg {array|string ...} Normally a string, providing the same string
+     * @param {string} level - Must be one of LogManager.LEVEL_ORDER
+     * @param {(...string|...string[])} msg - Normally a string, providing the same string
      * interpolation format as util.format. May also be an array of strings,
      * in which case each entry in the array is treated as arguments to util.format.
      * This later situation is useful for logMgrs that support multi-line formatting.
@@ -437,6 +466,8 @@ Logger.prototype = {
 
     /**
      * Set the log level for this object. This overrides the global log level for this object.
+     * @param {string} level - Must be one of LogManager.LEVEL_ORDER.
+     * @return {Logger} Self
      */
     setLevel: function (level) {
         this.logLevel = level;
@@ -444,7 +475,10 @@ Logger.prototype = {
     },
 
     /**
-     * Return true if the level is equal to or greater then the reference, or if reference is null
+     * Test if the given level is above the log level set for this Logger object.
+     * @param {string} level - Must be one of LogManager.LEVEL_ORDER.
+     * @return {boolean} True if the level is equal to or greater then the reference, or if
+     *   reference is null.
      */
     isAboveLevel: function (level) {
         var reference = this.logLevel || this.logMgr.logLevel;

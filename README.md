@@ -7,6 +7,8 @@ for simpler messages, but with the addition of chainable calls to set other outp
 
 **Note: express middleware is not yet working in this alpha version.**
 
+[API Documentation](./api.md)
+
 ## Install
 
 Install
