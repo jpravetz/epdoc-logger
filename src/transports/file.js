@@ -1,14 +1,15 @@
-/*************************************************************************
- * Copyright(c) 2012-2015 Jim Pravetz <jpravetz@epdoc.com>
- * May be freely distributed under the MIT license.
- **************************************************************************/
+/*****************************************************************************
+ * file.js
+ * CONFIDENTIAL Copyright 2012-2016 Jim Pravetz. All Rights Reserved.
+ *****************************************************************************/
 
 var dateutil = require('../dateutil');
 var _ = require('underscore');
 var Path = require('path');
 var fs = require('fs');
 
-// Number of lines of output to buffer. If this value is exceeded then buffer is written immediately to the file
+// Number of lines of output to buffer. If this value is exceeded then buffer is written
+// immediately to the file
 const MAX_BUFFER = 32;
 
 // We will subclass the ConsoleTransport
@@ -16,28 +17,28 @@ var Transport = require('./console');
 
 var protoProps = {
 
-    sType: 'file',
-    buffer: [],     // Used in case of stream backups
-    writable: true,
-
     validateOptions: function (previous) {
         if (_.isString(this.options.path)) {
             if (previous && previous.type() === 'sos') {
                 return new Error("Cannot switch from 'sos' logger to 'file' logger");
             }
-            var parentFolder = Path.dirname(this.options.path);
-            if( !fs.existsSync(parentFolder) ) {
-                return new Error("Log folder '" + parentFolder + "' does not exist");
-            }
+            //var parentFolder = Path.dirname(this.options.path);
+            //if (!fs.existsSync(parentFolder)) {
+            //    return new Error("Log folder '" + parentFolder + "' does not exist");
+            //}
+        } else {
+            return new Error("File not specified");
         }
-        return null;
     },
 
     open: function (onSuccess, onError, onClose) {
         try {
-            this.stream = fs.createWriteStream(this.options.path, {flags: 'a'});
+            var folder = Path.dirname(this.options.path);
+            if (!fs.existsSync(folder)){
+                fs.mkdirSync(folder);
+            }
+            this.stream = fs.createWriteStream(this.options.path, { flags: 'a' });
             this.bReady = true;
-            this.stream
             onSuccess && onSuccess();
         } catch (err) {
             onError && onError(err);
@@ -61,7 +62,10 @@ var protoProps = {
             this.writable = this.stream.write(msg, 'ascii');
         } else {
             this.buffer.push(msg);
-            this.stream.once('drain', this.flush);
+            if (!this.drainRegistered) {
+                this.stream.once('drain', this.flush);
+                this.drainRegistered = true;
+            }
         }
     },
 
@@ -70,7 +74,8 @@ var protoProps = {
      * Flushes everything in the buffer and starts a timer to automatically
      * flush again after options.buffer time
      */
-    flush: function () {
+    flush: function (cb) {
+        this.drainRegistered = false;
         if (this.buffer.length) {
             var flushing = this.buffer;
             this.buffer = [];
@@ -78,39 +83,35 @@ var protoProps = {
                 this._write(flushing[idx]);
             }
         }
+        cb && cb();
     },
 
-    end: function () {
+    end: function (cb) {
         this.flush();
         this.bReady = false;
         if (this.stream) {
             this.stream.end();
         }
+        cb && cb();
     },
 
-    destroy: function () {
+    destroy: function (cb) {
         this.end();
         if (this.stream) {
             this.stream.destroy();
         }
         this.stream = undefined;
+        cb && cb();
     },
 
     _formatLogMessage: function (params) {
-        var d = this.bISODate ? params.time.toISOString() : dateutil.formatMS(params.timeDiff);
-        var msg = [d, params.level.toUpperCase()];
-        if (this.bIncludeSid) {
-            msg.push(params.reqId ? params.reqId : 0);
-            msg.push(params.sid ? params.sid : "");
+        if (this.options.format === 'json') {
+            var json = this._paramsToJson(params);
+            return JSON.stringify(json);
+        } else {
+            var json = this._paramsToJsonArray(params);
+            return JSON.stringify(json);
         }
-        msg.push(params.module ? params.module : "");
-        msg.push(params.action ? params.action : "");
-        msg.push(params.message);
-        //msg = msg.concat(params.message?params.message:"");
-        if (params.data) {
-            msg.push(params.data);
-        }
-        return JSON.stringify(msg);
     },
 
     toString: function () {
@@ -121,8 +122,13 @@ var protoProps = {
 
 };
 
+
 var FileTransport = function (options) {
     Transport.call(this, options);
+    this.sType = 'file';
+    this.buffer = [];      // Used in case of stream backups
+    this.writable = true;
+
 };
 
 FileTransport.prototype = Object.create(Transport.prototype);

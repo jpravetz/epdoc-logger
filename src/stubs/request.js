@@ -1,7 +1,9 @@
-/*************************************************************************
- * Copyright(c) 2012-2014 Jim Pravetz <jpravetz@epdoc.com>
- * May be freely distributed under the MIT license.
- **************************************************************************/
+/*****************************************************************************
+ * request.js
+ * CONFIDENTIAL Copyright 2012-2016 Jim Pravetz. All Rights Reserved.
+ *****************************************************************************/
+
+var Logger = require('../logger');
 
 /**
  * Stub for express.request object, used when passing request object around when simulating req/res/next flow.
@@ -9,14 +11,15 @@
  * @param options The object to attach to req[name], defaults to {}.
  * @return A request object
  */
-module.exports = function( options ) {
-    var req = {
-        _startTime: (new Date()).getTime()
-    };
+
+var Request = function(options) {
+    var startTime = (new Date()).getTime();
     if( options instanceof Object ) {
         for( var propName in options ) {
-            req[propName] = options[propName];
+            this[propName] = options[propName];
         }
     }
-    return req;
+    this.log = new Logger()
 };
+
+module.exports = Request;

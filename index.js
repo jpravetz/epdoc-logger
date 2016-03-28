@@ -1,18 +1,32 @@
 var self = {
-    
-    _gLogger: undefined,
 
-    Logger: require('./src/logger'),
+    _gLogManager: undefined,
 
-    logger: function (options) {
-        if (!self._gLogger) {
-            self._gLogger = new self.Logger(options);
+    LogManager: require('./src/log_mgr'),
+
+    logMgr: function (options) {
+        if (!self._gLogManager) {
+            self._gLogManager = new self.LogManager(options);
         }
-        return self._gLogger;
+        return self._gLogManager;
     },
 
-    get: function (name) {
-        return self.logger().get(name);
+    hasLogMgr: function() {
+        return self._gLogManager ? true : false;
+    },
+
+    start: function() {
+        return self.logMgr().start();
+    },
+
+    /**
+     * Get a log object upon which logging calls can be made
+     * @param name {string|Array} Name of module. If an array, then joined by '.'.
+     * @param context {Object} Context object, with optional req and res properties.
+     * @returns New Log object
+     */
+    get: function (name,context) {
+        return self.logMgr().get(name,context);
     },
 
     /**
@@ -25,15 +39,15 @@ var self = {
     middleware: function () {
         return {
             reqId: require('./src/middleware/reqId'),
-            responseLogger: require('./src/middleware/responseLogger'),
-            routeLogger: require('./src/middleware/routeLogger'),
-            routeSeparator: require('./src/middleware/routeSeparator'),
-            errorHandler: require('./src/middleware/errorHandler')
+            responseLogger: require('./src/middleware/response_logger'),
+            routeLogger: require('./src/middleware/route_logger'),
+            routeSeparator: require('./src/middleware/route_separator'),
+            errorHandler: require('./src/middleware/error_handler')
         };
     },
 
-    response: require('./src/stubs/response'),
-    request: require('./src/stubs/request')
+    Response: require('./src/stubs/response'),
+    Request: require('./src/stubs/request')
 };
 
 module.exports = self;

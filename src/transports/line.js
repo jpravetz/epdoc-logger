@@ -1,7 +1,7 @@
-/*************************************************************************
- * Copyright(c) 2012-2015 Jim Pravetz <jpravetz@epdoc.com>
- * May be freely distributed under the MIT license.
- **************************************************************************/
+/*****************************************************************************
+ * line.js
+ * CONFIDENTIAL Copyright 2012-2016 Jim Pravetz. All Rights Reserved.
+ *****************************************************************************/
 
 var _ = require('underscore');
 var dateutil = require('../dateutil');
@@ -61,7 +61,8 @@ LineTransport.prototype = {
         this.data = [];
     },
 
-    flush: function () {
+    flush: function (cb) {
+        cb && cb();
     },
 
     /**
@@ -82,12 +83,14 @@ LineTransport.prototype = {
         lines.push(msg);
     },
 
-    end: function (onClose) {
+    end: function (cb) {
         this.bReady = false;
+        cb && cb();
     },
 
-    destroy: function () {
+    destroy: function (cb) {
         this.end();
+        cb && cb();
     },
 
     toString: function () {

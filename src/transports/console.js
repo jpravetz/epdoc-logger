@@ -1,7 +1,7 @@
-/*************************************************************************
- * Copyright(c) 2012-2016 Jim Pravetz <jpravetz@epdoc.com>
- * May be freely distributed under the MIT license.
- **************************************************************************/
+/*****************************************************************************
+ * console.js
+ * CONFIDENTIAL Copyright 2012-2016 Jim Pravetz. All Rights Reserved.
+ *****************************************************************************/
 
 var _ = require('underscore');
 var dateutil = require('../dateutil');
@@ -9,15 +9,17 @@ var dateutil = require('../dateutil');
 /**
  * Create a new console transport.
  * @param options Output options include:
- *      dateFormat = If "ISO" then output time as an ISO Date, otherwise output as time offset from app launch
- *      bIncludeSid = If true then output express request and session IDs, otherwise do not output these values
- *      buffer = Interval in milliseconds to flush buffer (used for transports that buffer)
+ *   dateFormat = If "ISO" then output time as an ISO Date, otherwise output as time offset from
+ *        app launch
+ *   sid = If true then output express request and session IDs, otherwise do not output these values
+ *   buffer = Interval in milliseconds to flush buffer (used for transports that buffer)
  * @constructor
  */
 var ConsoleTransport = function (options) {
     this.options = options || {};
-    this.bIncludeSid = (options && options.bIncludeSid === false) ? false : true;
-    this.bISODate = ( options && options.dateFormat === 'ISO') ? true : false;
+    this.bIncludeSid = (options && ( options.sid === false || options.bIncludeSid === false) ) ? false : true;
+    this.bIncludeCustom = (options && options.custom === false ) ? false : true;
+    this.timestampFormat = this.options.timestamp || 'ms';
     this.sType = 'console';
     this.bReady = true;
 };
@@ -55,7 +57,8 @@ ConsoleTransport.prototype = {
     clear: function () {
     },
 
-    flush: function () {
+    flush: function (cb) {
+        cb && cb();
     },
 
     /**
@@ -75,12 +78,14 @@ ConsoleTransport.prototype = {
         console.log(msg);
     },
 
-    end: function (onClose) {
+    end: function (cb) {
         this.bReady = false;
+        cb && cb();
     },
 
-    destroy: function () {
+    destroy: function (cb) {
         this.end();
+        cb && cb();
     },
 
     toString: function () {
@@ -88,20 +93,75 @@ ConsoleTransport.prototype = {
     },
 
     _formatLogMessage: function (params) {
-        var d = this.bISODate ? params.time.toISOString() : dateutil.formatMS(params.timeDiff);
-        var msg = [d, params.level.toUpperCase()];
+        if (this.options.format === 'json') {
+            var json = this._paramsToJson(params);
+            return JSON.stringify(json);
+        } else {
+            var json = this._paramsToJsonArray(params);
+            return JSON.stringify(json);
+        }
+    },
+
+    /**
+     * General method, not used by console, but used by other transports, to format the parameters
+     * into a JSON objecvt.
+     * @param params
+     * @returns {{timestamp: *, level: *, module: (string|*), action, data: *, message, custom: *}}
+     * @private
+     */
+    _paramsToJson: function (params) {
+        var json = {
+            timestamp: this._getTimestamp(params),
+            level: params.level.toUpperCase(),
+            emitter: params.module,
+            action: params.action,
+            data: JSON.stringify(params.data),
+            message: params.message,
+            custom: JSON.stringify(params.custom)
+        };
+        if (json.level === 'VERBOSE') {
+            json.level = 'TRACE';
+        }
         if (this.bIncludeSid) {
-            msg.push(params.reqId ? params.reqId : 0);
-            msg.push(params.sid ? params.sid : "");
+            json.sid = params.sid;
+            json.reqId = params.reqId;
         }
-        msg.push(params.module ? params.module : "");
-        msg.push(params.action ? params.action : "");
-        msg.push(params.message);
-        //msg = msg.concat(params.message?params.message:"");
+        if (this.bIncludeCustom) {
+            json.custom = params.custom;
+        }
+        if (params.message instanceof Array) {
+            json.message = params.message.join('\n');
+        }
+        return json;
+    },
+
+    _paramsToJsonArray: function (params) {
+        var json = [ this._getTimestamp(params), params.level.toUpperCase()];
+        if (this.bIncludeSid) {
+            json.push(params.reqId ? params.reqId : 0);
+            json.push(params.sid ? params.sid : "");
+        }
+        json.push(params.module ? params.module : "");
+        json.push(params.action ? params.action : "");
+        json.push(params.message);
+        //json = json.concat(params.message?params.message:"");
+        if (this.bIncludeCustom) {
+            json.push(params.custom ? params.custom : {});
+        }
         if (params.data) {
-            msg.push(params.data);
+            json.push(params.data);
         }
-        return JSON.stringify(msg);
+        return json;
+    },
+
+    _getTimestamp: function (params) {
+        if (this.timestampFormat === 'smstime') {
+            return String(params.time.getTime());
+        } else if (this.timestampFormat === 'iso') {
+            return params.time.toISOString();
+        } else {
+            return dateutil.formatMS(params.timeDiff);
+        }
     },
 
     pad: function (n, width, z) {

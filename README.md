@@ -1,6 +1,13 @@
 # Logger #
 
-A logging module supporting built-in and custom transports, Express 4 response mixins, rich message and data syntax, and chainable methods for creating log events.
+A logging module supporting built-in and custom transports, Express 4 response mixins, 
+rich message and data syntax, and chainable methods for creating log events.
+Generally follows [Winston's](https://github.com/winstonjs/winston) logging method calls
+for simpler messages, but with the addition of chainable calls to set other output columns.
+
+**Note: express middleware is not yet working in this alpha version.**
+
+[API Documentation](./api.md)
 
 ## Install
 
@@ -15,16 +22,17 @@ npm install --save epdoc-logger
 Log to the console.
 
 ```javascript
-var log = require('epdoc-logger').get();
+var log = require('epdoc-logger').start().get();
 
 log.info("Hello world");
+log.log('debug',"Hello %s","world");
 ```
 
 Log to a file, and buffer any messages until the logger is set up
 
 ```javascript
-var logger = require('epdoc-logger').logger({autoRun:false);
-var log = logger.get('main');
+var logMgr = require('epdoc-logger').logMgr();
+var log = logMgr.get('main');
 log.info("Starting application");
 
 var config = require('config.json');
@@ -32,6 +40,30 @@ logger.setTransport('file',{path:config.logFile});
 
 log.info("Hello world");
 ```
+
+Log to loggly, buffering and making batch calls to loggly.
+
+```javascript
+var logger = require('epdoc-logger').logger({autoRun:false);
+var log = logger.get('main');
+log.info("Starting application");
+
+logger.setTransport('loggly',{token:'MyToken'}); 
+
+log.info("Hello world");
+
+// log a message count for all the different log levels
+logger.writeCount();
+
+// Shutdown properly so loggly message buffer is flushed
+logger.destroying().then(function() {
+    done();
+}, function(err) {
+    done(err);
+});
+
+```
+
 
 In the above we are using two different objects:
  
@@ -48,26 +80,22 @@ The module has built-in support for the following transports:
 * [SOS Max](http://www.sos.powerflasher.com/developer-tools/sosmax/home/) - _SOS max is the POWERFLASHER Socket Output Server - a fast and helpful programmer tool with graphical
 user interface to display log messages for debugging purpose._
 * line - A line buffer used for automatic testing
-* loggly - coming soon!
+* loggly - See [loggly.com](http://loggly.com).
 
 On startup the logger can wait for a transport to be initialized before logging, or it can being writing log messages
 immediately. By default the logger auto-starts and uses the Console Transport.
 
-To use a different transport, initialize the logger with ```autoRun``` set to false, then set the transport. 
+A call to ```setTransport``` call ```start``` to begin logging. 
 Successfully setting the transport will also start writing log messages. Messages are buffered prior to the
 transport being intitialized, so prior to this event no messages will be lost.
-
-```javascript
-var Logger = require('epdoc-logger')
-```
 
 ### Logging to Console ###
 
 Main File
 
 ```javascript 
-var Logger = require('logger');
-var log = Logger.get('main');
+var gLogMgr = require('epdoc-logger').logMgr(a).start();
+var log = gLogMgr.get('main');
 
 log.info("Return value for %s is %s", "hello", "world" );
 log.data('req',{a:3}).info();
@@ -77,7 +105,7 @@ log.data('res',{b:4}).info("My message with %s support", 'formatting');
 Other File
 
 ```javascript 
-var log = require('epdoc-logger').get('other);
+var log = require('epdoc-logger').get('other');
 
 log.info("Hello world");
 ```
@@ -87,8 +115,8 @@ log.info("Hello world");
 This shows the more general use of the logger object.
 
 ```javascript
-var logger = require('epdoc-logger').logger({autoRun:false});
-var log = logger.get('MyModule');
+var gLogMgr = require('epdoc-logger').logger();
+var log = gLogMgr.get('MyModule');
 logger.setTransport( 'file', { path: 'path/to/myfile.log' } );
 
 log.info("Return value for %s is %s", "hello", "world" );
@@ -114,7 +142,12 @@ logger.setTransport( { type: 'sos', bIncludeSessionId: false } );
 log.info("Return value for %s is %s", "hello", "world" );
 ```
 
-### Advanced
+### Logging to Loggly ###
+
+Loggly output is buffered and sent in batches. As a result it is important to shutdown logging before exiting.
+See the example earlier in this readme showing how this is done.
+
+### Advanced (needs updating)
 
 Transports can also be closed using ```unsetLogger```. In this event logging will revert to the previously 
 specified transport. For example, if you specify an SOS transport and the SOS application is closed, 
@@ -143,18 +176,25 @@ The ```setLogger(type,options)``` has the following parameters:
  * ```type``` - The transport type, which is either a string (one of the built-in transports 'console', 'file' or
  'sos') or the class of a custom transport.
  * ```options``` - An object with the following optional parameters
-    * ```path``` - 'path/to/myfile.log', used when type is file
-    * ```dateFormat``` - one of 'ISO' or 'formatMS', default is dependent on the transport but is usually 'formatMS'
-    * ```bIncludeSessionId``` - Indicates whether the sessionId should be included in the output, defaults to true
+    * ```path``` - 'path/to/myfile.log', used when type is ```file```
+    * ```dateFormat``` - one of 'ISO' or 'formatMS', default is dependent on the transport but is 
+    usually 'formatMS' (not used with loggly)
+    * ```bIncludeSid``` - Indicates whether the sessionId should be included in the output, defaults to true
 
 To build your own custom transport class it
-is recommended that you subclass the console transport (obtained using ```Logger.getLoggerClass('console')```)
+just copy or subclass the console transport (obtained using ```Logger.getLoggerClass('console')```)
 and modify as has been done for the file and sos transports.
+
+Loggly has these additional options:
+
+- ```token``` (required) Token issued by [loggly.com] for your account
+- ```bufferSize``` (optional, default 100 messages) Number of messages to buffer
+- ```flushInterval``` (optional, default 5000 ms) An interval timer that flushes messages if there are any
 
 
 ## Log Messages
 
-Logging is done by one of these methods, however the 2nd is the most popular for normal applications,
+Logging is done by one of these methods, however the 2nd is recommended for normal applications,
 and it is recommended that you start there.
 
 1. Directly calling the Logger's ```logMessage``` or lower level ```logParams``` functions
@@ -167,16 +207,16 @@ If you are creating your own logging object, use Logger's logging object as an e
 at ```middleware/responseLogger.js``` for an example of a module that extends the express.js response object
 with logging methods.
 
-### The logMessage Function ##
+### Logging using Logger Object and logMessage method ##
 
 The ```logParams``` function directly adds a log message object to the log message queue.
 The ```logParams``` function is used by the _Logging Object_ (next section) and by any
 custom logging objects that you may choose to create.
 
 ```javascript
-var logger = require('epdoc-logger').logger({autoRun:false});
+var logger = require('epdoc-logger').logger();
 logger.setLogger( { type: 'sos', bIncludeSessionId: true } );
-logger.setLogLevel( 'info' );
+logger.setLevel( 'info' );
 logger.logParams( {
         level: 'info',
         sid: '123',
@@ -203,17 +243,21 @@ are then passed to the transport by calling the transport's ```write``` method a
 as a method parameter. The transport then formats and outputs the data. You can layer your own logging library underneath
 epdoc-logger by wrapping your library as a transport.
 
-### Logging using Logger's Module Logging Object ###
+### Logging using Log Object (recommended) ###
 
 A new Module Logging object is obtained by calling ```get``` on the logger. A shortcut is to use 
 ```require('epdoc-logger').get()``` to obtain the object.
+
+It is recommended that you create a new log object for each module or request. Attach your
+log object to a request object when you want to log in the context of the request. In this
+situation you should also set ```{ sid: true }``` in your LogManager.
 
 ```javascript
 // Return new logging object with property ```moduleName``` set.
 var log = require('epdoc-logger').get('MyModuleName');
 ```
 
-The string "MyModuleName" above should usually be set to the name of your Javascript file or module.
+The string "MyModuleName" above should usually be set to the name of your Javascript file, module, or emitter.
 It is output as a column or property of each line that is created by calling methods on the log object.
 
 The logging object provides a convenient interface that sits above the ```logParams``` function and 
@@ -232,31 +276,35 @@ log.data('key2',{type:'value2'}).info("My message");
 log.data('key1',{type:'value1'}).data('key2',{type:'value2'}).debug();
 ```
 
-The Module Logging object supports chaining. Every method except ```isAboveLevel()``` will 
-return the object.
+The Logging object supports chaining. Most methods will return the object.
 
 Items added with the ```data``` method are flushed when ```logArgs``` is called.
 ```logArgs``` is called directly or by any of the methods ```info```, ```debug```, ```log```, etc.
 
+You can also set per-Log Object _custom_ data using the ```log.set()``` method. 
+Data set this way remain constant for the life of the log object. For requests this might be
+useful to output something like the _messageId_ of a request. To output custom data you will also
+need to set ```{ custom: true }``` in your LogManager
+
 ## Logging Commands ##
 
-This sections shows example uses of the log object.
+This sections shows example uses of the LogManagher object.
 
 ```javascript
 // Get the global logger object
 
-var logger = require('epdoc-logger').logger({autoRun:false});
+var logMgr = require('epdoc-logger').logMgr({sid:false});
 
 // Logger static methods
 
-logger.setTransport( 'file', { path: 'path/to/myfile.log', dateFormat: 'ISO', bIncludeSid: false } );
-var loggerType = logger.getCurrentTransport().type();        // Will return the transport type of the logger
-logger.setLogLevel( 'warn' );
-var startTime = logger.getStartTime();                    // Milliseconds
+logMgr.setTransport( 'file', { path: 'path/to/myfile.log', dateFormat: 'ISO', sid: false } );
+var loggerType = logMgr.getCurrentTransport().type();        // Will return the transport type of the logger
+logMgr.setLevel( 'warn' );
+var startTime = logMgr.getStartTime();                    // Milliseconds
 
-// Get a log object for this file or module
+// Get a Logger object for this file or module
 
-var log = logger.get('MyModuleName');
+var log = logMgr.get('MyModuleName');
 
 // Instance methods. Each line outputs a message.
 
@@ -264,7 +312,7 @@ log.logObj('a',1).logObj('b',[2,3]).info();
 log.logObj({a:1,b:[2,3]}).info("My message");
 log.info( "I just want to say %s to the %s", "Hello", "World" );
 log.action('obj.update').debug( "We %s formatted messages", "do" );
-log.error( "Error: %s", err );
+log.error( new Error("My error") );
 log.verbose( "The default is to not output verbose messages, so this will not by default be output" );
 log.warn( "Danger Will Robinson, danger" );
 log.fault( "Restarting server in %d seconds", 10 );
@@ -276,7 +324,7 @@ log.separator();        // Output a line separator
 log.log( 'info', "This method %s supports formatting", "also" );
 
 // Enable verbose messages to be output for this log object (overrides global setting)
-log.setLogLevel( "verbose" );
+log.setLevel( "verbose" );
 ```
 
 ### Chaining ###
@@ -288,6 +336,8 @@ The following methods all add column values to the message that is output but do
 * ```action``` - Sets the action column value to this string.
 * ```logObj``` - Sets the data column value. Either pass in a key value pair, which is then added to the data
 object, or an object, which the data object is then set to.
+* ```set``` - Sets a value in a ```custom``` column and keeps this value for the duration of the Log object's
+lifespan. This column is currently only output to the loggly transport.
 
 The following methods result in a message being output with the corresponding log level set:
 
@@ -307,13 +357,29 @@ The following methods result in a message output with log level set to INFO:
     * ```msg``` - String to output, formatted with ```util.format```
 
 
+## Custom Log Levels ##
+
+Log level defaults are set in LogManager:
+
+```javascript
+    this.LEVEL_DEFAULT = 'debug';       // Default threshold level for outputting logs
+    this.LEVEL_INFO = 'info';           // If changing LEVEL_ORDER, what level should internally generated info messages be output at?
+    this.LEVEL_WARN = 'warn';           // If changing LEVEL_ORDER, what level should internally generated warn messages be output at?
+    this.LEVEL_ORDER = ['verbose', 'debug', 'info', 'warn', 'error', 'fatal'];
+```
+
+You can customize log levels by setting the value of this array after constructing your LogManager object.
+Any subsequently created Logger objects will have methods with the names you have provided. 
+Please use lowercase log level names.
 
 ## Express Middleware ##
+
+_Note: This section needs to be updated._
 
 The included express middleware are instantiated as follows:
 
 ```javascript
-var Logger = require('epdoc-logger');
+var LogMgr = require('epdoc-logger');
 
 var reqId = Logger.middleware().reqId;
 var responseLogger = Logger.middleware().responseLogger;
@@ -365,7 +431,7 @@ Adds an information line to the log file for each new route.
 ### More Information
 
 It would be nice if there were more documentation for the logging methods, but in the meantime,
-please refer to the source code in responseLogger.js.
+please refer to the source code in src/log.js.
 
 ## Test
 
@@ -375,7 +441,7 @@ Tests have not been updated, however I have started migrating these to mocha.
 
 * The express middleware has not been tested since version 2.0.0 has been started.
 * Add koa middleware (I don't currently have a koa project going, so this may not happen for awhile)
-* Loggly support (highest priority for me right now)
+* Loggly support - DONE!
 
 ## Author
 
