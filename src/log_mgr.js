@@ -12,14 +12,30 @@ var ConsoleStream = require('./transports/console');
 
 
 /**
- * Create a new LogManager using the default ConsoleTransport. The logger will not begin writing
- * to the transport unless you set autoRun = true or call setTransport or call start.
- * To use a different transport, set the transport using setTransport('file').
- * You will likely have one LogManager per application, then call logMgr.get() to get a log
- * object which you will use for logging messages.
- * @param options {Object} { autoRun: false, sid: false, custom: boolean, level: string,
- *   transport: { string } Note that if transport has any parameters, you should set it using the
- *   setTransport method.
+ * Create a new LogManager object with a default ConsoleTransport. Logged messages will not begin
+ * writing to the transport until {@link LogManager#start} or {@link LogManager#setTransport} is
+ * called. To use a different transport, set the transport using setTransport('file'). You will
+ * likely have one LogManager per application, then call logMgr.get() to get a log object which you
+ * will use for logging messages.
+ *
+ * @class A LogManager is used to manage logging, including transports, startup, shutdown and
+ *   various options.
+ *
+ * @param {Object} [options] -
+ * @param {Date} [options.t0=now] - The earliest known time for when the process was started
+ * @param {boolean} [options.sid=false] - Indicates whether a session ID column should be included
+ *   in log output
+ * @param {boolean} [options.custom=false] - Indicates whether a custom column should be included
+ *   in log output
+ * @param {string} [options.level=debug] - The log level at and above which log messages will be
+ *   written
+ * @param {boolean} [options.errorStack=false] - Include the error stack in the data column when
+ *   writing Error objects to the log.
+ * @param {Object} [options.transport] - Set the transport now rather than calling {#setTransport}.
+ *   This object contains the config for the transport and must include a type property.
+ * @param {string} options.transport.type - The name of the transport
+ * @param {boolean} [autoRun=false] - If set to true then logging will be immediately enabled and a
+ *   call to {@link LogManager#start} will not be necessary.
  * @constructor
  */
 var LogManager = function (options) {
@@ -31,8 +47,10 @@ var LogManager = function (options) {
     // Count of how many errors, warnings, etc
     this.logCount = {};
     this.LEVEL_DEFAULT = 'debug';       // Default threshold level for outputting logs
-    this.LEVEL_INFO = 'info';           // If changing LEVEL_ORDER, what level should internally generated info messages be output at?
-    this.LEVEL_WARN = 'warn';           // If changing LEVEL_ORDER, what level should internally generated warn messages be output at?
+    this.LEVEL_INFO = 'info';           // If changing LEVEL_ORDER, what level should internally
+                                        // generated info messages be output at?
+    this.LEVEL_WARN = 'warn';           // If changing LEVEL_ORDER, what level should internally
+                                        // generated warn messages be output at?
     this.LEVEL_ORDER = ['verbose', 'debug', 'info', 'warn', 'error', 'fatal'];
     this.logLevel = options.level ? options.level : this.LEVEL_DEFAULT;
 // A stack of tranports, with the console transport always installed by default as a fallback
@@ -57,7 +75,7 @@ LogManager.prototype = {
     /**
      * Starts the transport at the head of the transport stack, if not already started. This starts
      * logging. This is done manually because we may hold of logging until the transport is set.
-     * @private
+     * @return {LogManager}
      */
     start: function () {
         var self = this;
@@ -96,19 +114,22 @@ LogManager.prototype = {
      * The default transport, before any is unshifted onto the list of transports, is the console
      * transport. If you add a transport (eg. file transport) then later remove it, the previously
      * set logger (eg. console) will be used.
-     * @param type - For the provided loggers, one of 'sos', 'file', 'line', or 'console'. For a
-     *   custom transport this should be a transport class object that can be instantiated with
+     *
+     * @param {string|Object} type - For the provided loggers, one of 'sos', 'file', 'line', or
+     *   'console'. For a custom transport this should be a transport class object that can be
+     *   instantiated with
      *   'new'. To create your own transport class, use getLoggerClass('console') and then subclass
      *   this class.
      * @param options are passed to the transport when constructing the new transport object.
      *   Options for the predefined transports are:
      *      path {string} path to file, used by file transport
-     *      timestamp {string} one of 'iso', 'smstime' or 'ms', defaults to 'ms' but may be overriden by
-     *   transport requirements (e.g. loggly uses iso) sid {boolean} whether to include sessionId and reqId
-     *   columns in log output (used with express and other request/response apps), overrides
-     *   LogMgr setting. custom {boolean} Indicates whether to include 'custom' column or not,
-     *   overrides LogMgr setting.
+     *      timestamp {string} one of 'iso', 'smstime' or 'ms', defaults to 'ms' but may be
+     *   overriden by transport requirements (e.g. loggly uses iso) sid {boolean} whether to
+     *   include sessionId and reqId columns in log output (used with express and other
+     *   request/response apps), overrides LogMgr setting. custom {boolean} Indicates whether to
+     *   include 'custom' column or not, overrides LogMgr setting.
      *
+     * @return {LogManager}
      */
     setTransport: function (type, options) {
 
@@ -216,9 +237,10 @@ LogManager.prototype = {
     },
 
     /**
-     * Set automatically when this moduel is initialized, but can be set manually to the earliest
-     * known time that the application was started.
-     * @param d
+     * Set automatically when the epdoc-logger module is initialized, but can be set manually to
+     * the earliest known time that the application was started.
+     * @param d {Date} The application start time
+     * @return {LogManager}
      */
     setStartTime: function (d) {
         this.t0 = (new Date(d)).getTime();
@@ -234,26 +256,28 @@ LogManager.prototype = {
     },
 
     /**
-     * Return a new module logger object instance using the specified module name.
+     * Return a new module {@link Logger} object with the specified module name.
      * Although it's a new logger instance, it still uses the same underlying
-     * 'writeMessageParams' method, and whatever transport is set globally.
-     * @param moduleName Name of module or file, added as a column to log output
-     * @param opt_context {object} A context object. For Express or koa this would have 'req' and
+     * 'writeMessageParams' method, and whatever transport is set globally by this LogManager.
+     * @param {string} moduleName Name of module or file, added as a column to log output
+     * @param {object} [context] A context object. For Express or koa this would have 'req' and
      *   'res' properties. The context.req may also have reqId and sid/sessionId/session.id
      *   properties that are used to populate their respective columns of output. Otherwise these
      *   columns are left blank on output.
-     * @return A new logger object.
+     * @return A new {logger} object.
      */
-    get: function (moduleName, opt_context) {
-        return new Logger(this, moduleName, opt_context);
+    get: function (moduleName, context) {
+        return new Logger(this, moduleName, context);
     },
 
     /**
-     * Same as logParams with just these parameters set.
-     * @param level
-     * @param action
-     * @param msg
-     * @param data
+     * A wrapper for logParams with a more limited set of properties.
+     * @param {string} level
+     * @param {string} action
+     * @param {string} message
+     * @param {Object} [data]
+     * @return {LogManager}
+     * @see {LogManager#logParams}
      */
     logMessage: function (level, action, message, data) {
         var params = { module: 'logger', level: level, action: action, message: message };
@@ -264,29 +288,33 @@ LogManager.prototype = {
     },
 
     /**
-     * Write a raw message. We queue messages to handle the moment in time while we are switching
-     * streams and the new stream is not ready yet. We do queuing while we wait for it to be ready.
-     * You can completely bypass creating a logger instance in your class if you use this call
-     * directly, In this situation the log level filtering will be established by the log level
-     * (this.logLevel).
-     * @param msgParams includes:
-     *      level - Must be one of LEVEL_ORDER values, all lower case
-     *      sid - (Optional) sessionID to display
-     *      module - (Optional) Module descriptor to display (usually of form route.obj.function)
-     *      time - (Optional) A date object with the current time, will be filled in if not
-     *   provided
-     *      timeDiff - (Optional) The difference in milliseconds between 'time' and when the
-     *   application was started, based on reading LogManager.getStartTime() message - A string or
-     *   an array of strings. If an array the string will be printed on multiple lines where
-     *   supported (e.g. SOS). The string must already formatted (e.g.. no '%s')
-     *   @params opt_thresholdLevel {string} Specify the threshold log level above which to display this log message.
+     * Write a raw message to the transport. The LogManager will buffer messages to handle the
+     * situation where we are switching transports and the new transport is not yet ready. It is
+     * possible to log directly to a transport using this method and never need to create a {@link
+        * Logger} object.
+     *
+     * @param {Object} msgParams - The message to be written
+     * @param {string} [msgParams.level=info] - Must be one of LEVEL_ORDER values, all lower case
+     * @param {string} [msgParams.sid] - sessionID to display
+     * @param {string} [msgParams.module] - Module or emitter descriptor to display (usually of
+     *   form route.obj.function)
+     * @param {string} [msgParams.time=now] - A date object with the current time
+     * @param {string} [msgParams.timeDiff=calculated] - The difference in milliseconds between
+     *   'time' and when the application was started, based on reading {@link
+        *   LogManager#getStartTime}
+     * @param {string|string[]} msgParams.message - A string or an array of strings. If an array
+     *   the string will be printed on multiple lines where supported (e.g. SOS). The string must
+     *   already formatted (e.g.. no '%s')
+     * @params {string} [thresholdLevel] - Specify the threshold log level above which to display
+     *   this log message, overriding the log level set for the LogManager.
+     * @return {LogManager}
      */
-    logParams: function (msgParams,opt_thresholdLevel) {
+    logParams: function (msgParams, thresholdLevel) {
         if (msgParams) {
             if (!msgParams.level) {
                 msgParams.level = this.LEVEL_INFO;
             }
-            if (this.isAboveLevel(msgParams.level,opt_thresholdLevel)) {
+            if (this.isAboveLevel(msgParams.level, thresholdLevel)) {
                 if (!msgParams.time) {
                     msgParams.time = new Date();
                 }
@@ -304,8 +332,9 @@ LogManager.prototype = {
     },
 
     /**
-     * Set the LogManager objects's minimum log level
-     * @param level {string} Must be one of LEVEL_ORDER
+     * Set the {@link LogManager} objects's minimum log level
+     * @param level {string} - Must be one of {@link LogManager#LEVEL_ORDER}
+     * @return {LogManager}
      */
     setLevel: function (level) {
         this.logLevel = level;
@@ -313,10 +342,12 @@ LogManager.prototype = {
     },
 
     /**
-     * Return true if the level is equal to or greater then the LogManager's logLevel property.
+     * Return true if the level is equal to or greater then the {@link LogManager#logLevel}
+     * property.
+     * @return {boolean}
      */
-    isAboveLevel: function (level,opt_thresholdLevel) {
-        var threshold = opt_thresholdLevel || this.logLevel;
+    isAboveLevel: function (level, thresholdLevel) {
+        var threshold = thresholdLevel || this.logLevel;
         if (this.LEVEL_ORDER.indexOf(level) >= this.LEVEL_ORDER.indexOf(threshold)) {
             return true;
         }
@@ -325,34 +356,50 @@ LogManager.prototype = {
 
 
     /**
-     * Write a count of how many of each level of message has been output.
-     * This is a useful function to call when the application is shutdown.
+     * Write a log line to the transport with a count of how many of each level of message has been
+     * output. This is a useful function to call when the application is shutdown.
+     * @param {string} [message]
+     * @return {LogManager}
      */
-    writeCount: function (opt_msg) {
+    writeCount: function (message) {
         return this.logParams({
             module: 'logger',
             action: 'counts',
             data: this.logCount,
-            message: opt_msg
+            message: message
         });
     },
 
+    /**
+     * Set whether to show an error stack as data when an Error is encountered.
+     * This option can also be set in {@link LogManager#constructor}. The property is referenced by
+     * {@link Logger} objects when they are created, and is used by the Logger to determine whether
+     * to output an Error stack trace in the data column when an Error is logged.
+     * @param {boolean} [bShow=true] Set whether to log the call stack for logged errors.
+     * @returns {LogManager}
+     */
     errorStack: function (bShow) {
         this.bErrorStack = (bShow === false) ? false : true;
         return this;
     },
 
     /**
-     * Return a count object
-     * @returns {Object} with properties for 'warn', 'info', etc.
+     * Return a count object containing a count of the number of log messages produced at the
+     * various log levels defined in {@link LogManager#LEVEL_ORDER}.
+     * @returns {Object} with properties for 'warn', 'info', etc. where the value of each property
+     *   is a number.
      */
     getCount: function () {
         return this.logCount;
     },
 
-    // Do a managed shutdown. This is important if using a buffered logger such as our loggly
-    // implementation.
-    destroying: function () {
+    /**
+     * Performs a managed shutdown of the logging service. This is relevant if using a buffered
+     * logger such as the loggly transport.
+     * @param {function} [callback] - Called with err when complete.
+     * @returns {Promise}
+     */
+    destroying: function (callback) {
         var jobs = [];
         while (this.transports.length) {
             var transport = this.transports.shift();
@@ -369,36 +416,39 @@ LogManager.prototype = {
                 jobs.push(job);
             }
         }
-        return Promise.all(jobs)
+        return Promise.all(jobs).then(function () {
+            callback && callback();
+            return Promise.resolve();
+        }, function (err) {
+            callback && callback(err);
+            return Promise.reject(err);
+        });
     },
 
     /**
-     * Flush the queue of the current transport
+     * Flush the queue of the current transport.
+     * @param {function} [callback] - Called with err when complete.
      * @returns {Promise}
      */
-    flushing: function () {
+    flushing: function (callback) {
         var self = this;
         return new Promise(function (resolve, reject) {
             var transport = self.getCurrentTransport();
             if (transport) {
                 transport.flush(function (err) {
                     if (err) {
+                        callback && callback(err);
                         reject(err);
                     } else {
+                        callback && callback();
                         resolve();
                     }
                 })
             } else {
+                callback && callback();
                 resolve();
             }
         });
-    },
-
-    /**
-     * Shortcut to util.format()
-     */
-    format: function () {
-        return util.format.apply(this, arguments);
     }
 
 };

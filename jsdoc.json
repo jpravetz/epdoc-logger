@@ -1,6 +1,7 @@
 {
     "templates": {},
     "source": {
+        "include": ["./index.js"],
         "exclude": [
             "src/stubs/*.js",
             "src/middleware/response.js",

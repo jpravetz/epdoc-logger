@@ -7,27 +7,28 @@ var _ = require('underscore');
 var dateutil = require('../dateutil');
 
 /**
- * Create a new line transport where output is added to a lines array.
- * Used for testing.
- * @param options Output options include:
- *      dateFormat = If "ISO" then output time as an ISO Date, otherwise output as time offset from app launch
- *      bIncludeSid = If true then output express request and session IDs, otherwise do not output these values
- *      buffer = Interval in milliseconds to flush buffer (used for transports that buffer)
+ * Create a new Callback transport where output is added to a data array or a callback is used to
+ * pass thru the log message. Used for testing.
+ *
+ * @param options {Object} Output options include:
+ * @param [sid] {boolean} - If true then output express request and session IDs, otherwise
+ *   do not output these values
+ * @param{function}  [callback] - Callback with object to be logged rather than adding to line
+ *   buffer
  * @constructor
  */
-var LineTransport = function (options) {
+var CallbackTransport = function (options) {
     this.options = options || {};
-    this.bIncludeSid = (options && options.bIncludeSid === false) ? false : true;
-    this.bISODate = ( options && options.dateFormat === 'ISO') ? true : false;
-    this.sType = 'line';
+    this.bIncludeSid = (options && options.sid === false) ? false : true;
+    this.sType = 'callback';
     this.bReady = true;
-    this.lines = [];
+    this.logCallback = options.callback;
     this.data = [];
 };
 
-LineTransport.prototype = {
+CallbackTransport.prototype = {
 
-    constructor: LineTansport,
+    constructor: CallbackTransport,
 
 
     validateOptions: function () {
@@ -57,7 +58,6 @@ LineTransport.prototype = {
      * as socket transports that direct logs to a UI.
      */
     clear: function () {
-        this.lines = [];
         this.data = [];
     },
 
@@ -66,7 +66,7 @@ LineTransport.prototype = {
     },
 
     /**
-     * Write a log line to the lines array, and the params to the data array.
+     * Write params to the data array or call the callback with the params.
      * @param params Object with the following properties:
      *      time = Date object
      *      level = log level (INFO, WARN, ERROR, or any string)
@@ -78,9 +78,11 @@ LineTransport.prototype = {
      *      data = JSON object
      */
     write: function (params) {
-        data.push(params);
-        var msg = this._formatLogMessage(params);
-        lines.push(msg);
+        if (this.logCallback) {
+            this.logCallback(params);
+        } else {
+            this.data.push(params);
+        }
     },
 
     end: function (cb) {
@@ -94,24 +96,7 @@ LineTransport.prototype = {
     },
 
     toString: function () {
-        return "Console";
-    },
-
-    _formatLogMessage: function (params) {
-        var d = this.bISODate ? params.time.toISOString() : dateutil.formatMS(params.timeDiff);
-        var msg = [d, params.level.toUpperCase()];
-        if (this.bIncludeSid) {
-            msg.push(params.reqId ? params.reqId : 0);
-            msg.push(params.sid ? params.sid : "");
-        }
-        msg.push(params.module ? params.module : "");
-        msg.push(params.action ? params.action : "");
-        msg.push(params.message);
-        //msg = msg.concat(params.message?params.message:"");
-        if (params.data) {
-            msg.push(params.data);
-        }
-        return JSON.stringify(msg);
+        return "Buffer";
     },
 
     pad: function (n, width, z) {
@@ -125,4 +110,4 @@ LineTransport.prototype = {
 };
 
 
-module.exports = LineTransport;
+module.exports = CallbackTransport;
