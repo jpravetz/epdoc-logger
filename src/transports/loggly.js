@@ -76,6 +76,10 @@ LogglyTransport.prototype = {
         return this.sType;
     },
 
+    isEqual: function(transport) {
+        return transport.type === 'loggly' && transport.token === this.token ? true : false
+    },
+
     /**
      * Return true if this logger is ready to accept write operations.
      * Otherwise the caller should buffer writes and call write when ready is true.
@@ -170,7 +174,7 @@ LogglyTransport.prototype = {
     },
 
     toString: function () {
-        return "loggly";
+        return "Loggly";
     },
 
     _formatLogMessage: function (params) {

@@ -40,6 +40,10 @@ var protoProps = {
         });
     },
 
+    isEqual: function(transport) {
+        return transport.type === 'sos' && transport.port === this.port ? true : false
+    },
+
     clear: function() {
         console.log("Socket: Clearing Socket console");
         if( this.options.format === 'sos' ) {

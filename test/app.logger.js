@@ -26,26 +26,39 @@ describe("Logger test", function () {
     }
 
     it("Set Callback transport and verify previous messages", function (done) {
-        logMgr.setTransport('callback',{callback:onMessage});
-        var params = buffer.shift();
-        should(params).have.property('time');
-        should(params).have.properties({action:'bake',message:'Starting',module:'moduleName',level:'info'});
-        params = buffer.shift();
-        should(params).have.property('time');
-        should(params).have.properties({message:'Running { a: 2, b: 3 }',module:'moduleName',level:'debug'});
-        should.not.exist(params.action);
-        should(params.data).have.properties({c:4,e:7});
-        params = buffer.shift();
-        should(params).have.property('time');
-        should(params).have.properties({action:'logger.push',message:'Setting logger to Buffer',module:'logger',level:'info'});
-        should(params.data).have.properties({transport:'Buffer'});
-        params = buffer.shift();
-        should(params).have.property('time');
-        should(params).have.properties({action:'logger.push.success',message:'Set logger to Buffer',module:'logger',level:'info'});
-        should(params.data).have.properties({transport:'Buffer'});
-        params = buffer.shift();
-        should.not.exist(params);
-        done();
+        logMgr.setTransport('callback',{callback:onMessage}).start(function() {
+            try {
+                var params = buffer.shift();
+                should(params).have.property('time');
+                should(params).have.properties({action:'bake',message:'Starting',module:'moduleName',level:'info'});
+                params = buffer.shift();
+                should(params).have.property('time');
+                should(params).have.properties({message:'Running { a: 2, b: 3 }',module:'moduleName',level:'debug'});
+                should.not.exist(params.action);
+                should(params.data).have.properties({c:4,e:7});
+                params = buffer.shift();
+                should(params).have.property('time');
+                should(params).have.properties({action:'logger.start.success',message:'Started Console transport',module:'logger',level:'info'});
+                should(params.data).have.properties({transport:'Console'});
+                params = buffer.shift();
+                should(params).have.property('time');
+                should(params).have.properties({action:'logger.push',message:'Setting logger to Callback',module:'logger',level:'info'});
+                should(params.data).have.properties({transport:'Callback'});
+                params = buffer.shift();
+                should(params).have.property('time');
+                should(params).have.properties({action:'logger.stop',message:'Stopping Console',module:'logger',level:'info'});
+                should(params.data).have.properties({transport:'Console'});
+                params = buffer.shift();
+                should(params).have.property('time');
+                should(params).have.properties({action:'logger.start.success',message:'Started Callback transport',module:'logger',level:'info'});
+                should(params.data).have.properties({transport:'Callback'});
+                params = buffer.shift();
+                should.not.exist(params);
+                done();
+            } catch(err) {
+                done(err);
+            }
+        });
     });
 
     it("Verify new messages", function (done) {

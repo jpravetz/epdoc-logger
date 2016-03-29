@@ -44,6 +44,10 @@ CallbackTransport.prototype = {
         return this.sType;
     },
 
+    isEqual: function(transport) {
+        return transport.type === 'callback' && transport.callback === this.callback ? true : false
+    },
+
     /**
      * Return true if this logger is ready to accept write operations.
      * Otherwise the caller should buffer writes and call write when ready is true.
@@ -97,7 +101,7 @@ CallbackTransport.prototype = {
     },
 
     toString: function () {
-        return "Buffer";
+        return "Callback";
     },
 
     pad: function (n, width, z) {

@@ -154,11 +154,14 @@ On startup the logger can wait for a transport to be initialized before logging,
 immediately (if {@link LogManager#autoRun} is set. 
 By default the logger uses the Console Transport and must be started manually.
 
-If {@link LogManager#autoRun} is not set, then a call to {@link LogManager#start} or {@link LogManager#setTransport} will begin logging. 
-Messages are buffered prior to the transport being intitialized, so prior to this event no messages will be lost.
+If {@link LogManager#autoRun} is not set, then a call to {@link LogManager#start} will begin logging. 
+Messages are buffered prior to the transport being initialized, so prior to this event no messages will be lost.
 
-Transports are configured via properties passed to {@link LogManager#setTransport} or {@link LogManager#new} and options.transport. 
+Transports are configured via properties passed to {@link LogManager#setTransport}, {@link LogManager#addTransport} 
+or {@link LogManager#new} and options.transport. 
 Transport configuration properties are passed directly to the transport. Refer to the individual class API reference documents for more information.
+
+Multiple transports can be configured to be run at the same time using {@link LogManager#addTransport}.
 
 ### Logging to Console ###
 

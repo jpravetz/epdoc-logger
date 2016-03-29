@@ -43,6 +43,10 @@ ConsoleTransport.prototype = {
     type: function () {
         return this.sType;
     },
+    
+    isEqual: function(transport) {
+        return transport.type === 'console' ? true : false
+    },
 
     /**
      * Return true if this logger is ready to accept write operations.
