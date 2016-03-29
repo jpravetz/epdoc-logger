@@ -9,14 +9,26 @@ var os = require('os');
 var request = require('request');
 
 /**
- * Create a new console transport.
- * @param options Output options include:
- *      dateFormat = If "ISO" then output time as an ISO Date, otherwise output as time offset from
- *   app launch bIncludeSid = If true then output express request and session IDs, otherwise do not
- *   output these values buffer = Interval in milliseconds to flush buffer (used for transports
- *   that buffer)
+ * Create a new Loggly transport to output log messages to loggly.
+ *
+ * @param options {Object} Output options include:
+ * @param [sid] {boolean} - If true then output express request and session IDs, otherwise
+ *   do not output these values
+ * @param token {string} - The loggly token used for authenticating to loggly.
+ * @param [tags] {string[]} - Array of loggly tags.
+ * @param [url] {string} - URL to use for the loggly service. Should be set only if the default URL
+ *   value is not working.
+ * @param [host=os.hostname()] {string} - Set the name of the host that is reported to loggly in a host column.
+ * @param [timestamp=ms] {string} - Set the format for timestamp output, must be one of 'ms' or
+ *   'iso'.
+ * @param [format=jsonArray] {string} - Set the format for the output line. Must be one of 'json'
+ *   or 'jsonArray'.
+ * @param [custom=true] {boolean} - Set whether to output a 'custom' column.
+ * @param [bufferSize=100] {number} - The maximum number of lines of log messages to buffer before writing to loggly.
+ * @param [flushInterval=5000] {number} - The maximum number of milliseconds of buffering before writing to loggly.
  * @constructor
  */
+
 var LogglyTransport = function (options) {
     options || (options = {});
     this.options = options;
@@ -88,15 +100,16 @@ LogglyTransport.prototype = {
 
     /**
      * Write a log line
-     * @param params Object with the following properties:
-     *      time = Date object
-     *      level = log level (INFO, WARN, ERROR, or any string)
-     *      reqId = express request ID, if provided (output if bIncludeSid is true)
-     *      sid = express session ID, if provided (output if bIncludeSid is true)
-     *      module = name of file or module (noun)
-     *      action = method or operation being performed (verb)
-     *      message = text string to output
-     *      data = JSON object
+     * @param params {Object} Parameters to be logged:
+     *  @param {Date} params.time - Date object
+     * @param {string} params.level - log level (INFO, WARN, ERROR, or any string)
+     * @param {string} params.reqId - express request ID, if provided (output if options.sid is true)
+     * @param {string} params.sid - express session ID, if provided (output if options.sid is true)
+     * @param {string} params.module - name of file or module or emitter (noun)
+     * @param {string} params.action - method or operation being performed (verb)
+     * @param {string} params.message - text string to output
+     * @param {Object} params.custom - Arbitrary data to be logged in a 'custom' column if enabled via the LogManager.
+     * @param {Object} params.data - Arbitrary data to be logged in the 'data' column
      */
     write: function (params) {
         var msg = this._formatLogMessage(params);

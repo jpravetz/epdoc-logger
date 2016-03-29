@@ -66,16 +66,17 @@ CallbackTransport.prototype = {
     },
 
     /**
-     * Write params to the data array or call the callback with the params.
-     * @param params Object with the following properties:
-     *      time = Date object
-     *      level = log level (INFO, WARN, ERROR, or any string)
-     *      reqId = express request ID, if provided (output if bIncludeSid is true)
-     *      sid = express session ID, if provided (output if bIncludeSid is true)
-     *      module = name of file or module (noun)
-     *      action = method or operation being performed (verb)
-     *      message = text string to output
-     *      data = JSON object
+     * Write a log line
+     * @param params {Object} Parameters to be logged:
+     *  @param {Date} params.time - Date object
+     * @param {string} params.level - log level (INFO, WARN, ERROR, or any string)
+     * @param {string} params.reqId - express request ID, if provided (output if options.sid is true)
+     * @param {string} params.sid - express session ID, if provided (output if options.sid is true)
+     * @param {string} params.module - name of file or module or emitter (noun)
+     * @param {string} params.action - method or operation being performed (verb)
+     * @param {string} params.message - text string to output
+     * @param {Object} params.custom - Arbitrary data to be logged in a 'custom' column if enabled via the LogManager.
+     * @param {Object} params.data - Arbitrary data to be logged in the 'data' column
      */
     write: function (params) {
         if (this.logCallback) {

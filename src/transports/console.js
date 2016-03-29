@@ -7,14 +7,17 @@ var _ = require('underscore');
 var dateutil = require('../dateutil');
 
 /**
- * Create a new console transport.
- * @param options Output options include:
- *   dateFormat = If "ISO" then output time as an ISO Date, otherwise output as time offset from
- *        app launch
- *   sid = If true then output express request and session IDs, otherwise do not output these values
- *   buffer = Interval in milliseconds to flush buffer (used for transports that buffer)
+ * Create a new Console transport to output log messages to the console.
+ *
+ * @param options {Object} Output options include:
+ * @param [sid] {boolean} - If true then output express request and session IDs, otherwise
+ *   do not output these values
+ * @param [timestamp=ms] {string} - Set the format for timestamp output, must be one of 'ms' or 'iso'.
+ * @param [format=jsonArray] {string} - Set the format for the output line. Must be one of 'json' or 'jsonArray'.
+ * @param [custom=true] {boolean} - Set whether to output a 'custom' column.
  * @constructor
  */
+
 var ConsoleTransport = function (options) {
     this.options = options || {};
     this.bIncludeSid = (options && ( options.sid === false || options.bIncludeSid === false) ) ? false : true;
@@ -63,15 +66,16 @@ ConsoleTransport.prototype = {
 
     /**
      * Write a log line
-     * @param params Object with the following properties:
-     *      time = Date object
-     *      level = log level (INFO, WARN, ERROR, or any string)
-     *      reqId = express request ID, if provided (output if bIncludeSid is true)
-     *      sid = express session ID, if provided (output if bIncludeSid is true)
-     *      module = name of file or module (noun)
-     *      action = method or operation being performed (verb)
-     *      message = text string to output
-     *      data = JSON object
+     * @param params {Object} Parameters to be logged:
+     *  @param {Date} params.time - Date object
+     * @param {string} params.level - log level (INFO, WARN, ERROR, or any string)
+     * @param {string} params.reqId - express request ID, if provided (output if options.sid is true)
+     * @param {string} params.sid - express session ID, if provided (output if options.sid is true)
+     * @param {string} params.module - name of file or module or emitter (noun)
+     * @param {string} params.action - method or operation being performed (verb)
+     * @param {string} params.message - text string to output
+     * @param {Object} params.custom - Arbitrary data to be logged in a 'custom' column if enabled via the LogManager.
+     * @param {Object} params.data - Arbitrary data to be logged in the 'data' column
      */
     write: function (params) {
         var msg = this._formatLogMessage(params);
