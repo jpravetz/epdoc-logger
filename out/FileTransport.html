@@ -4,7 +4,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width">
-	<title>Documentation Class: ConsoleTransport</title>
+	<title>Documentation Class: FileTransport</title>
 
 	<!--[if lt IE 9]>
 	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -70,13 +70,13 @@
 		<div id="main">
 			
 
-	<h1 class="page-title">Class: ConsoleTransport</h1>
+	<h1 class="page-title">Class: FileTransport</h1>
 <section>
 
 <header>
     
         <h2>
-        ConsoleTransport
+        FileTransport
         </h2>
         
     
@@ -89,7 +89,7 @@
         
 <hr>
 <dt>
-    <h4 class="name" id="ConsoleTransport"><span class="type-signature"></span>new ConsoleTransport(options)</h4>
+    <h4 class="name" id="FileTransport"><span class="type-signature"></span>new FileTransport(options)</h4>
     
     
 </dt>
@@ -97,7 +97,7 @@
 
     
     <div class="description">
-        Create a new Console transport to output log messages to the console.
+        Create a new File transport to output log messages to a file.
     </div>
     
 
@@ -218,6 +218,42 @@
 
         <tr>
             
+                <td class="name"><code>path</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last">The path to the output file to append to.</td>
+        </tr>
+
+    
+
+        <tr>
+            
                 <td class="name"><code>timestamp</code></td>
             
 
@@ -251,7 +287,9 @@
                 </td>
             
 
-            <td class="description last">Set the format for timestamp output, must be one of 'ms' or 'iso'.</td>
+            <td class="description last">Set the format for timestamp output, must be one of
+  'ms' or
+  'iso'.</td>
         </tr>
 
     
@@ -291,7 +329,8 @@
                 </td>
             
 
-            <td class="description last">Set the format for the output line. Must be one of 'json' or 'jsonArray'.</td>
+            <td class="description last">Set the format for the output line. Must be one of
+  'json' or 'jsonArray'.</td>
         </tr>
 
     
@@ -434,6 +473,86 @@
     <div class="description">
         Used to clear the logger display. This is applicable only to certain transports, such
 as socket transports that direct logs to a UI.
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="flush"><span class="type-signature"></span>flush()</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        Used only if buffering (if options.buffer is > 0)
+Flushes everything in the buffer and starts a timer to automatically
+flush again after options.buffer time
     </div>
     
 
@@ -753,7 +872,8 @@ Otherwise the caller should buffer writes and call write when ready is true.
 
             
 
-            <td class="description last">express request ID, if provided (output if options.sid is true)</td>
+            <td class="description last">express request ID, if provided (output if options.sid is
+  true)</td>
         </tr>
 
     
@@ -873,7 +993,8 @@ Otherwise the caller should buffer writes and call write when ready is true.
 
             
 
-            <td class="description last">Arbitrary data to be logged in a 'custom' column if enabled via the LogManager.</td>
+            <td class="description last">Arbitrary data to be logged in a 'custom' column if enabled
+  via the LogManager.</td>
         </tr>
 
     

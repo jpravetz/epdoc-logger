@@ -33,7 +33,7 @@
 			<li class="dropdown">
 				<a href="classes.list.html" class="dropdown-toggle" data-toggle="dropdown">Classes<b class="caret"></b></a>
 				<ul class="dropdown-menu ">
-					<li><a href="CallbackTransport.html">CallbackTransport</a></li><li><a href="ConsoleTransport.html">ConsoleTransport</a></li><li><a href="Logger.html">Logger</a></li><li><a href="LogglyTransport.html">LogglyTransport</a></li><li><a href="LogManager.html">LogManager</a></li><li><a href="Response.html">Response</a></li>
+					<li><a href="CallbackTransport.html">CallbackTransport</a></li><li><a href="ConsoleTransport.html">ConsoleTransport</a></li><li><a href="FileTransport.html">FileTransport</a></li><li><a href="Logger.html">Logger</a></li><li><a href="LogglyTransport.html">LogglyTransport</a></li><li><a href="LogManager.html">LogManager</a></li><li><a href="Response.html">Response</a></li>
 				</ul>
 			</li>
 			
@@ -170,21 +170,20 @@ var log = new Logger(logMgr,'emitter-name');
 // A shortcut that is also equivalent and that uses a global LogManager object
 var log = require('epdoc-logger').get('emitter-name');</code></pre><h2>Configuring Transports</h2><p>The module has built-in support for the following transports:</p>
 <ul>
-<li>console (default)</li>
-<li>file (specify path) - logs as a JSON array</li>
-<li><a href="http://www.sos.powerflasher.com/developer-tools/sosmax/home/">SOS Max</a> - <em>SOS max is the POWERFLASHER Socket Output Server - a fast and helpful programmer tool with graphical
-user interface to display log messages for debugging purpose.</em><ul>
-<li>SOS Max appears to not work on the latest version of Mac OS X.</li>
-</ul>
-</li>
-<li>line - A line buffer/callback used only for automated testing</li>
-<li>loggly - See <a href="http://loggly.com">loggly.com</a>.</li>
+<li><a href="ConsoleTransport.html">ConsoleTransport</a> - logs to the console (default)</li>
+<li><a href="FileTransport.html">FileTransport</a> - logs to a file</li>
+<li>SOSTransport - Logs to <a href="http://www.sos.powerflasher.com/developer-tools/sosmax/home/">SOS Max</a>. <em>SOS max is the POWERFLASHER Socket Output Server - a fast and helpful programmer tool with graphical
+user interface to display log messages for debugging purpose.</em> Note that SOS Max appears to not work on the latest version of Mac OS X.</li>
+<li><a href="CallbackTransport.html">CallbackTransport</a> - A line buffer/callback transport used only for automated testing</li>
+<li><a href="LogglyTransport.html">LogglyTransport</a> - Logs to the online <a href="http://loggly.com">loggly.com</a> service.</li>
 </ul>
 <p>On startup the logger can wait for a transport to be initialized before logging, or it can begin writing log messages
 immediately (if LogManager#autoRun is set. 
 By default the logger uses the Console Transport and must be started manually.</p>
 <p>If LogManager#autoRun is not set, then a call to <a href="LogManager.html#start">LogManager#start</a> or <a href="LogManager.html#setTransport">LogManager#setTransport</a> will begin logging. 
 Messages are buffered prior to the transport being intitialized, so prior to this event no messages will be lost.</p>
+<p>Transports are configured via properties passed to <a href="LogManager.html#setTransport">LogManager#setTransport</a> or LogManager#new and options.transport. 
+Transport configuration properties are passed directly to the transport. Refer to the individual class API reference documents for more information.</p>
 <h3>Logging to Console</h3><p>Main File</p>
 <pre class="prettyprint source lang-javascript"><code>var gLogMgr = require('epdoc-logger').logMgr(a).start();
 var log = gLogMgr.get('main');
@@ -213,7 +212,7 @@ logger.setTransport( { type: 'sos', bIncludeSessionId: false } );
 
 log.info(&quot;Return value for %s is %s&quot;, &quot;hello&quot;, &quot;world&quot; );</code></pre><h3>Logging to Loggly</h3><p>Loggly output is buffered and sent in batches. As a result it is important to shutdown logging before exiting.
 See the example earlier in this readme showing how this is done.</p>
-<h3>Advanced (needs updating)</h3><p>Transports can also be closed using <code>unsetLogger</code>. In this event logging will revert to the previously 
+<h3>Advanced (SECTION IS OUT OF DATE)</h3><p>Transports can also be closed using <code>unsetLogger</code>. In this event logging will revert to the previously 
 specified transport. For example, if you specify an SOS transport and the SOS application is closed, 
 logging will return back to the console and the console will be (re)started automatically. 
 If an active transport closes on it's own (<em>e.g.</em> SOS Max application exits) 
@@ -355,7 +354,7 @@ heavy use within our own applications, and so errors are quickly found.</p>
 <li>Add koa middleware (I don't currently have a koa project going, so this may not happen for awhile)</li>
 <li>Loggly support - DONE!</li>
 </ul>
-<h2>Author</h2><p>Jim Pravetz <a href="&#109;&#97;&#105;&#x6c;&#x74;&#x6f;&#x3a;&#106;&#x70;&#114;&#97;&#x76;&#101;&#x74;&#122;&#64;&#x65;&#112;&#100;&#111;&#99;&#46;&#x63;&#111;&#109;">&#106;&#x70;&#114;&#97;&#x76;&#101;&#x74;&#122;&#64;&#x65;&#112;&#100;&#111;&#99;&#46;&#x63;&#111;&#109;</a></p>
+<h2>Author</h2><p>Jim Pravetz <a href="&#x6d;&#97;&#x69;&#108;&#x74;&#x6f;&#x3a;&#106;&#112;&#114;&#97;&#118;&#101;&#116;&#x7a;&#64;&#101;&#x70;&#100;&#111;&#99;&#x2e;&#x63;&#111;&#109;">&#106;&#112;&#114;&#97;&#118;&#101;&#116;&#x7a;&#64;&#101;&#x70;&#100;&#111;&#99;&#x2e;&#x63;&#111;&#109;</a></p>
 <h2>License</h2><p><a href="https://github.com/strongloop/express/blob/master/LICENSE">MIT</a></p></article>
     </section>
 
@@ -400,7 +399,7 @@ heavy use within our own applications, and so errors are quickly found.</p>
 <span class="jsdoc-message">
 	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a>
 	
-		on 2016-03-29T12:04:17-07:00
+		on 2016-03-29T14:16:19-07:00
 	
 	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
 </span>

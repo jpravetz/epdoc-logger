@@ -33,7 +33,7 @@
 			<li class="dropdown">
 				<a href="classes.list.html" class="dropdown-toggle" data-toggle="dropdown">Classes<b class="caret"></b></a>
 				<ul class="dropdown-menu ">
-					<li><a href="CallbackTransport.html">CallbackTransport</a></li><li><a href="ConsoleTransport.html">ConsoleTransport</a></li><li><a href="Logger.html">Logger</a></li><li><a href="LogglyTransport.html">LogglyTransport</a></li><li><a href="LogManager.html">LogManager</a></li><li><a href="Response.html">Response</a></li>
+					<li><a href="CallbackTransport.html">CallbackTransport</a></li><li><a href="ConsoleTransport.html">ConsoleTransport</a></li><li><a href="FileTransport.html">FileTransport</a></li><li><a href="Logger.html">Logger</a></li><li><a href="LogglyTransport.html">LogglyTransport</a></li><li><a href="LogManager.html">LogManager</a></li><li><a href="Response.html">Response</a></li>
 				</ul>
 			</li>
 			
@@ -2808,7 +2808,7 @@ the earliest known time that the application was started.
             
 <hr>
 <dt>
-    <h4 class="name" id="setTransport"><span class="type-signature"></span>setTransport(type, options)</h4>
+    <h4 class="name" id="setTransport"><span class="type-signature"></span>setTransport(<span class="optional">type</span>, options)</h4>
     
     
 </dt>
@@ -2842,6 +2842,8 @@ set logger (eg. console) will be used.
         <th>Type</th>
 
         
+        <th>Argument</th>
+        
 
         
 
@@ -2871,14 +2873,24 @@ set logger (eg. console) will be used.
             </td>
 
             
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
 
             
 
-            <td class="description last">For the provided loggers, one of 'sos', 'file', 'line', or
-  'console'. For a custom transport this should be a transport class object that can be
-  instantiated with
-  'new'. To create your own transport class, use getLoggerClass('console') and then subclass
-  this class.</td>
+            <td class="description last">For the provided loggers, one of 'sos', 'file', 'callback',
+  'console' or 'loggly'. For a custom transport this should be a transport class object that
+  can be instantiated with 'new'. To create your own transport class, consider using
+  getLoggerClass('console') and then subclassing this class. If the params option contains a
+  'type' property, this field is optional.</td>
         </tr>
 
     
@@ -2886,6 +2898,102 @@ set logger (eg. console) will be used.
         <tr>
             
                 <td class="name"><code>options</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last">These are directly passed to the transport when constructing the new
+  transport object. Please refer to the individual transport for properties. Some common
+  properties are listed here.
+                <h6 class="method-params-label method-subparams-label">Properties</h6>
+                
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Argument</th>
+        
+
+        
+        <th>Default</th>
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>sid</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last">If true then output express request and session IDs, otherwise
+  do not output these values</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>timestamp</code></td>
             
 
             <td class="type">
@@ -2899,17 +3007,74 @@ set logger (eg. console) will be used.
             </td>
 
             
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
 
+                
+
+                
+                </td>
             
 
-            <td class="description last">are passed to the transport when constructing the new transport object.
-  Options for the predefined transports are:
-     path  path to file, used by file transport
-     timestamp {string} one of 'iso', 'smstime' or 'ms', defaults to 'ms' but may be
-  overriden by transport requirements (e.g. loggly uses iso) sid {boolean} whether to
-  include sessionId and reqId columns in log output (used with express and other
-  request/response apps), overrides LogMgr setting. custom {boolean} Indicates whether to
-  include 'custom' column or not, overrides LogMgr setting.</td>
+            
+                <td class="default">
+                
+                    ms
+                
+                </td>
+            
+
+            <td class="description last">Set the format for timestamp output, must be one of 'ms' or
+  'iso'.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>custom</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    true
+                
+                </td>
+            
+
+            <td class="description last">Set whether to output a 'custom' column.</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+            </td>
         </tr>
 
     
@@ -3379,7 +3544,7 @@ output. This is a useful function to call when the application is shutdown.
 <span class="jsdoc-message">
 	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a>
 	
-		on 2016-03-29T12:04:17-07:00
+		on 2016-03-29T14:16:19-07:00
 	
 	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
 </span>

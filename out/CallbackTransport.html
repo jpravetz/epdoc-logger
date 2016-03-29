@@ -4,7 +4,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width">
-	<title>Documentation Class: ConsoleTransport</title>
+	<title>Documentation Class: CallbackTransport</title>
 
 	<!--[if lt IE 9]>
 	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -70,13 +70,13 @@
 		<div id="main">
 			
 
-	<h1 class="page-title">Class: ConsoleTransport</h1>
+	<h1 class="page-title">Class: CallbackTransport</h1>
 <section>
 
 <header>
     
         <h2>
-        ConsoleTransport
+        CallbackTransport
         </h2>
         
     
@@ -89,7 +89,7 @@
         
 <hr>
 <dt>
-    <h4 class="name" id="ConsoleTransport"><span class="type-signature"></span>new ConsoleTransport(options)</h4>
+    <h4 class="name" id="CallbackTransport"><span class="type-signature"></span>new CallbackTransport(options)</h4>
     
     
 </dt>
@@ -97,7 +97,8 @@
 
     
     <div class="description">
-        Create a new Console transport to output log messages to the console.
+        Create a new Callback transport where output is added to a data array or a callback is used to
+pass thru the log message. Used for testing.
     </div>
     
 
@@ -167,8 +168,6 @@
         
 
         
-        <th>Default</th>
-        
 
         <th class="last">Description</th>
     </tr>
@@ -205,10 +204,6 @@
             
 
             
-                <td class="default">
-                
-                </td>
-            
 
             <td class="description last">If true then output express request and session IDs, otherwise
   do not output these values</td>
@@ -218,13 +213,13 @@
 
         <tr>
             
-                <td class="name"><code>timestamp</code></td>
+                <td class="name"><code>callback</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">string</span>
+<span class="param-type">function</span>
 
 
 
@@ -244,94 +239,9 @@
             
 
             
-                <td class="default">
-                
-                    ms
-                
-                </td>
-            
 
-            <td class="description last">Set the format for timestamp output, must be one of 'ms' or 'iso'.</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>format</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                    jsonArray
-                
-                </td>
-            
-
-            <td class="description last">Set the format for the output line. Must be one of 'json' or 'jsonArray'.</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>custom</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">boolean</span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                    true
-                
-                </td>
-            
-
-            <td class="description last">Set whether to output a 'custom' column.</td>
+            <td class="description last">Callback with object to be logged rather than adding to line
+  buffer</td>
         </tr>
 
     
