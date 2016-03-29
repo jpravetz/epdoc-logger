@@ -3,6 +3,7 @@ var self = {
     _gLogManager: undefined,
 
     LogManager: require('./src/log_mgr'),
+    Logger: require('./src/logger'),
 
     logMgr: function (options) {
         if (!self._gLogManager) {

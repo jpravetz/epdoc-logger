@@ -5,9 +5,10 @@ rich message and data syntax, and chainable methods for creating log events.
 Generally follows [Winston's](https://github.com/winstonjs/winston) logging method calls
 for simpler messages, but with the addition of chainable calls to set other output columns.
 
-**Note: express middleware is not yet working in this alpha version.**
+**Note: express middleware is currently being revised.**
 
-[API Documentation](./api.md)
+[Home Page and API Documentation](http://jpravetz.github.io/epdoc-logger/out/index.html)
+
 
 ## Install
 

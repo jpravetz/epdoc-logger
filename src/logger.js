@@ -8,29 +8,47 @@ var moment = require('moment');
 var _ = require('underscore');
 
 /**
- * Logging module. Shows time and log level (debug, info, warn, error).
- * Time is shown in milliseconds since this module was first initialized.
+ * <p>Create a new log object with methods to log to the transport that is attached to
+ * <code>logMgr</code>. This log object can be attached to another object, for example an
+ * [Express]{@link http://expressjs.com/} request object, in order to pass the log object down
+ * through a calling stack. If a context is passed in, various properties may be harvested off of
+ * the req property. These include: req._reqId (populates reqId column), req.sid (uses
+ * req.session.id or req.sessionId and populates sid column), req._startTime and req._hrStartTime
+ * (either can be used to determine the response time for a request).
  *
- * Create a new log object with methods to log to the transport that is attached to `logMgr`.
- * This log object can be attached to another object, for example an express response object,
- * in order to next the log call and thereby carry context down thru the calling stack.
- * If a context is passed in, various properties may be harvested off of the req property. These
- * include: req._reqId (populates reqId column), req.sid?req.session.id|req.sessionId (populates
- * sid column), req._startTime and req._hrStartTime (can be used to determine response time for a
- * request).
+ * @class A Logger object has methods to write log information to a specified transport.
+ * The line below shows sample output when writting to the Console transport.
+ *
+ * <p><code>["00:03.767","INFO",0,"","main","app.initialized","We've initialized the
+ * app",{"process":{"pid":12345}}]</code>
+ *
+ * <p>For the above output, time is since this module was first initialized and is shown in
+ * milliseconds. This is followed by the log level, request ID, session ID, module/emitter name,
+ * action, message and arbitrary data.
+ *
+ * <p>The format of the output is determined by the transport and it's settings.
  *
  * @example
- *        var log = require('epdoc-logger').get('logtest');
- *        log.info( 'Message: %s', 'my message');
+ * // Create a new Logger object step by step
+ * var EpdocLogger = require('epdoc-logger');
+ * var LogManager = EpdocLogger.LogManager;
+ * var Logger = EpdocLogger.Logger;
+ * var logMgr = new LogManager();
+ * var log = new Logger(gLogMgr,'logtest');
  *
- * @class Logger
+ * @example
+ * // Create a new Logger object the easy way using global LogManager.
+ * var log = require('epdoc-logger').get('logtest');
+ *
+ *
  * @param  {LogManager} logMgr - The parent LogManager object that specifies the transport and
  *   provides lower-level output methods
  * @param [modulename] {string|string[]} The name of the module or emitter that is emitting the
- *   log message, used to populate the module column of logMgr output. This can be modified to show
- *   the calling stack by calling pushName and popName.
- * @param [context] {object} A context object. For [Express](http://expressjs.com/) or
- *   [koa](http://koajs.com/) this would have ```req``` and ```res``` properties.
+ *   log message, used to populate the <code>module</code> output column. This can be modified to
+ *   show method call hierarchy by calling <code>pushName</code> and <code>popName</code>.
+ * @param [context] {object} A context object. For [Express]{@link http://expressjs.com/} or
+ *   [koa]{@link http://koajs.com/} this would have <code>req</code> and <code>res</code>
+ *   properties.
  * @constructor
  */
 var Logger = function (logMgr, modulename, context) {
@@ -137,7 +155,7 @@ Logger.prototype = {
      *
      * @param {...string} arguments - Single string or multiple strings that are then joined with a
      *   '.'.
-     * @return {*}
+     * @return {Logger} The Logger object
      */
     action: function () {
         if (arguments[0] instanceof Array) {
@@ -166,8 +184,8 @@ Logger.prototype = {
     },
 
     /**
-     * Set <i>custom data</i> that is output in a separate column called ```custom```.
-     * This column must be specifically enabled via the LogManager constructor's ```custom```
+     * Set <i>custom data</i> that is output in a separate column called <code>custom</code>`.
+     * This column must be specifically enabled via the LogManager constructor's <code>custom</code>
      * option.
      *
      * @param key {String|object} If a string then sets custom.key = value, otherwise extends
@@ -180,10 +198,15 @@ Logger.prototype = {
     },
 
     /**
-     * Set a property in the ```data``` column.
-     * @param {string|object} key - If a string then sets ```data[key]``` to ```value```. Otherwise
-     *   extend the object ```data``` the object ```key```.
-     * @param [value] {string} If key is a string then sets data[key] to this value.
+     * Set a property or multiple properties in the <code>data</code> column.
+     * @example
+     * log.data('a',3).data('b',4).info();
+     * log.data({a:3,b:4}).info();
+     *
+     * @param {string|object} key - If a string then sets <code>data[key]</code> to
+     *   <code>value</code>. Otherwise extend the object <code>data</code> with the object
+     *   <code>key</code>.
+     * @param [value] {string} If key is a string then sets <code>data[key]</code> to this value.
      * @return {Logger}
      */
     data: function (key, value) {
@@ -191,22 +214,7 @@ Logger.prototype = {
     },
 
     /**
-     * Set a property in the log data column, or set the value of the log data object.
-     * Also sets the response data with the same value. This is used if you are using express
-     * middleware, to set data that will be logged for the response (not sent with the reponse).
-     * By using this method you can set data that is used in res.send() and in logging.
-     * @method resData
-     * @param key {string|object} If a string then sets data[key] to value. Otherwise sets data to
-     *   key.
-     * @param value If key is a string then sets data[key] to this value.
-     * @deprecated
-     * @return {Logger}
-     */
-    resData: function (key, value) {
-        return this._setData('data', key, value)._setData('resData', key, value);
-    },
-
-    /**
+     * Common method used by the {@link Logger#data} method.
      * @param field
      * @param key
      * @param value
@@ -227,14 +235,19 @@ Logger.prototype = {
 
     /**
      * A method to add context to the method stack that has gotten us to this point in code.
-     * The context is pushed into a stack, and the full stack is output as the 'module' property
-     * of the log message. Usually called at the entry point of a function.
-     * Can also be called by submodules, in which case the submodules should call popRouteInfo when
-     * returning Note that it is not necessary to call popRouteInfo when terminating a request with
-     * a response.
+     * The context is pushed into a stack, and the full stack is output as the module/emitter
+     * property of the log message.
+     *
+     * <p>This method is usually called at the entry point of a function. Can also be
+     * called by submodules, in which case the submodules should call [popName]{@link
+     * Logger#popName} when returning. Note that it is not necessary to call [popName]{@link
+     * Logger#popName} when used in the context of an Express context and terminating a request
+     * with a response.
+     *
      * @param name (required) String in the form 'api.org.create' (route.method or
      *   route.object.method).
      * @return Response object
+     * @see Logger#popName
      */
     pushName: function (name) {
         this.stack.push(name);
@@ -247,6 +260,7 @@ Logger.prototype = {
      * @param options Available options are 'all' if all action contexts are to be removed from the
      *   _logging stack.
      * @return Response object
+     * @see Logger#pushName
      */
     popName: function (options) {
         if (options && options.all === true) {

@@ -40,7 +40,7 @@
 			<li class="dropdown">
 				<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Global<b class="caret"></b></a>
 				<ul class="dropdown-menu ">
-					<li><a href="global.html#formatMS">formatMS</a></li><li><a href="global.html#reqId">reqId</a></li><li><a href="global.html#Request">Request</a></li><li><a href="global.html#resData">resData</a></li>
+					<li><a href="global.html#formatMS">formatMS</a></li><li><a href="global.html#reqId">reqId</a></li><li><a href="global.html#Request">Request</a></li>
 				</ul>
 			</li>
 			
@@ -79,7 +79,17 @@
         Logger
         </h2>
         
-            <div class="class-description">Logger</div>
+            <div class="class-description">A Logger object has methods to write log information to a specified transport.
+The line below shows sample output when writting to the Console transport.
+
+<p><code>["00:03.767","INFO",0,"","main","app.initialized","We've initialized the
+app",{"process":{"pid":12345}}]</code>
+
+<p>For the above output, time is since this module was first initialized and is shown in
+milliseconds. This is followed by the log level, request ID, session ID, module/emitter name,
+action, message and arbitrary data.
+
+<p>The format of the output is determined by the transport and it's settings.</div>
         
     
 </header>
@@ -99,16 +109,13 @@
 
     
     <div class="description">
-        Logging module. Shows time and log level (debug, info, warn, error).
-Time is shown in milliseconds since this module was first initialized.
-
-Create a new log object with methods to log to the transport that is attached to `logMgr`.
-This log object can be attached to another object, for example an express response object,
-in order to next the log call and thereby carry context down thru the calling stack.
-If a context is passed in, various properties may be harvested off of the req property. These
-include: req._reqId (populates reqId column), req.sid?req.session.id|req.sessionId (populates
-sid column), req._startTime and req._hrStartTime (can be used to determine response time for a
-request).
+        <p>Create a new log object with methods to log to the transport that is attached to
+<code>logMgr</code>. This log object can be attached to another object, for example an
+<a href="http://expressjs.com/">Express</a> request object, in order to pass the log object down
+through a calling stack. If a context is passed in, various properties may be harvested off of
+the req property. These include: req._reqId (populates reqId column), req.sid (uses
+req.session.id or req.sessionId and populates sid column), req._startTime and req._hrStartTime
+(either can be used to determine the response time for a request).
     </div>
     
 
@@ -209,8 +216,8 @@ request).
             
 
             <td class="description last">The name of the module or emitter that is emitting the
-  log message, used to populate the module column of logMgr output. This can be modified to show
-  the calling stack by calling pushName and popName.</td>
+  log message, used to populate the <code>module</code> output column. This can be modified to
+  show method call hierarchy by calling <code>pushName</code> and <code>popName</code>.</td>
         </tr>
 
     
@@ -244,8 +251,9 @@ request).
 
             
 
-            <td class="description last">A context object. For [Express](http://expressjs.com/) or
-  [koa](http://koajs.com/) this would have ```req``` and ```res``` properties.</td>
+            <td class="description last">A context object. For <a href="http://expressjs.com/">Express</a> or
+  <a href="http://koajs.com/">koa</a> this would have <code>req</code> and <code>res</code>
+  properties.</td>
         </tr>
 
     
@@ -307,10 +315,17 @@ request).
     
 
     
-        <h5>Example</h5>
+        <h5>Examples</h5>
         
-    <pre class="sunlight-highlight-javascript">var log = require(&#x27;epdoc-logger&#x27;).get(&#x27;logtest&#x27;);
-       log.info( &#x27;Message: %s&#x27;, &#x27;my message&#x27;);</pre>
+    <pre class="sunlight-highlight-javascript">// Create a new Logger object step by step
+var EpdocLogger = require(&#x27;epdoc-logger&#x27;);
+var LogManager = EpdocLogger.LogManager;
+var Logger = EpdocLogger.Logger;
+var logMgr = new LogManager();
+var log = new Logger(gLogMgr,&#x27;logtest&#x27;);</pre>
+
+    <pre class="sunlight-highlight-javascript">// Create a new Logger object the easy way using global LogManager.
+var log = require(&#x27;epdoc-logger&#x27;).get(&#x27;logtest&#x27;);</pre>
 
 
     
@@ -475,6 +490,10 @@ machine-searchable verb that uniquely describes the type of log event.
     <h5>Returns:</h5>
     
             
+<div class="param-desc">
+    The Logger object
+</div>
+
 
 
 <dl>
@@ -483,7 +502,7 @@ machine-searchable verb that uniquely describes the type of log event.
     </dt>
     <dd>
         
-<span class="param-type">*</span>
+<span class="param-type"><a href="Logger.html">Logger</a></span>
 
 
 
@@ -514,7 +533,7 @@ machine-searchable verb that uniquely describes the type of log event.
 
     
     <div class="description">
-        Set a property in the ```data``` column.
+        Set a property or multiple properties in the <code>data</code> column.
     </div>
     
 
@@ -579,8 +598,9 @@ machine-searchable verb that uniquely describes the type of log event.
 
             
 
-            <td class="description last">If a string then sets ```data[key]``` to ```value```. Otherwise
-  extend the object ```data``` the object ```key```.</td>
+            <td class="description last">If a string then sets <code>data[key]</code> to
+  <code>value</code>. Otherwise extend the object <code>data</code> with the object
+  <code>key</code>.</td>
         </tr>
 
     
@@ -614,7 +634,7 @@ machine-searchable verb that uniquely describes the type of log event.
 
             
 
-            <td class="description last">If key is a string then sets data[key] to this value.</td>
+            <td class="description last">If key is a string then sets <code>data[key]</code> to this value.</td>
         </tr>
 
     
@@ -694,6 +714,13 @@ machine-searchable verb that uniquely describes the type of log event.
 
 
         
+
+    
+        <h5>Example</h5>
+        
+    <pre class="sunlight-highlight-javascript">log.data(&#x27;a&#x27;,3).data(&#x27;b&#x27;,4).info();
+log.data({a:3,b:4}).info();</pre>
+
 
     
 </dd>
@@ -1880,6 +1907,13 @@ be called if the function terminates the request with a response.
 	
 
 	
+	<dt class="tag-see method-doc-label method-doc-details-label">See:</dt>
+	<dd class="tag-see">
+		<ul>
+			<li><a href="Logger.html#pushName">Logger#pushName</a></li>
+			</ul>
+	</dd>
+	
 
 	
 </dl>
@@ -1924,11 +1958,12 @@ be called if the function terminates the request with a response.
     
     <div class="description">
         A method to add context to the method stack that has gotten us to this point in code.
-The context is pushed into a stack, and the full stack is output as the 'module' property
-of the log message. Usually called at the entry point of a function.
-Can also be called by submodules, in which case the submodules should call popRouteInfo when
-returning Note that it is not necessary to call popRouteInfo when terminating a request with
-a response.
+The context is pushed into a stack, and the full stack is output as the module/emitter
+property of the log message.
+
+<p>This method is usually called at the entry point of a function. Can also be
+called by submodules, in which case the submodules should call <a href="Logger.html#popName">popName</a> when returning. Note that it is not necessary to call <a href="Logger.html#popName">popName</a> when used in the context of an Express context and terminating a request
+with a response.
     </div>
     
 
@@ -2018,6 +2053,13 @@ a response.
 
 	
 
+	
+	<dt class="tag-see method-doc-label method-doc-details-label">See:</dt>
+	<dd class="tag-see">
+		<ul>
+			<li><a href="Logger.html#popName">Logger#popName</a></li>
+			</ul>
+	</dd>
 	
 
 	
@@ -2262,8 +2304,8 @@ a response.
 
     
     <div class="description">
-        Set <i>custom data</i> that is output in a separate column called ```custom```.
-This column must be specifically enabled via the LogManager constructor's ```custom```
+        Set <i>custom data</i> that is output in a separate column called <code>custom</code>`.
+This column must be specifically enabled via the LogManager constructor's <code>custom</code>
 option.
     </div>
     
@@ -2628,7 +2670,7 @@ option.
 <span class="jsdoc-message">
 	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a>
 	
-		on 2016-03-28T16:49:03-07:00
+		on 2016-03-28T18:10:17-07:00
 	
 	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
 </span>
