@@ -115,20 +115,19 @@ LogManager.prototype = {
      * transport. If you add a transport (eg. file transport) then later remove it, the previously
      * set logger (eg. console) will be used.
      *
-     * @param {string|Object} type - For the provided loggers, one of 'sos', 'file', 'line', or
-     *   'console'. For a custom transport this should be a transport class object that can be
-     *   instantiated with
-     *   'new'. To create your own transport class, use getLoggerClass('console') and then subclass
-     *   this class.
-     * @param options are passed to the transport when constructing the new transport object.
-     *   Options for the predefined transports are:
-     *      path {string} path to file, used by file transport
-     *      timestamp {string} one of 'iso', 'smstime' or 'ms', defaults to 'ms' but may be
-     *   overriden by transport requirements (e.g. loggly uses iso) sid {boolean} whether to
-     *   include sessionId and reqId columns in log output (used with express and other
-     *   request/response apps), overrides LogMgr setting. custom {boolean} Indicates whether to
-     *   include 'custom' column or not, overrides LogMgr setting.
-     *
+     * @param {string|Object} [type] - For the provided loggers, one of 'sos', 'file', 'callback',
+     *   'console' or 'loggly'. For a custom transport this should be a transport class object that
+     *   can be instantiated with 'new'. To create your own transport class, consider using
+     *   getLoggerClass('console') and then subclassing this class. If the params option contains a
+     *   'type' property, this field is optional.
+     * @param options {Object} These are directly passed to the transport when constructing the new
+     *   transport object. Please refer to the individual transport for properties. Some common
+     *   properties are listed here.
+     * @param [options.sid] {boolean} - If true then output express request and session IDs, otherwise
+     *   do not output these values
+     * @param [options.timestamp=ms] {string} - Set the format for timestamp output, must be one of 'ms' or
+     *   'iso'.
+     * @param [options.custom=true] {boolean} - Set whether to output a 'custom' column.
      * @return {LogManager}
      */
     setTransport: function (type, options) {

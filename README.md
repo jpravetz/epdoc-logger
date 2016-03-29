@@ -143,13 +143,12 @@ var log = require('epdoc-logger').get('emitter-name');
 
 The module has built-in support for the following transports:
 
-* console (default)
-* file (specify path) - logs as a JSON array
-* [SOS Max](http://www.sos.powerflasher.com/developer-tools/sosmax/home/) - _SOS max is the POWERFLASHER Socket Output Server - a fast and helpful programmer tool with graphical
-user interface to display log messages for debugging purpose._
- * SOS Max appears to not work on the latest version of Mac OS X.
-* line - A line buffer/callback used only for automated testing
-* loggly - See [loggly.com](http://loggly.com).
+* {@link ConsoleTransport} - logs to the console (default)
+* {@link FileTransport} - logs to a file
+* SOSTransport - Logs to [SOS Max](http://www.sos.powerflasher.com/developer-tools/sosmax/home/). _SOS max is the POWERFLASHER Socket Output Server - a fast and helpful programmer tool with graphical
+user interface to display log messages for debugging purpose._ Note that SOS Max appears to not work on the latest version of Mac OS X.
+* {@link CallbackTransport} - A line buffer/callback transport used only for automated testing
+* {@link LogglyTransport} - Logs to the online [loggly.com](http://loggly.com) service.
 
 On startup the logger can wait for a transport to be initialized before logging, or it can begin writing log messages
 immediately (if {@link LogManager#autoRun} is set. 
@@ -157,6 +156,9 @@ By default the logger uses the Console Transport and must be started manually.
 
 If {@link LogManager#autoRun} is not set, then a call to {@link LogManager#start} or {@link LogManager#setTransport} will begin logging. 
 Messages are buffered prior to the transport being intitialized, so prior to this event no messages will be lost.
+
+Transports are configured via properties passed to {@link LogManager#setTransport} or {@link LogManager#new} and options.transport. 
+Transport configuration properties are passed directly to the transport. Refer to the individual class API reference documents for more information.
 
 ### Logging to Console ###
 
@@ -216,7 +218,7 @@ log.info("Return value for %s is %s", "hello", "world" );
 Loggly output is buffered and sent in batches. As a result it is important to shutdown logging before exiting.
 See the example earlier in this readme showing how this is done.
 
-### Advanced (needs updating)
+### Advanced (SECTION IS OUT OF DATE)
 
 Transports can also be closed using ```unsetLogger```. In this event logging will revert to the previously 
 specified transport. For example, if you specify an SOS transport and the SOS application is closed, 

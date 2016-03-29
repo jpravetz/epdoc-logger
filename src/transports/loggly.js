@@ -12,20 +12,20 @@ var request = require('request');
  * Create a new Loggly transport to output log messages to loggly.
  *
  * @param options {Object} Output options include:
- * @param [sid] {boolean} - If true then output express request and session IDs, otherwise
+ * @param [options.sid] {boolean} - If true then output express request and session IDs, otherwise
  *   do not output these values
- * @param token {string} - The loggly token used for authenticating to loggly.
- * @param [tags] {string[]} - Array of loggly tags.
- * @param [url] {string} - URL to use for the loggly service. Should be set only if the default URL
+ * @param options.token {string} - The loggly token used for authenticating to loggly.
+ * @param [options.tags] {string[]} - Array of loggly tags.
+ * @param [options.url] {string} - URL to use for the loggly service. Should be set only if the default URL
  *   value is not working.
- * @param [host=os.hostname()] {string} - Set the name of the host that is reported to loggly in a host column.
- * @param [timestamp=ms] {string} - Set the format for timestamp output, must be one of 'ms' or
+ * @param [options.host=os.hostname()] {string} - Set the name of the host that is reported to loggly in a host column.
+ * @param [options.timestamp=ms] {string} - Set the format for timestamp output, must be one of 'ms' or
  *   'iso'.
- * @param [format=jsonArray] {string} - Set the format for the output line. Must be one of 'json'
+ * @param [options.format=jsonArray] {string} - Set the format for the output line. Must be one of 'json'
  *   or 'jsonArray'.
- * @param [custom=true] {boolean} - Set whether to output a 'custom' column.
- * @param [bufferSize=100] {number} - The maximum number of lines of log messages to buffer before writing to loggly.
- * @param [flushInterval=5000] {number} - The maximum number of milliseconds of buffering before writing to loggly.
+ * @param [options.custom=true] {boolean} - Set whether to output a 'custom' column.
+ * @param [options.bufferSize=100] {number} - The maximum number of lines of log messages to buffer before writing to loggly.
+ * @param [options.flushInterval=5000] {number} - The maximum number of milliseconds of buffering before writing to loggly.
  * @constructor
  */
 

@@ -11,9 +11,9 @@ var dateutil = require('../dateutil');
  * pass thru the log message. Used for testing.
  *
  * @param options {Object} Output options include:
- * @param [sid] {boolean} - If true then output express request and session IDs, otherwise
+ * @param [options.sid] {boolean} - If true then output express request and session IDs, otherwise
  *   do not output these values
- * @param{function}  [callback] - Callback with object to be logged rather than adding to line
+ * @param {function} [options.callback] - Callback with object to be logged rather than adding to line
  *   buffer
  * @constructor
  */

@@ -6,9 +6,10 @@
 var express = require('express');
 var request = require('supertest');
 var should = require('should');
-var middleware = require('../index').middleware();
+var epdocLogger = require('../index');
+var middleware = epdocLogger.middleware();
 
-describe.only("Express response middleware", function () {
+describe("Express response middleware", function () {
 
     this.timeout(300000);
 
@@ -16,7 +17,7 @@ describe.only("Express response middleware", function () {
 
     before(function (done) {
 
-        var logMgr = require('../index').logMgr();
+        var logMgr = new epdocLogger.LogManager();
         logMgr.start();
 
         app.use(middleware.reqId());

@@ -6,15 +6,15 @@
 var epdocLogger = require('../index');
 var should = require('should');
 
-describe.only("Logger test", function () {
+describe("Logger test", function () {
 
     var logMgr;
     var log;
     var token = '4d7f2890-1e74-4b61-9844-ffd8acc62911';
 
     it("Init LogManager and Logger", function (done) {
-        logMgr = epdocLogger.logMgr();
-        log = epdocLogger.get('moduleName');
+        logMgr = new epdocLogger.LogManager();
+        log = logMgr.get('moduleName');
         log.action('bake').info("Starting");
         log.data({c:4,e:7}).debug("Running",{a:2,b:3});
         done();

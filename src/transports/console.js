@@ -4,17 +4,17 @@
  *****************************************************************************/
 
 var _ = require('underscore');
-var dateutil = require('../dateutil');
+var format = require('./util/format');
 
 /**
  * Create a new Console transport to output log messages to the console.
  *
  * @param options {Object} Output options include:
- * @param [sid] {boolean} - If true then output express request and session IDs, otherwise
+ * @param [options.sid] {boolean} - If true then output express request and session IDs, otherwise
  *   do not output these values
- * @param [timestamp=ms] {string} - Set the format for timestamp output, must be one of 'ms' or 'iso'.
- * @param [format=jsonArray] {string} - Set the format for the output line. Must be one of 'json' or 'jsonArray'.
- * @param [custom=true] {boolean} - Set whether to output a 'custom' column.
+ * @param [options.timestamp=ms] {string} - Set the format for timestamp output, must be one of 'ms' or 'iso'.
+ * @param [options.format=jsonArray] {string} - Set the format for the output line. Must be one of 'json' or 'jsonArray'.
+ * @param [options.custom=true] {boolean} - Set whether to output a 'custom' column.
  * @constructor
  */
 
@@ -67,7 +67,7 @@ ConsoleTransport.prototype = {
     /**
      * Write a log line
      * @param params {Object} Parameters to be logged:
-     *  @param {Date} params.time - Date object
+     * @param {Date} params.time - Date object
      * @param {string} params.level - log level (INFO, WARN, ERROR, or any string)
      * @param {string} params.reqId - express request ID, if provided (output if options.sid is true)
      * @param {string} params.sid - express session ID, if provided (output if options.sid is true)
@@ -97,84 +97,19 @@ ConsoleTransport.prototype = {
     },
 
     _formatLogMessage: function (params) {
-        if (this.options.format === 'json') {
-            var json = this._paramsToJson(params);
-            return JSON.stringify(json);
-        } else {
-            var json = this._paramsToJsonArray(params);
-            return JSON.stringify(json);
-        }
-    },
-
-    /**
-     * General method, not used by console, but used by other transports, to format the parameters
-     * into a JSON objecvt.
-     * @param params
-     * @returns {{timestamp: *, level: *, module: (string|*), action, data: *, message, custom: *}}
-     * @private
-     */
-    _paramsToJson: function (params) {
-        var json = {
-            timestamp: this._getTimestamp(params),
-            level: params.level.toUpperCase(),
-            emitter: params.module,
-            action: params.action,
-            data: JSON.stringify(params.data),
-            message: params.message,
-            custom: JSON.stringify(params.custom)
+        var opts = {
+            timestamp: this.timestampFormat,
+            sid: this.bIncludeSid,
+            custom: this.bIncludeCustom
         };
-        if (json.level === 'VERBOSE') {
-            json.level = 'TRACE';
-        }
-        if (this.bIncludeSid) {
-            json.sid = params.sid;
-            json.reqId = params.reqId;
-        }
-        if (this.bIncludeCustom) {
-            json.custom = params.custom;
-        }
-        if (params.message instanceof Array) {
-            json.message = params.message.join('\n');
-        }
-        return json;
-    },
-
-    _paramsToJsonArray: function (params) {
-        var json = [ this._getTimestamp(params), params.level.toUpperCase()];
-        if (this.bIncludeSid) {
-            json.push(params.reqId ? params.reqId : 0);
-            json.push(params.sid ? params.sid : "");
-        }
-        json.push(params.module ? params.module : "");
-        json.push(params.action ? params.action : "");
-        json.push(params.message);
-        //json = json.concat(params.message?params.message:"");
-        if (this.bIncludeCustom) {
-            json.push(params.custom ? params.custom : {});
-        }
-        if (params.data) {
-            json.push(params.data);
-        }
-        return json;
-    },
-
-    _getTimestamp: function (params) {
-        if (this.timestampFormat === 'smstime') {
-            return String(params.time.getTime());
-        } else if (this.timestampFormat === 'iso') {
-            return params.time.toISOString();
+        if (this.options.format === 'json') {
+            var json = format.paramsToJson(params,opts);
+            return JSON.stringify(json);
         } else {
-            return dateutil.formatMS(params.timeDiff);
+            var json = format.paramsToJsonArray(params,opts);
+            return JSON.stringify(json);
         }
-    },
-
-    pad: function (n, width, z) {
-        z = z || '0';
-        n = n + '';
-        return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
-    },
-
-    last: true
+    }
 
 };
 
