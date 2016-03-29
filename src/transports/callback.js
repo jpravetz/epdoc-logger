@@ -1,35 +1,35 @@
 /*****************************************************************************
- * console.js
+ * line.js
  * CONFIDENTIAL Copyright 2012-2016 Jim Pravetz. All Rights Reserved.
  *****************************************************************************/
 
 var _ = require('underscore');
-var format = require('./util/format');
+var dateutil = require('../dateutil');
 
 /**
- * Create a new Console transport to output log messages to the console.
+ * Create a new Callback transport where output is added to a data array or a callback is used to
+ * pass thru the log message. Used for testing.
  *
  * @param options {Object} Output options include:
  * @param [options.sid] {boolean} - If true then output express request and session IDs, otherwise
  *   do not output these values
- * @param [options.timestamp=ms] {string} - Set the format for timestamp output, must be one of 'ms' or 'iso'.
- * @param [options.format=jsonArray] {string} - Set the format for the output line. Must be one of 'json' or 'jsonArray'.
- * @param [options.custom=true] {boolean} - Set whether to output a 'custom' column.
+ * @param {function} [options.callback] - Callback with object to be logged rather than adding to line
+ *   buffer
  * @constructor
  */
-
-var ConsoleTransport = function (options) {
+var CallbackTransport = function (options) {
     this.options = options || {};
-    this.bIncludeSid = (options && ( options.sid === false || options.bIncludeSid === false) ) ? false : true;
-    this.bIncludeCustom = (options && options.custom === false ) ? false : true;
-    this.timestampFormat = this.options.timestamp || 'ms';
-    this.sType = 'console';
+    this.bIncludeSid = (options && options.sid === false) ? false : true;
+    this.sType = 'callback';
     this.bReady = true;
+    this.logCallback = options.callback;
+    this.data = [];
 };
 
-ConsoleTransport.prototype = {
+CallbackTransport.prototype = {
 
-    constructor: ConsoleTransport,
+    constructor: CallbackTransport,
+
 
     validateOptions: function () {
         return null;
@@ -58,6 +58,7 @@ ConsoleTransport.prototype = {
      * as socket transports that direct logs to a UI.
      */
     clear: function () {
+        this.data = [];
     },
 
     flush: function (cb) {
@@ -67,7 +68,7 @@ ConsoleTransport.prototype = {
     /**
      * Write a log line
      * @param params {Object} Parameters to be logged:
-     * @param {Date} params.time - Date object
+     *  @param {Date} params.time - Date object
      * @param {string} params.level - log level (INFO, WARN, ERROR, or any string)
      * @param {string} params.reqId - express request ID, if provided (output if options.sid is true)
      * @param {string} params.sid - express session ID, if provided (output if options.sid is true)
@@ -78,8 +79,11 @@ ConsoleTransport.prototype = {
      * @param {Object} params.data - Arbitrary data to be logged in the 'data' column
      */
     write: function (params) {
-        var msg = this._formatLogMessage(params);
-        console.log(msg);
+        if (this.logCallback) {
+            this.logCallback(params);
+        } else {
+            this.data.push(params);
+        }
     },
 
     end: function (cb) {
@@ -93,25 +97,18 @@ ConsoleTransport.prototype = {
     },
 
     toString: function () {
-        return "Console";
+        return "Buffer";
     },
 
-    _formatLogMessage: function (params) {
-        var opts = {
-            timestamp: this.timestampFormat,
-            sid: this.bIncludeSid,
-            custom: this.bIncludeCustom
-        };
-        if (this.options.format === 'json') {
-            var json = format.paramsToJson(params,opts);
-            return JSON.stringify(json);
-        } else {
-            var json = format.paramsToJsonArray(params,opts);
-            return JSON.stringify(json);
-        }
-    }
+    pad: function (n, width, z) {
+        z = z || '0';
+        n = n + '';
+        return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
+    },
+
+    last: true
 
 };
 
 
-module.exports = ConsoleTransport;
+module.exports = CallbackTransport;
