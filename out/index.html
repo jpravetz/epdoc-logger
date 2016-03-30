@@ -33,14 +33,14 @@
 			<li class="dropdown">
 				<a href="modules.list.html" class="dropdown-toggle" data-toggle="dropdown">Modules<b class="caret"></b></a>
 				<ul class="dropdown-menu ">
-					<li><a href="module-reqId.html">reqId</a></li>
+					<li><a href="module-middleware_reqId.html">middleware/reqId</a></li><li><a href="module-middleware_responseLogger.html">middleware/responseLogger</a></li><li><a href="module-middleware_routeLogger.html">middleware/routeLogger</a></li><li><a href="module-middleware_routeSeparator.html">middleware/routeSeparator</a></li>
 				</ul>
 			</li>
 			
 			<li class="dropdown">
 				<a href="classes.list.html" class="dropdown-toggle" data-toggle="dropdown">Classes<b class="caret"></b></a>
 				<ul class="dropdown-menu ">
-					<li><a href="CallbackTransport.html">CallbackTransport</a></li><li><a href="ConsoleTransport.html">ConsoleTransport</a></li><li><a href="FileTransport.html">FileTransport</a></li><li><a href="Logger.html">Logger</a></li><li><a href="LogglyTransport.html">LogglyTransport</a></li><li><a href="LogManager.html">LogManager</a></li><li><a href="Response.html">Response</a></li>
+					<li><a href="CallbackTransport.html">CallbackTransport</a></li><li><a href="ConsoleTransport.html">ConsoleTransport</a></li><li><a href="FileTransport.html">FileTransport</a></li><li><a href="Logger.html">Logger</a></li><li><a href="LogglyTransport.html">LogglyTransport</a></li><li><a href="LogManager.html">LogManager</a></li>
 				</ul>
 			</li>
 			
@@ -305,26 +305,21 @@ Please use lowercase log level names. They will be changed to uppercase by trans
 <li>LogManager#constructor or <a href="LogManager.html#setLevel">LogManager#setLevel</a> - This becomes the default log level for all <a href="Logger.html">Logger</a> objects and transports.</li>
 <li>At the Transport level by passing in the option <code>level</code>. This will override the value set for the LogManager.</li>
 </ul>
-<h2>Express Middleware (Needs Updating)</h2><p>The included express middleware are instantiated as follows:</p>
-<pre class="prettyprint source lang-javascript"><code>var LogMgr = require('epdoc-logger');
-
-var reqId = Logger.middleware().reqId;
-var responseLogger = Logger.middleware().responseLogger;
-var routeLogger = Logger.middleware().routeLogger;
-var routeSeparator = Logger.middleware().routeSeparator;
+<h2>Express Middleware</h2><p>The included express middleware are instantiated as follows:</p>
+<pre class="prettyprint source lang-javascript"><code>var middleware = require('epdoc-logger').middleware();
 
 var app = express();
-app.use(reqId());
+app.use(middleware.reqId());
 
 app.use(app.router);
-app.all('*', responseLogger());
-app.all('*', routeSeparator());
-app.all('*', routeLogger());</code></pre><p>See test/app.express.js for an example of how to use a stub request and response method to test middleware.
+app.all('*', middleware.responseLogger());
+app.all('*', middleware.routeSeparator());
+app.all('*', middleware.routeLogger());</code></pre><p>See test/app.express.js for an example of how to use a stub request and response method to test middleware.
 This technique can also be useful if you wish to use the req/res/next mechanism in non-express environments.
 As an example, you could have req/res objects for tracking AMQP (RabbitMQ) or AWS SQS requests and
 associating request or session IDs.</p>
-<h3><a href="module-reqId.html">module:reqId</a></h3><p>Adds <code>_reqId</code> and <code>_hrStartTime</code> to the request object. These are used later when logging.</p>
-<h3>module:ResponseLogger</h3><p>The responseLogger middleware mixes custom logging methods, similar to those in the logging object,
+<h3><a href="module-middleware_reqId.html">ReqId</a></h3><p>Adds <code>_reqId</code> and <code>_hrStartTime</code> to the request object. These are used later when logging.</p>
+<h3><a href="module-middleware_responseLogger.html">ResponseLogger</a></h3><p>The responseLogger middleware mixes custom logging methods, similar to those in the logging object,
 into the express <code>response</code> object. This will add request-context-sensitive logging information
 to each log message.</p>
 <p>As with the logging object, most methods can be chained. An example usage:</p>
@@ -332,13 +327,13 @@ to each log message.</p>
     res.pushRouteInfo('myFunction');
     res.action('complete').data(params).info('Entering function');
     res.popRouteInfo();
-}</code></pre><h3>RouteSeparator</h3><p>Adds a separator line to the log file for each new route.</p>
-<h3>RouteLogger</h3><p>Adds an information line to the log file for each new route.</p>
+}</code></pre><h3><a href="module-middleware_routeSeparator.html">RouteSeparator</a></h3><p>Adds a separator line to the log file for each new route.</p>
+<h3><a href="module-middleware_routeLogger.html">RouteLogger</a></h3><p>Adds an information line to the log file for each new route.</p>
 <h2>Action Items</h2><ul>
 <li>Add koa middleware (I don't currently have a koa project going, so this may not happen for awhile)</li>
 <li>More unit tests</li>
 </ul>
-<h2>Author</h2><p>Jim Pravetz <a href="&#109;&#x61;&#x69;&#108;&#x74;&#x6f;&#58;&#106;&#x70;&#114;&#97;&#118;&#x65;&#x74;&#122;&#64;&#x65;&#x70;&#100;&#x6f;&#99;&#46;&#99;&#111;&#109;">&#106;&#x70;&#114;&#97;&#118;&#x65;&#x74;&#122;&#64;&#x65;&#x70;&#100;&#x6f;&#99;&#46;&#99;&#111;&#109;</a></p>
+<h2>Author</h2><p>Jim Pravetz <a href="&#x6d;&#97;&#105;&#x6c;&#x74;&#111;&#58;&#106;&#x70;&#114;&#x61;&#x76;&#x65;&#116;&#122;&#x40;&#101;&#112;&#x64;&#111;&#x63;&#46;&#99;&#x6f;&#109;">&#106;&#x70;&#114;&#x61;&#x76;&#x65;&#116;&#122;&#x40;&#101;&#112;&#x64;&#111;&#x63;&#46;&#99;&#x6f;&#109;</a></p>
 <h2>License</h2><p><a href="https://github.com/strongloop/express/blob/master/LICENSE">MIT</a></p></article>
     </section>
 
@@ -383,7 +378,7 @@ to each log message.</p>
 <span class="jsdoc-message">
 	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a>
 	
-		on 2016-03-29T19:12:23-07:00
+		on 2016-03-29T21:30:26-07:00
 	
 	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
 </span>

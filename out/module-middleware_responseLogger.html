@@ -4,7 +4,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width">
-	<title>Documentation Classes</title>
+	<title>Documentation Module: middleware/responseLogger</title>
 
 	<!--[if lt IE 9]>
 	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -77,15 +77,10 @@
 		<div id="main">
 			
 
-	<h1 class="page-title">Classes</h1>
+	<h1 class="page-title">Module: middleware/responseLogger</h1>
 <section>
 
 <header>
-    
-        <h2>
-        
-        </h2>
-        
     
 </header>
 
@@ -93,6 +88,14 @@
 <article>
     <div class="container-overview">
     
+        
+            <div class="description"><a href="http://expressjs.com/">Express</a> middleware extends express.js
+<a href="http://expressjs.com/en/4x/api.html#res">response</a> object by adding a
+<a href="Logger.html">Logger</a> object via which logging can be done in the context of the request. Also extends
+<a href="http://expressjs.com/en/4x/api.html#res.send">response.send</a> and
+<a href="http://expressjs.com/en/4x/api.html#res.send">response.end</a> methods to automatically
+log a message when a response is sent. This message will include the response time for the
+request.</div>
         
 
         
@@ -144,35 +147,260 @@
     
 
     
-        <h3 class="subsection-title">Classes</h3>
+
+    
+
+    
+
+    
+
+    
+        <h3 class="subsection-title">Methods</h3>
 
         <dl>
-            <dt><a href="CallbackTransport.html">CallbackTransport</a></dt>
-            <dd></dd>
+            
+<hr>
+<dt>
+    <h4 class="name" id="~responseLogger"><span class="type-signature">&lt;inner> </span>responseLogger(<span class="optional">options</span>)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        Return middleware that can add a <a href="Logger.html">Logger</a> object to the express response object.
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
         
-            <dt><a href="ConsoleTransport.html">ConsoleTransport</a></dt>
-            <dd></dd>
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
         
-            <dt><a href="FileTransport.html">FileTransport</a></dt>
-            <dd></dd>
+        <th>Name</th>
         
-            <dt><a href="Logger.html">Logger</a></dt>
-            <dd></dd>
+
+        <th>Type</th>
+
         
-            <dt><a href="LogglyTransport.html">LogglyTransport</a></dt>
-            <dd></dd>
+        <th>Argument</th>
         
-            <dt><a href="LogManager.html">LogManager</a></dt>
-            <dd></dd>
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>options</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last">
+                <h6 class="method-params-label method-subparams-label">Properties</h6>
+                
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Argument</th>
+        
+
+        
+        <th>Default</th>
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>objName</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    log
+                
+                </td>
+            
+
+            <td class="description last">The name of the response object property
+to which to attach the <a href="Logger.html">Logger</a> object.</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+            </td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    Function that can be called to add middleware to an express
+<a href="http://expressjs.com/en/4x/api.html#app">application</a>.
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">function</span>
+
+
+
+    </dd>
+</dl>
+
+
+        
+
+    
+        <h5>Example</h5>
+        
+    <pre class="sunlight-highlight-javascript">var middleware = require(&#x27;epdoc-logger&#x27;).middleware();
+app.all(&#x27;*&#x27;, middleware.responseLogger());</pre>
+
+
+    
+</dd>
+
         </dl>
-    
-
-    
-
-    
-
-    
-
     
 
     

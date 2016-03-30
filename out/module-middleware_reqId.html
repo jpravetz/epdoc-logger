@@ -4,7 +4,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width">
-	<title>Documentation Classes</title>
+	<title>Documentation Module: middleware/reqId</title>
 
 	<!--[if lt IE 9]>
 	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -77,15 +77,10 @@
 		<div id="main">
 			
 
-	<h1 class="page-title">Classes</h1>
+	<h1 class="page-title">Module: middleware/reqId</h1>
 <section>
 
 <header>
-    
-        <h2>
-        
-        </h2>
-        
     
 </header>
 
@@ -93,6 +88,10 @@
 <article>
     <div class="container-overview">
     
+        
+            <div class="description">Express middleware adds a unique id <code>_reqId</code> and high-resolution start time
+<code>_hrStartTime</code> to the request object. The high-resolution start time uses
+<code>process.hrtime()</code>.</div>
         
 
         
@@ -144,35 +143,193 @@
     
 
     
-        <h3 class="subsection-title">Classes</h3>
+
+    
+
+    
+
+    
+        <h3 class="subsection-title">Members</h3>
 
         <dl>
-            <dt><a href="CallbackTransport.html">CallbackTransport</a></dt>
-            <dd></dd>
-        
-            <dt><a href="ConsoleTransport.html">ConsoleTransport</a></dt>
-            <dd></dd>
-        
-            <dt><a href="FileTransport.html">FileTransport</a></dt>
-            <dd></dd>
-        
-            <dt><a href="Logger.html">Logger</a></dt>
-            <dd></dd>
-        
-            <dt><a href="LogglyTransport.html">LogglyTransport</a></dt>
-            <dd></dd>
-        
-            <dt><a href="LogManager.html">LogManager</a></dt>
-            <dd></dd>
+            
+<hr>
+<dt class="name" id="~reqId">
+    <h4><span class="type-signature">&lt;inner> </span>reqId<span class="type-signature"></span></h4>
+
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        Request ID, unique for this process, incremented from 0 for every new request.
+    </div>
+    
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+</dd>
+
         </dl>
     
 
     
+        <h3 class="subsection-title">Methods</h3>
+
+        <dl>
+            
+<hr>
+<dt>
+    <h4 class="name" id="~routeSeparator"><span class="type-signature">&lt;inner> </span>routeSeparator()</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        Return middleware that adds a unique id <code>_reqId</code> and high-resolution start time
+<code>_hrStartTime</code> to the express request object
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
 
     
 
     
 
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    Function that can be called to add middleware to an express
+<a href="http://expressjs.com/en/4x/api.html#app">application</a>.
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">function</span>
+
+
+
+    </dd>
+</dl>
+
+
+        
+
+    
+        <h5>Example</h5>
+        
+    <pre class="sunlight-highlight-javascript">var middleware = require(&#x27;epdoc-logger&#x27;).middleware();
+var app = express();
+app.use(middleware.reqId());</pre>
+
+
+    
+</dd>
+
+        </dl>
     
 
     
