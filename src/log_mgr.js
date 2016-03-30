@@ -198,7 +198,7 @@ LogManager.prototype = {
             }
             var newTransportName = newTransport.toString();
             this.logMessage(this.LEVEL_INFO, "logger.push", "Setting transport to " + newTransportName, { transport: newTransportName });
-            if( this.defaultTransport.ready() ) {
+            if (this.defaultTransport.ready()) {
                 this.defaultTransport.end();
                 this.logMessage(this.LEVEL_INFO, "logger.stop", "Stopping default " + this.defaultTransport + " transport", { transport: this.defaultTransport.toString() });
             }
@@ -222,6 +222,7 @@ LogManager.prototype = {
                 type = undefined;
             }
         }
+        options || ( options = {} );
 
         if (!options.sid) {
             options.sid = this.sid;
@@ -338,7 +339,11 @@ LogManager.prototype = {
                     if (nextMsg) {
                         for (var idx = 0; idx < this.transports.length; idx++) {
                             var transport = this.transports[idx];
-                            transport.write(nextMsg);
+                            var logLevel = transport.level || nextMsg._logLevel || this.logLevel;
+                            if( this.isAboveLevel(nextMsg.level,logLevel) ) {
+                                nextMsg._logLevel = undefined;
+                                transport.write(nextMsg);
+                            }
                         }
                         this.flushQueue();
                     }
@@ -435,28 +440,29 @@ LogManager.prototype = {
      * @param {string} [msgParams.time=now] - A date object with the current time
      * @param {string} [msgParams.timeDiff=calculated] - The difference in milliseconds between
      *   'time' and when the application was started, based on reading {@link
-        *   LogManager#getStartTime}
+     *   LogManager#getStartTime}
      * @param {string|string[]} msgParams.message - A string or an array of strings. If an array
      *   the string will be printed on multiple lines where supported (e.g. SOS). The string must
      *   already formatted (e.g.. no '%s')
-     * @params {string} [thresholdLevel] - Specify the threshold log level above which to display
-     *   this log message, overriding the log level set for the LogManager.
+     * @params {string} [logLevel] - Specify the threshold log level above which to display
+     *   this log message, overriding the log level set for the LogManager, but not overriding the
+     *   setting set for the transport.
      * @return {LogManager}
      */
-    logParams: function (msgParams, thresholdLevel) {
+    logParams: function (msgParams, logLevel) {
         if (msgParams) {
             if (!msgParams.level) {
                 msgParams.level = this.LEVEL_INFO;
             }
-            if (this.isAboveLevel(msgParams.level, thresholdLevel)) {
-                if (!msgParams.time) {
-                    msgParams.time = new Date();
-                }
-                if (!msgParams.timeDiff) {
-                    msgParams.timeDiff = msgParams.time.getTime() - this.t0;
-                }
-                this.queue.push(msgParams);
+            // Set for later comparison
+            msgParams._logLevel = logLevel || this.logLevel;
+            if (!msgParams.time) {
+                msgParams.time = new Date();
             }
+            if (!msgParams.timeDiff) {
+                msgParams.timeDiff = msgParams.time.getTime() - this.t0;
+            }
+            this.queue.push(msgParams);
             if (msgParams.length && msgParams.message && msgParams.message.length > msgParams.length) {
                 msgParams.message = msgParams.message.substr(0, msgParams.length) + "...";
             }
@@ -560,28 +566,30 @@ LogManager.prototype = {
     },
 
     /**
-     * Flush the queue of the current transport.
+     * Flush the queue for all transports.
      * @param {function} [callback] - Called with err when complete.
      * @returns {Promise}
      */
     flushing: function (callback) {
-        var self = this;
-        return new Promise(function (resolve, reject) {
-            var transport = self.getCurrentTransport();
-            if (transport) {
+        var jobs = [];
+        _.each(this.transports, function (transport) {
+            var job = new Promise(function (resolve, reject) {
                 transport.flush(function (err) {
                     if (err) {
-                        callback && callback(err);
                         reject(err);
                     } else {
-                        callback && callback();
                         resolve();
                     }
-                })
-            } else {
-                callback && callback();
-                resolve();
-            }
+                });
+            });
+            jobs.push(job);
+        });
+        return Promise.all(jobs).then(function () {
+            callback && callback();
+            return Promise.resolve();
+        }, function (err) {
+            callback && callback(err);
+            return Promise.reject(err);
         });
     }
 

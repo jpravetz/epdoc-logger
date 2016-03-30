@@ -22,6 +22,7 @@ var format = require('./util/format');
  * @param [options.format=jsonArray] {string} - Set the format for the output line. Must be one of
  *   'json' or 'jsonArray'.
  * @param [options.custom=true] {boolean} - Set whether to output a 'custom' column.
+ * @param [options.level] {string} - Log level above which to output log messages, overriding setting for LogManager.
  * @constructor
  */
 
@@ -30,6 +31,7 @@ var FileTransport = function (options) {
     this.bIncludeSid = (options && ( options.sid === false || options.bIncludeSid === false) ) ? false : true;
     this.bIncludeCustom = (options && options.custom === false ) ? false : true;
     this.timestampFormat = this.options.timestamp || 'ms';
+    this.level = this.options.level;
     this.path = options.path;
     this.sType = 'file';
     this.bReady = true;

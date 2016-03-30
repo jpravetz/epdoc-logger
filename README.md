@@ -141,7 +141,7 @@ var log = require('epdoc-logger').get('emitter-name');
 
 ## Configuring Transports
 
-The module has built-in support for the following transports:
+The module has built-in support for the following transports and can output to multiple transports at the same time.
 
 * {@link ConsoleTransport} - logs to the console (default)
 * {@link FileTransport} - logs to a file
@@ -150,18 +150,19 @@ user interface to display log messages for debugging purpose._ Note that SOS Max
 * {@link CallbackTransport} - A line buffer/callback transport used only for automated testing
 * {@link LogglyTransport} - Logs to the online [loggly.com](http://loggly.com) service.
 
-On startup the logger can wait for a transport to be initialized before logging, or it can begin writing log messages
-immediately (if {@link LogManager#autoRun} is set. 
+On startup the logger can wait for a transport to be initialized before starting to write log messages, or will begin writing log messages
+immediately when {@link LogManager#autoRun} is set. 
 By default the logger uses the Console Transport and must be started manually.
 
 If {@link LogManager#autoRun} is not set, then a call to {@link LogManager#start} will begin logging. 
-Messages are buffered prior to the transport being initialized, so prior to this event no messages will be lost.
+Messages are buffered prior to this method being called, so prior to this event no messages will be lost and there is time to configure transports.
 
 Transports are configured via properties passed to {@link LogManager#setTransport}, {@link LogManager#addTransport} 
-or {@link LogManager#new} and options.transport. 
-Transport configuration properties are passed directly to the transport. Refer to the individual class API reference documents for more information.
+or {@link LogManager#new}. 
+Transport configuration properties are passed directly to the transport. Refer to the individual transport API reference documents for more information.
 
-Multiple transports can be configured to be run at the same time using {@link LogManager#addTransport}.
+Multiple transports can be configured to be run at the same time using {@link LogManager#addTransport}. 
+When either the {@link LogManager#setTransport} or {@link LogManager#addTransport} methods are called, the default transport is disabled.
 
 ### Logging to Console ###
 
@@ -221,52 +222,18 @@ log.info("Return value for %s is %s", "hello", "world" );
 Loggly output is buffered and sent in batches. As a result it is important to shutdown logging before exiting.
 See the example earlier in this readme showing how this is done.
 
-### Advanced (SECTION IS OUT OF DATE)
+### Advanced
 
-Transports can also be closed using ```unsetLogger```. In this event logging will revert to the previously 
-specified transport. For example, if you specify an SOS transport and the SOS application is closed, 
+Transports can also be closed using {@link LogManager#clearTransports}, or can sometimes close on their own.
+In this event logging will revert to the default (Console) transport. 
+For example, if you specify an SOS transport and the SOS application is closed, 
 logging will return back to the console and the console will be (re)started automatically. 
 If an active transport closes on it's own (_e.g._ SOS Max application exits) 
-the active transport is automatically shifted off the list of transports as if calling ```unsetLogger```.
-
-See the files in the test folder for additional examples and information.
-
-A call to ```setLogger``` will stop the previously activated transport (if any),
-add the new transport to the stack and automatically start the new transport.
-
-Transports are maintained in a list. When calling ```setLogger``` you are unshifting a transport onto
-the head of the list. When you call ```unsetLogger``` you are stopping the transport, shifting it off the list
-of transports, and restoring and restarting the previously set transport.
+the transport is removed.
 
 The Logger will buffer messages while switching transports,
 however individual transports can do their own buffering (_e.g._ file).
 If a transport closes prematurely, it's buffer may be lost.
-
-There are probably few instances where you would need to manually call ```unsetLogger``` or deal with the list
-of transports, except where wishing to start and stop an _SOS_-style transport.
-
-The ```setLogger(type,options)``` has the following parameters:
-
- * ```type``` - The transport type, which is either a string (one of the built-in transports 'console', 'file' or
- 'sos') or the class of a custom transport.
- * ```options``` - An object with the following optional parameters
-    * ```path``` - 'path/to/myfile.log', used when type is ```file```
-    * ```dateFormat``` - one of 'ISO' or 'formatMS', default is dependent on the transport but is 
-    usually 'formatMS' (not used with loggly)
-    * ```bIncludeSid``` - Indicates whether the sessionId should be included in the output, defaults to true
-
-To build your own custom transport class it
-just copy or subclass the console transport (obtained using ```Logger.getLoggerClass('console')```)
-and modify as has been done for the file and sos transports.
-
-Loggly has these additional options:
-
-- ```token``` (required) Token issued by [loggly.com] for your account
-- ```bufferSize``` (optional, default 100 messages) Number of messages to buffer
-- ```flushInterval``` (optional, default 5000 ms) An interval timer that flushes messages if there are any
-
-
-
 
 ## Logging Example ##
 
@@ -337,24 +304,28 @@ The following methods result in a message output with log level set to INFO:
     * ```msg``` - String to output, formatted with ```util.format```
 
 
-## Custom Log Levels ##
+## Log Levels ##
 
-Log level defaults are set in LogManager:
+Log level defaults are set in {@link LogManager#new}:
 
 ```javascript
-    this.LEVEL_DEFAULT = 'debug';       // Default threshold level for outputting logs
-    this.LEVEL_INFO = 'info';           // If changing LEVEL_ORDER, what level should internally generated info messages be output at?
-    this.LEVEL_WARN = 'warn';           // If changing LEVEL_ORDER, what level should internally generated warn messages be output at?
-    this.LEVEL_ORDER = ['verbose', 'debug', 'info', 'warn', 'error', 'fatal'];
+this.LEVEL_DEFAULT = 'debug';       // Default threshold level for outputting logs
+this.LEVEL_INFO = 'info';           // If changing LEVEL_ORDER, what level should internally generated info messages be output at?
+this.LEVEL_WARN = 'warn';           // If changing LEVEL_ORDER, what level should internally generated warn messages be output at?
+this.LEVEL_ORDER = ['verbose', 'debug', 'info', 'warn', 'error', 'fatal'];
 ```
 
-You can customize log levels by setting the value of this array after constructing your LogManager object.
+You can _customize_ log levels by setting the value of this array after constructing your LogManager object.
 Any subsequently created Logger objects will have methods with the names you have provided. 
-Please use lowercase log level names.
+Please use lowercase log level names. They will be changed to uppercase by transports, where appropriate.
+
+The level at which messages are output can be controlled at three points:
+
+- {@link Logger#constructor} or {@link Logger#setLevel} - This log level will override log levels set by the LogManager
+- {@link LogManager#constructor} or {@link LogManager#setLevel} - This becomes the default log level for all {@link Logger} objects and transports.
+- At the Transport level by passing in the option ```level```. This will override the value set for the LogManager.
 
 ## Express Middleware (Needs Updating) ##
-
-_Note: This section needs to be updated._
 
 The included express middleware are instantiated as follows:
 
@@ -375,16 +346,16 @@ app.all('*', routeSeparator());
 app.all('*', routeLogger());
 ```
 
-See test/reqtest.js for an example of how to use a stub request and response method to test middleware.
+See test/app.express.js for an example of how to use a stub request and response method to test middleware.
 This technique can also be useful if you wish to use the req/res/next mechanism in non-express environments.
-As an example, you could have req/res objects for tracking AMQP (RabbitMQ) requests and responses and
-associating reqIds with the AMQP requests.
+As an example, you could have req/res objects for tracking AMQP (RabbitMQ) or AWS SQS requests and
+associating request or session IDs.
 
-### reqId ###
+### {@link module:reqId}
 
 Adds ```_reqId``` and ```_hrStartTime``` to the request object. These are used later when logging.
 
-### {@link ResponseLogger} ###
+### {@link module:ResponseLogger} ###
 
 The responseLogger middleware mixes custom logging methods, similar to those in the logging object,
 into the express ```response``` object. This will add request-context-sensitive logging information
@@ -408,16 +379,10 @@ Adds a separator line to the log file for each new route.
 
 Adds an information line to the log file for each new route.
 
-## Test
-
-Unit tests are not very good for this modules, however the module is in 
-heavy use within our own applications, and so errors are quickly found.
-
 ## Action Items
 
-* The express middleware is currently being updated.
 * Add koa middleware (I don't currently have a koa project going, so this may not happen for awhile)
-* Loggly support - DONE!
+* More unit tests
 
 ## Author
 

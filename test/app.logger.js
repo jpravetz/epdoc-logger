@@ -42,11 +42,11 @@ describe("Logger test", function () {
                 should(params.data).have.properties({transport:'Console'});
                 params = buffer.shift();
                 should(params).have.property('time');
-                should(params).have.properties({action:'logger.push',message:'Setting logger to Callback',module:'logger',level:'info'});
+                should(params).have.properties({action:'logger.push',message:'Setting transport to Callback',module:'logger',level:'info'});
                 should(params.data).have.properties({transport:'Callback'});
                 params = buffer.shift();
                 should(params).have.property('time');
-                should(params).have.properties({action:'logger.stop',message:'Stopping Console',module:'logger',level:'info'});
+                should(params).have.properties({action:'logger.stop',message:'Stopping default Console transport',module:'logger',level:'info'});
                 should(params.data).have.properties({transport:'Console'});
                 params = buffer.shift();
                 should(params).have.property('time');
