@@ -325,25 +325,20 @@ The level at which messages are output can be controlled at three points:
 - {@link LogManager#constructor} or {@link LogManager#setLevel} - This becomes the default log level for all {@link Logger} objects and transports.
 - At the Transport level by passing in the option ```level```. This will override the value set for the LogManager.
 
-## Express Middleware (Needs Updating) ##
+## Express Middleware ##
 
 The included express middleware are instantiated as follows:
 
 ```javascript
-var LogMgr = require('epdoc-logger');
-
-var reqId = Logger.middleware().reqId;
-var responseLogger = Logger.middleware().responseLogger;
-var routeLogger = Logger.middleware().routeLogger;
-var routeSeparator = Logger.middleware().routeSeparator;
+var middleware = require('epdoc-logger').middleware();
 
 var app = express();
-app.use(reqId());
+app.use(middleware.reqId());
 
 app.use(app.router);
-app.all('*', responseLogger());
-app.all('*', routeSeparator());
-app.all('*', routeLogger());
+app.all('*', middleware.responseLogger());
+app.all('*', middleware.routeSeparator());
+app.all('*', middleware.routeLogger());
 ```
 
 See test/app.express.js for an example of how to use a stub request and response method to test middleware.
@@ -351,11 +346,11 @@ This technique can also be useful if you wish to use the req/res/next mechanism 
 As an example, you could have req/res objects for tracking AMQP (RabbitMQ) or AWS SQS requests and
 associating request or session IDs.
 
-### {@link module:reqId}
+### [ReqId]{@link module:middleware/reqId}
 
 Adds ```_reqId``` and ```_hrStartTime``` to the request object. These are used later when logging.
 
-### {@link module:ResponseLogger} ###
+### [ResponseLogger]{@link module:middleware/responseLogger} ###
 
 The responseLogger middleware mixes custom logging methods, similar to those in the logging object,
 into the express ```response``` object. This will add request-context-sensitive logging information
@@ -371,11 +366,11 @@ function myFunction(req,res,params) {
 }
 ```
 
-### {@link RouteSeparator} ###
+### [RouteSeparator]{@link module:middleware/routeSeparator} ###
 
 Adds a separator line to the log file for each new route.
 
-### {@link RouteLogger} ###
+### [RouteLogger]{@link module:middleware/routeLogger} ###
 
 Adds an information line to the log file for each new route.
 
