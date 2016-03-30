@@ -8,16 +8,28 @@
  * <code>_hrStartTime</code> to the request object. The high-resolution start time uses
  * <code>process.hrtime()</code>.
  *
- * @module reqId
+ * @module middleware/reqId
  */
 
+
 /**
- * Request ID, unique for this instance, incremented from 0.
+ * Request ID, unique for this process, incremented from 0 for every new request.
  */
 var reqId = 0;
 
 /**
- * Returns function that can be called to add Express middleware.
+ * Return middleware that adds a unique id <code>_reqId</code> and high-resolution start time
+ * <code>_hrStartTime</code> to the express request object
+ *
+ * @function routeSeparator
+ *
+ * @example
+ * var middleware = require('epdoc-logger').middleware();
+ * var app = express();
+ * app.use(middleware.reqId());
+ *
+ * @returns {Function} Function that can be called to add middleware to an express
+ * [application]{@link http://expressjs.com/en/4x/api.html#app}.
  */
 module.exports = function () {
 

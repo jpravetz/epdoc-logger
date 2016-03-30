@@ -4,9 +4,30 @@
  *****************************************************************************/
 
 /**
- * Middleware outputs a log message for every route
- * Depends on responseLogger being installed, must be run after router
+ * [Express]{@link http://expressjs.com/} middleware outputs a log message for every route.
+ * Depends on responseLogger being installed, must be added after the router.
+ *
+ * @module middleware/routeLogger
  */
+
+
+/**
+ * Return middleware that outputs a log message for every new request.
+ * The log message is output via a {@link Logger} object that is attached
+ * to the express [response]{@link http://expressjs.com/en/4x/api.html#res}
+ * object using the [responseLogger]{@link module:middleware/responseLogger} middleware.
+ *
+ * @function routeLogger
+ *
+ * @example
+ * var middleware = require('epdoc-logger').middleware();
+ * app.all('*', middleware.responseLogger());
+ * app.all('*', middleware.routeLogger());
+ *
+ * @returns {Function} Function that can be called to add middleware to an express
+ * [application]{@link http://expressjs.com/en/4x/api.html#app}.
+ */
+
 module.exports = function() {
 
     return function(req,res,next) {

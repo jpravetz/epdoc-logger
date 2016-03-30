@@ -7,25 +7,32 @@ _ = require('underscore');
 var Response = require('./response');
 var Logger = require('../logger');
 
-
 /**
- * Middleware extends express.js response object, to be used for logging and responding to API
- * calls. This middleware creates a new ResponseLogger object with attached methods, then adds
- * these methods to the Express response object (mixins).
+ * [Express]{@link http://expressjs.com/} middleware extends express.js
+ * [response]{@link http://expressjs.com/en/4x/api.html#res} object by adding a
+ * {@link Logger} object via which logging can be done in the context of the request. Also extends
+ * [response.send]{@link http://expressjs.com/en/4x/api.html#res.send} and
+ * [response.end]{@link http://expressjs.com/en/4x/api.html#res.send} methods to automatically
+ * log a message when a response is sent. This message will include the response time for the
+ * request.
+ *
+ * @module middleware/responseLogger
  */
 
 
 /**
- * Add a log object to req and res objects.
+ * Return middleware that can add a {@link Logger} object to the express response object.
+ * @function responseLogger
  *
- * @class Response
- * @param opt_options {Object}
- *      responseBuilder: a method to build the response object in the event of an exception, error
- *   or success. Errors are indicated by the exception being passed in to the builder, or errorCode
- *   being defined. The value may be a function or 'json-api' to use the JSON API response builder.
- *   objName: {string} the name of an object to mixin our responseLogger methods with, defaults to
- *   'log'.
- * @returns {Function}
+ * @example
+ * var middleware = require('epdoc-logger').middleware();
+ * app.all('*', middleware.responseLogger());
+ *
+ * @param [options] {Object}
+ * @param [options.objName=log] {string} The name of the response object property
+ * to which to attach the {@link Logger} object.
+ * @returns {Function} Function that can be called to add middleware to an express
+ * [application]{@link http://expressjs.com/en/4x/api.html#app}.
  */
 
 module.exports = function (options) {
