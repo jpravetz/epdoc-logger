@@ -45,9 +45,21 @@ ConsoleTransport.prototype = {
     type: function () {
         return this.sType;
     },
-    
-    isEqual: function(transport) {
-        return transport.type === 'console' ? true : false
+
+    /**
+     * Test if the transport matches the argument.
+     * @param transport {string|object} If a string then matches if equal to 'console'. If an object
+     *   then matches if transport.type equals 'console'.
+     * @returns {boolean} True if the transport matches the argument
+     */
+    match: function(transport) {
+        if(  _.isString(transport) && transport === this.sType ) {
+            return true;
+        } 
+        if( _.isObject(transport) && transport.type === this.sType ) {
+            return true;
+        }
+        return false;
     },
 
     /**

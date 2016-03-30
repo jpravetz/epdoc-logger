@@ -82,8 +82,21 @@ LogglyTransport.prototype = {
         return this.sType;
     },
 
-    isEqual: function (transport) {
-        return transport.type === 'loggly' && transport.token === this.token ? true : false
+    /**
+     * Test if the transport matches the argument.
+     * @param transport {string|object} If a string then matches if equal to 'loggly'. If an object
+     *   then matches if transport.type equals 'loggly' and transport.token equals this transports
+     *   token property.
+     * @returns {boolean} True if the transport matches the argument
+     */
+    match: function (transport) {
+        if (_.isString(transport) && transport === this.sType) {
+            return true;
+        }
+        if (_.isObject(transport) && transport.type === this.sType && transport.token === this.token) {
+            return true;
+        }
+        return false;
     },
 
     /**
