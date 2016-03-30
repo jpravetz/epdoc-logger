@@ -22,6 +22,7 @@ var format = require('./util/format');
  * @param [options.format=jsonArray] {string} - Set the format for the output line. Must be one of
  *   'json' or 'jsonArray'.
  * @param [options.custom=true] {boolean} - Set whether to output a 'custom' column.
+ * @param [options.level] {string} - Log level above which to output log messages, overriding setting for LogManager.
  * @constructor
  */
 
@@ -30,6 +31,8 @@ var FileTransport = function (options) {
     this.bIncludeSid = (options && ( options.sid === false || options.bIncludeSid === false) ) ? false : true;
     this.bIncludeCustom = (options && options.custom === false ) ? false : true;
     this.timestampFormat = this.options.timestamp || 'ms';
+    this.level = this.options.level;
+    this.path = options.path;
     this.sType = 'file';
     this.bReady = true;
     this.buffer = [];      // Used in case of stream backups
@@ -41,11 +44,11 @@ FileTransport.prototype = {
     constructor: FileTransport,
 
     validateOptions: function (previous) {
-        if (_.isString(this.options.path)) {
+        if (_.isString(this.path)) {
             if (previous && previous.type() === 'sos') {
                 return new Error("Cannot switch from 'sos' logger to 'file' logger");
             }
-            //var parentFolder = Path.dirname(this.options.path);
+            //var parentFolder = Path.dirname(this.path);
             //if (!fs.existsSync(parentFolder)) {
             //    return new Error("Log folder '" + parentFolder + "' does not exist");
             //}
@@ -56,11 +59,11 @@ FileTransport.prototype = {
 
     open: function (onSuccess, onError, onClose) {
         try {
-            var folder = Path.dirname(this.options.path);
+            var folder = Path.dirname(this.path);
             if (!fs.existsSync(folder)) {
                 fs.mkdirSync(folder);
             }
-            this.stream = fs.createWriteStream(this.options.path, { flags: 'a' });
+            this.stream = fs.createWriteStream(this.path, { flags: 'a' });
             this.bReady = true;
             onSuccess && onSuccess();
         } catch (err) {
@@ -77,6 +80,10 @@ FileTransport.prototype = {
 
     type: function () {
         return this.sType;
+    },
+
+    isEqual: function(transport) {
+        return transport.type === 'file' && transport.path === this.path ? true : false
     },
 
     /**
@@ -178,7 +185,7 @@ FileTransport.prototype = {
     },
 
     toString: function () {
-        return "File (" + this.options.path + ")";
+        return "File (" + this.path + ")";
     },
 
     last: true

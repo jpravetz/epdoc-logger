@@ -6,7 +6,7 @@
 
 /**
  * Express.js methods that are either added to or replace methods of the Express response object.
- * @class Response
+ * @module Response
  */
 
 module.exports = {

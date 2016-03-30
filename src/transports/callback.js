@@ -13,6 +13,7 @@ var dateutil = require('../dateutil');
  * @param options {Object} Output options include:
  * @param [options.sid] {boolean} - If true then output express request and session IDs, otherwise
  *   do not output these values
+ * @param [options.level] {string} - Log level above which to output log messages, overriding setting for LogManager.
  * @param {function} [options.callback] - Callback with object to be logged rather than adding to line
  *   buffer
  * @constructor
@@ -20,6 +21,7 @@ var dateutil = require('../dateutil');
 var CallbackTransport = function (options) {
     this.options = options || {};
     this.bIncludeSid = (options && options.sid === false) ? false : true;
+    this.level = this.options.level;
     this.sType = 'callback';
     this.bReady = true;
     this.logCallback = options.callback;
@@ -42,6 +44,10 @@ CallbackTransport.prototype = {
 
     type: function () {
         return this.sType;
+    },
+
+    isEqual: function(transport) {
+        return transport.type === 'callback' && transport.callback === this.callback ? true : false
     },
 
     /**
@@ -97,7 +103,7 @@ CallbackTransport.prototype = {
     },
 
     toString: function () {
-        return "Buffer";
+        return "Callback";
     },
 
     pad: function (n, width, z) {

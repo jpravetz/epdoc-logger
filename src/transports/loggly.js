@@ -14,18 +14,23 @@ var request = require('request');
  * @param options {Object} Output options include:
  * @param [options.sid] {boolean} - If true then output express request and session IDs, otherwise
  *   do not output these values
+ * @param [options.level] {string} - Log level above which to output log messages, overriding
+ *   setting for LogManager.
  * @param options.token {string} - The loggly token used for authenticating to loggly.
  * @param [options.tags] {string[]} - Array of loggly tags.
- * @param [options.url] {string} - URL to use for the loggly service. Should be set only if the default URL
- *   value is not working.
- * @param [options.host=os.hostname()] {string} - Set the name of the host that is reported to loggly in a host column.
- * @param [options.timestamp=ms] {string} - Set the format for timestamp output, must be one of 'ms' or
- *   'iso'.
- * @param [options.format=jsonArray] {string} - Set the format for the output line. Must be one of 'json'
- *   or 'jsonArray'.
+ * @param [options.url] {string} - URL to use for the loggly service. Should be set only if the
+ *   default URL value is not working.
+ * @param [options.host=os.hostname()] {string} - Set the name of the host that is reported to
+ *   loggly in a host column.
+ * @param [options.timestamp=ms] {string} - Set the format for timestamp output, must be one of
+ *   'ms' or 'iso'.
+ * @param [options.format=jsonArray] {string} - Set the format for the output line. Must be one of
+ *   'json' or 'jsonArray'.
  * @param [options.custom=true] {boolean} - Set whether to output a 'custom' column.
- * @param [options.bufferSize=100] {number} - The maximum number of lines of log messages to buffer before writing to loggly.
- * @param [options.flushInterval=5000] {number} - The maximum number of milliseconds of buffering before writing to loggly.
+ * @param [options.bufferSize=100] {number} - The maximum number of lines of log messages to buffer
+ *   before writing to loggly.
+ * @param [options.flushInterval=5000] {number} - The maximum number of milliseconds of buffering
+ *   before writing to loggly.
  * @constructor
  */
 
@@ -36,6 +41,7 @@ var LogglyTransport = function (options) {
     this.subdomain = 'logs-01';
     this.bIncludeSid = (options && ( options.sid === false || options.bIncludeSid === false)) ? false : true;
     this.bIncludeCustom = (options && options.custom === false ) ? false : true;
+    this.level = this.options.level;
     this.tags = (_.isArray(options.tags) && options.tags.length ) ? ('/tag/' + options.tags.join(',') + '/') : '';
     this.sType = 'loggly';
     this.bReady = false;
@@ -76,6 +82,10 @@ LogglyTransport.prototype = {
         return this.sType;
     },
 
+    isEqual: function (transport) {
+        return transport.type === 'loggly' && transport.token === this.token ? true : false
+    },
+
     /**
      * Return true if this logger is ready to accept write operations.
      * Otherwise the caller should buffer writes and call write when ready is true.
@@ -103,12 +113,14 @@ LogglyTransport.prototype = {
      * @param params {Object} Parameters to be logged:
      *  @param {Date} params.time - Date object
      * @param {string} params.level - log level (INFO, WARN, ERROR, or any string)
-     * @param {string} params.reqId - express request ID, if provided (output if options.sid is true)
+     * @param {string} params.reqId - express request ID, if provided (output if options.sid is
+     *   true)
      * @param {string} params.sid - express session ID, if provided (output if options.sid is true)
      * @param {string} params.module - name of file or module or emitter (noun)
      * @param {string} params.action - method or operation being performed (verb)
      * @param {string} params.message - text string to output
-     * @param {Object} params.custom - Arbitrary data to be logged in a 'custom' column if enabled via the LogManager.
+     * @param {Object} params.custom - Arbitrary data to be logged in a 'custom' column if enabled
+     *   via the LogManager.
      * @param {Object} params.data - Arbitrary data to be logged in the 'data' column
      */
     write: function (params) {
@@ -170,7 +182,7 @@ LogglyTransport.prototype = {
     },
 
     toString: function () {
-        return "loggly";
+        return "Loggly";
     },
 
     _formatLogMessage: function (params) {
