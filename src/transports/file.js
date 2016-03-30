@@ -82,8 +82,21 @@ FileTransport.prototype = {
         return this.sType;
     },
 
-    isEqual: function(transport) {
-        return transport.type === 'file' && transport.path === this.path ? true : false
+    /**
+     * Test if the transport matches the argument.
+     * @param transport {string|object} If a string then matches if equal to 'file'. If an object
+     *   then matches if transport.type equals 'file' and transport.path equals this transports
+     *   path property.
+     * @returns {boolean} True if the transport matches the argument
+     */
+    match: function(transport) {
+        if(  _.isString(transport) && transport === this.sType ) {
+            return true;
+        }
+        if( _.isObject(transport) && transport.type === this.sType && transport.path === this.path ) {
+            return true;
+        }
+        return false;
     },
 
     /**

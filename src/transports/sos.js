@@ -8,6 +8,7 @@ var util = require('util');
 var _ = require('underscore');
 
 // We will subclass the ConsoleTransport
+// This transport works for SOS but I would like to modify it to work with other socket loggers.
 var Transport = require('./console');
 
 var protoProps = {
@@ -40,8 +41,21 @@ var protoProps = {
         });
     },
 
-    isEqual: function(transport) {
-        return transport.type === 'sos' && transport.port === this.port ? true : false
+    /**
+     * Test if the transport matches the argument.
+     * @param transport {string|object} If a string then matches if equal to 'socket'. If an object
+     *   then matches if transport.type equals 'socket' and transport.port equals this transports
+     *   port property.
+     * @returns {boolean} True if the transport matches the argument
+     */
+    match: function(transport) {
+        if(  _.isString(transport) && transport === this.sType ) {
+            return true;
+        }
+        if( _.isObject(transport) && transport.type === this.sType && transport.port === this.port ) {
+            return true;
+        }
+        return false;
     },
 
     clear: function() {

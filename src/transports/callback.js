@@ -13,9 +13,11 @@ var dateutil = require('../dateutil');
  * @param options {Object} Output options include:
  * @param [options.sid] {boolean} - If true then output express request and session IDs, otherwise
  *   do not output these values
- * @param [options.level] {string} - Log level above which to output log messages, overriding setting for LogManager.
- * @param {function} [options.callback] - Callback with object to be logged rather than adding to line
- *   buffer
+ * @param [options.level] {string} - Log level above which to output log messages, overriding
+ *   setting for LogManager.
+ * @param {function} [options.callback] - Callback with object to be logged rather than adding to
+ *   line buffer
+ * @param {function} [options.uid] - Unique identifier used by {@link CallbackTransport#match}.
  * @constructor
  */
 var CallbackTransport = function (options) {
@@ -25,6 +27,7 @@ var CallbackTransport = function (options) {
     this.sType = 'callback';
     this.bReady = true;
     this.logCallback = options.callback;
+    this.uid = options.uid;
     this.data = [];
 };
 
@@ -46,8 +49,22 @@ CallbackTransport.prototype = {
         return this.sType;
     },
 
-    isEqual: function(transport) {
-        return transport.type === 'callback' && transport.callback === this.callback ? true : false
+    /**
+     * Test if the transport matches the argument.
+     * @param transport {string|object} If a string, then matches if equal to 'callback'. If an
+     *   object, then matches if transport.type equals 'callback' and if transport.uid matches.
+     * @returns {boolean} True if the transport matches the argument
+     */
+    match: function (transport) {
+        if (_.isString(transport) && transport === this.sType) {
+            return true;
+        }
+        if (_.isObject(transport) && transport.type === this.sType) {
+            if (transport.uid == this.uid) {
+                return true;
+            }
+        }
+        return false;
     },
 
     /**
@@ -76,12 +93,14 @@ CallbackTransport.prototype = {
      * @param params {Object} Parameters to be logged:
      *  @param {Date} params.time - Date object
      * @param {string} params.level - log level (INFO, WARN, ERROR, or any string)
-     * @param {string} params.reqId - express request ID, if provided (output if options.sid is true)
+     * @param {string} params.reqId - express request ID, if provided (output if options.sid is
+     *   true)
      * @param {string} params.sid - express session ID, if provided (output if options.sid is true)
      * @param {string} params.module - name of file or module or emitter (noun)
      * @param {string} params.action - method or operation being performed (verb)
      * @param {string} params.message - text string to output
-     * @param {Object} params.custom - Arbitrary data to be logged in a 'custom' column if enabled via the LogManager.
+     * @param {Object} params.custom - Arbitrary data to be logged in a 'custom' column if enabled
+     *   via the LogManager.
      * @param {Object} params.data - Arbitrary data to be logged in the 'data' column
      */
     write: function (params) {
@@ -103,7 +122,7 @@ CallbackTransport.prototype = {
     },
 
     toString: function () {
-        return "Callback";
+        return "Callback" + (this.uid ? (" (" + this.uid + ")") : "");
     },
 
     pad: function (n, width, z) {
