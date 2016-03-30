@@ -197,16 +197,16 @@ LogManager.prototype = {
                 this.clearTransports();
             }
             var newTransportName = newTransport.toString();
-            this.logMessage(this.LEVEL_INFO, "logger.push", "Setting logger to " + newTransportName, { transport: newTransportName });
-            if( this.defaultTransport.ready ) {
+            this.logMessage(this.LEVEL_INFO, "logger.push", "Setting transport to " + newTransportName, { transport: newTransportName });
+            if( this.defaultTransport.ready() ) {
                 this.defaultTransport.end();
-                this.logMessage(this.LEVEL_INFO, "logger.stop", "Stopping " + this.defaultTransport, { transport: this.defaultTransport.toString() });
+                this.logMessage(this.LEVEL_INFO, "logger.stop", "Stopping default " + this.defaultTransport + " transport", { transport: this.defaultTransport.toString() });
             }
             this.transports.unshift(newTransport);
             this.running = false;
             //this.start();
         } else {
-            this.logMessage(this.LEVEL_WARN, "logger.push.warn", ("Unsupported setLogger operation: " + err.message ), { options: options });
+            this.logMessage(this.LEVEL_WARN, "logger.push.warn", ("Unsupported setTransport operation: " + err.message ), { options: options });
         }
         return this;
     },
