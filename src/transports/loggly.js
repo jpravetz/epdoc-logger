@@ -202,11 +202,10 @@ LogglyTransport.prototype = {
         var json = {
             timestamp: (params.time ? params.time.toISOString() : (new Date()).toISOString()),
             level: params.level,
-            module: params.module,
+            emitter: params.module,
             action: params.action,
             data: params.data,
-            message: params.message,
-            custom: params.custom
+            message: params.message
         };
         if (this.bIncludeSid) {
             json.sid = params.sid;
