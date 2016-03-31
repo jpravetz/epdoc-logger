@@ -42,7 +42,11 @@ var LogglyTransport = function (options) {
     this.bIncludeSid = (options && ( options.sid === false || options.bIncludeSid === false)) ? false : true;
     this.bIncludeCustom = (options && options.custom === false ) ? false : true;
     this.level = this.options.level;
-    this.tags = (_.isArray(options.tags) && options.tags.length ) ? ('/tag/' + options.tags.join(',') + '/') : '';
+    var tags = [ 'epdoc'];
+    if( _.isArray(options.tags) && options.tags.length ) {
+        tags = tags.concat(options.tags);
+    }
+    this.tags = '/tag/' + tags.join(',') + '/';
     this.sType = 'loggly';
     this.bReady = false;
 
