@@ -4,7 +4,7 @@
  *****************************************************************************/
 
 var _ = require('underscore');
-var dateutil = require('../dateutil');
+var format = require('./util/format');
 
 /**
  * Create a new Callback transport where output is added to a data array or a callback is used to
@@ -23,6 +23,7 @@ var dateutil = require('../dateutil');
 var CallbackTransport = function (options) {
     this.options = options || {};
     this.bIncludeSid = (options && options.sid === false) ? false : true;
+    this.bIncludeCustom = (options && options.custom === false ) ? false : true;
     this.level = this.options.level;
     this.sType = 'callback';
     this.bReady = true;
@@ -104,10 +105,17 @@ CallbackTransport.prototype = {
      * @param {Object} params.data - Arbitrary data to be logged in the 'data' column
      */
     write: function (params) {
+        var opts = {
+            timestamp: 'iso',
+            sid: this.bIncludeSid,
+            custom: this.bIncludeCustom,
+            dataObjects: true
+        };
+        var json = format.paramsToJson(params,opts);
         if (this.logCallback) {
-            this.logCallback(params);
+            this.logCallback(json);
         } else {
-            this.data.push(params);
+            this.data.push(json);
         }
     },
 

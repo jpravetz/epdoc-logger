@@ -8,8 +8,8 @@ var _ = require('underscore');
 var util = require('util');
 var Path = require('path');
 var Logger = require('./logger');
-var ConsoleStream = require('./transports/console');
 
+var mgrIdx = 0;
 
 /**
  * Create a new LogManager object with no transports. Logged messages will not begin
@@ -51,6 +51,7 @@ var ConsoleStream = require('./transports/console');
 var LogManager = function (options) {
 
     options || ( options = {} );
+    this.name = 'LogManager#'+(++mgrIdx);
     this.t0 = options.t0 ? options.t0.getTime() : (new Date()).getTime();
     this.sid = ( options.sid === true ) ? true : false;
     this.custom = ( options.custom === true ) ? true : false;
@@ -124,6 +125,23 @@ LogManager.prototype = {
             });
         }
         return self;
+    },
+
+  /**
+   * Wraps {LogManager#start} into a Promise.
+   * @return {Promise} Resolves to this.
+   */
+  starting: function() {
+        var self = this;
+        return new Promise(function (resolve, reject) {
+            self.start(function(err) {
+                if(err) {
+                    reject(err);
+                } else {
+                    resolve(self);
+                }
+            });
+        });
     },
 
     _startingTransport: function (transport) {

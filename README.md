@@ -1,7 +1,8 @@
 # epdoc-logger #
 
 A logging module supporting built-in and custom transports, Express 4 response mixins, 
-rich message and data syntax, and chainable methods for recording log events.
+rich message and data syntax, chainable methods for recording log events, and a 
+callback transport to allow unit testing via log messages.
 Generally supports [Winston's](https://github.com/winstonjs/winston) logging method calls
 for simpler messages, but with the addition of a substantial number of new methods, 
 many of which can be chained to create richer output with more columns of data.
@@ -147,7 +148,7 @@ The module has built-in support for the following transports and can output to m
 * {@link FileTransport} - logs to a file
 * SOSTransport - Logs to [SOS Max](http://www.sos.powerflasher.com/developer-tools/sosmax/home/). _SOS max is the POWERFLASHER Socket Output Server - a fast and helpful programmer tool with graphical
 user interface to display log messages for debugging purpose._ Note that SOS Max appears to not work on the latest version of Mac OS X.
-* {@link CallbackTransport} - A line buffer/callback transport used only for automated testing
+* {@link CallbackTransport} - A line buffer/callback transport useful for automated testing
 * {@link LogglyTransport} - Logs to the online [loggly.com](http://loggly.com) service.
 
 On startup the logger can wait for a transport to be initialized before starting to write log messages, or will begin writing log messages

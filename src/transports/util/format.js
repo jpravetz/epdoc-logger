@@ -31,9 +31,9 @@ var self = {
             level: params.level.toUpperCase(),
             emitter: params.module,
             action: params.action,
-            data: JSON.stringify(params.data),
+            data: options.dataObjects ? params.data : JSON.stringify(params.data),
             message: params.message,
-            custom: JSON.stringify(params.custom)
+            custom: options.dataObjects ? params.custom : JSON.stringify(params.custom)
         };
         if (json.level === 'VERBOSE') {
             json.level = 'TRACE';
