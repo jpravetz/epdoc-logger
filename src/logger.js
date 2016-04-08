@@ -99,7 +99,7 @@ var Logger = function (logMgr, modulename, context) {
                         msgs.push(err.errors[idx]);
                     }
                 }
-                if (self.errorStack() && err.stack) {
+                if (self.bErrorStack && err.stack) {
                     var items = err.stack.split(/\n\s*/);
                     self.data({ error: { code: err.code, stack: items } });
                 } else if (!_.isUndefined(err.code)) {
@@ -130,6 +130,12 @@ Logger.prototype = {
         return this;
     },
 
+  /**
+   * Set whether to log a stack for Error objects. If not set in the constructor, then inherits
+   * this value from the LogManager.
+   * @param [bShow=true] {boolean}
+   * @returns {Logger}
+   */
     errorStack: function (bShow) {
         this.bErrorStack = (bShow === false) ? false : true;
         return this;
