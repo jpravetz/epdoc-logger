@@ -84,7 +84,7 @@ var LogManager = function (options) {
         }
     }
     if (options.autoRun === true) {
-        if (!this.tarray.length) {
+        if (!tarray.length) {
             this.addTransport('console');
         }
         this.start();

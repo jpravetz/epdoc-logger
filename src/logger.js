@@ -130,12 +130,12 @@ Logger.prototype = {
         return this;
     },
 
-  /**
-   * Set whether to log a stack for Error objects. If not set in the constructor, then inherits
-   * this value from the LogManager.
-   * @param [bShow=true] {boolean}
-   * @returns {Logger}
-   */
+    /**
+     * Set whether to log a stack for Error objects. If not set in the constructor, then inherits
+     * this value from the LogManager.
+     * @param [bShow=true] {boolean}
+     * @returns {Logger}
+     */
     errorStack: function (bShow) {
         this.bErrorStack = (bShow === false) ? false : true;
         return this;
@@ -246,8 +246,8 @@ Logger.prototype = {
      *
      * <p>This method is usually called at the entry point of a function. Can also be
      * called by submodules, in which case the submodules should call [popName]{@link
-     * Logger#popName} when returning. Note that it is not necessary to call [popName]{@link
-     * Logger#popName} when used in the context of an Express context and terminating a request
+        * Logger#popName} when returning. Note that it is not necessary to call [popName]{@link
+        * Logger#popName} when used in the context of an Express context and terminating a request
      * with a response.
      *
      * @param name (required) String in the form 'api.org.create' (route.method or
@@ -494,6 +494,14 @@ Logger.prototype = {
     setLevel: function (level) {
         this.logLevel = level;
         return this;
+    },
+
+    /**
+     * Get the log level for this object
+     * @returns {string} The currently set log level for this Logger object.
+     */
+    getLevel: function () {
+        return this.logLevel;
     },
 
     /**

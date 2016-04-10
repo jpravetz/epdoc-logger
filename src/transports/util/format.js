@@ -12,12 +12,14 @@ var self = {
      * @param params {Object} Parameters to be logged:
      * @param {Date} params.time - Date object
      * @param {string} params.level - log level (INFO, WARN, ERROR, or any string)
-     * @param {string} params.reqId - express request ID, if provided (output if options.sid is true)
+     * @param {string} params.reqId - express request ID, if provided (output if options.sid is
+     *   true)
      * @param {string} params.sid - express session ID, if provided (output if options.sid is true)
      * @param {string} params.module - name of file or module or emitter (noun)
      * @param {string} params.action - method or operation being performed (verb)
      * @param {string} params.message - text string to output
-     * @param {Object} params.custom - Arbitrary data to be logged in a 'custom' column if enabled via the LogManager.
+     * @param {Object} params.custom - Arbitrary data to be logged in a 'custom' column if enabled
+     *   via the LogManager.
      * @param {Object} params.data - Arbitrary data to be logged in the 'data' column
      * @param options {Object}
      * @param [options.timestamp=ms] {string} Timestamp output format
@@ -25,18 +27,22 @@ var self = {
      * @param [options.custom=ms] {string} include custom
      * @returns {Object}
      */
-    paramsToJson: function (params,options) {
+    paramsToJson: function (params, options) {
+        options || ( options = {});
         var json = {
-            timestamp: self.getTimestamp(params,options.timestamp),
-            level: params.level.toUpperCase(),
+            timestamp: self.getTimestamp(params, options.timestamp),
+            level: params.level,
             emitter: params.module,
             action: params.action,
             data: options.dataObjects ? params.data : JSON.stringify(params.data),
             message: params.message,
             custom: options.dataObjects ? params.custom : JSON.stringify(params.custom)
         };
-        if (json.level === 'VERBOSE') {
-            json.level = 'TRACE';
+        if (options.levelMap && options.levelMap.verbose && json.level === 'VERBOSE') {
+            json.level = options.levelMap.verbose;
+        }
+        if( options.levelUppercase ) {
+            json.level = json.level.toUpperCase();
         }
         if (options.sid) {
             json.sid = params.sid;
@@ -56,12 +62,14 @@ var self = {
      * @param params {Object} Parameters to be logged:
      * @param {Date} params.time - Date object
      * @param {string} params.level - log level (INFO, WARN, ERROR, or any string)
-     * @param {string} params.reqId - express request ID, if provided (output if options.sid is true)
+     * @param {string} params.reqId - express request ID, if provided (output if options.sid is
+     *   true)
      * @param {string} params.sid - express session ID, if provided (output if options.sid is true)
      * @param {string} params.module - name of file or module or emitter (noun)
      * @param {string} params.action - method or operation being performed (verb)
      * @param {string} params.message - text string to output
-     * @param {Object} params.custom - Arbitrary data to be logged in a 'custom' column if enabled via the LogManager.
+     * @param {Object} params.custom - Arbitrary data to be logged in a 'custom' column if enabled
+     *   via the LogManager.
      * @param {Object} params.data - Arbitrary data to be logged in the 'data' column
      * @param options {Object}
      * @param [options.timestamp=ms] {string} Timestamp output format
@@ -69,8 +77,8 @@ var self = {
      * @param [options.custom=ms] {string} include custom
      * @returns {Object}
      */
-    paramsToJsonArray: function (params,options) {
-        var json = [ self.getTimestamp(params,options.timestamp), params.level.toUpperCase()];
+    paramsToJsonArray: function (params, options) {
+        var json = [self.getTimestamp(params, options.timestamp), params.level.toUpperCase()];
         if (options.sid) {
             json.push(params.reqId ? params.reqId : 0);
             json.push(params.sid ? params.sid : "");
@@ -88,7 +96,7 @@ var self = {
         return json;
     },
 
-    getTimestamp: function (params,format) {
+    getTimestamp: function (params, format) {
         if (format === 'smstime') {
             return String(params.time.getTime());
         } else if (format === 'iso') {
