@@ -189,6 +189,7 @@ LogManager.prototype = {
      *   'iso'.
      * @param [options.custom=true] {boolean} - Set whether to output a 'custom' column. Default is
      *   to use LogManager's custom setting.
+     * @param [options.level=debug] {string} - Log level for this transport.
      * @return {LogManager}
      */
     addTransport: function (type, options) {
@@ -223,6 +224,9 @@ LogManager.prototype = {
         if (!options.custom) {
             options.custom = this.custom;
         }
+        if( !options.level ) {
+            options.level = this.logLevel;
+        }
 
         var Transport;
 
@@ -238,7 +242,7 @@ LogManager.prototype = {
 
         if (Transport) {
             var newTransport = new Transport(options);
-            var err = newTransport.validateOptions(newTransport);
+            var err = newTransport.validateOptions();
             if (!err) {
                 return newTransport;
             } else {
