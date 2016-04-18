@@ -146,22 +146,29 @@ LogManager.prototype = {
 
     _startingTransport: function (transport) {
         var self = this;
-        var name = transport.toString();
         return new Promise(function (resolve, reject) {
+            var name = transport.toString();
+            var bResolved = true;
             transport.open(onSuccess, onError, onClose);
 
             function onSuccess () {
                 transport.clear();
                 self.logMessage(self.LEVEL_INFO, "logger.start.success", "Started transport '" + name + "'", { transport: name });
-                resolve();
+                if( !bResolved ) {
+                    bResolved = true;
+                    resolve();
+                }
                 // self.flushQueue();
-            };
+            }
 
             function onError (err) {
                 self.logMessage(self.LEVEL_WARN, "logger.warn", "Tried but failed to start transport '" + name + "'" + err);
                 self.removeTransport(transport);
-                reject(err);
-            };
+                if( !bResolved ) {
+                    bResolved = true;
+                    resolve();
+                }
+            }
 
             function onClose () {
                 self.logMessage(self.LEVEL_INFO, "logger.close", "Closed transport '" + name + "'");
