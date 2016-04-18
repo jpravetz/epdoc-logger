@@ -103,7 +103,7 @@ describe("Logger lifecycle", function () {
         logMgr.addTransport('callback', { callback: onMessage2, uid: 2 }).start(function () {
             try {
                 _.each([1, 2], function (n) {
-                    params = buffer[n].shift();
+                    var params = buffer[n].shift();
                     should(params).have.property('timestamp');
                     should(params).have.properties({
                         action: 'logger.transport.add',
@@ -143,7 +143,7 @@ describe("Logger lifecycle", function () {
     it("Verify new messages 2", function (done) {
         log.info("Doing even more");
         _.each([1, 2], function (n) {
-            params = buffer[n].shift();
+            var params = buffer[n].shift();
             should(params).have.property('timestamp');
             should(params).have.properties({
                 message: 'Doing even more',
@@ -160,7 +160,7 @@ describe("Logger lifecycle", function () {
 
     it("Verify removing transport", function (done) {
         logMgr.removeTransport({type:'callback',uid:1});
-        params = buffer[2].shift();
+        var params = buffer[2].shift();
         should.not.exist(params);
         logMgr.start(function() {
             try {
@@ -194,7 +194,7 @@ describe("Logger lifecycle", function () {
 
     it("Verify write count",function(done) {
         logMgr.writeCount();
-        params = buffer[2].shift();
+        var params = buffer[2].shift();
         should(params).have.property('timestamp');
         should(params).have.properties({
             action: 'counts',

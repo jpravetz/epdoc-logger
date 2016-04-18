@@ -198,6 +198,10 @@ LogglyTransport.prototype = {
         this.end(cb);
     },
 
+    setLevel: function(level) {
+        this.level = level;
+    },
+
     toString: function () {
         return "Loggly";
     },

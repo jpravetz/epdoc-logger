@@ -148,7 +148,7 @@ LogManager.prototype = {
         var self = this;
         return new Promise(function (resolve, reject) {
             var name = transport.toString();
-            var bResolved = true;
+            var bResolved = false;
             transport.open(onSuccess, onError, onClose);
 
             function onSuccess () {
@@ -474,12 +474,20 @@ LogManager.prototype = {
     },
 
     /**
-     * Set the {@link LogManager} objects's minimum log level
+     * Set the {@link LogManager} objects's minimum log level.
      * @param level {string} - Must be one of {@link LogManager#LEVEL_ORDER}
+     * @param [options] {Object}
+     * @param [options.transports=false] {Boolean} Set the level for all transports as well.
      * @return {LogManager}
      */
-    setLevel: function (level) {
+    setLevel: function (level,options) {
         this.logLevel = level;
+        if( options && options.transports ) {
+            for (var tdx = 0; tdx < this.transports.length; tdx++) {
+                var transport = this.transports[tdx];
+                transport.setLevel(level);
+            }
+        }
         return this;
     },
 

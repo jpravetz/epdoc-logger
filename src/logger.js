@@ -110,7 +110,7 @@ var Logger = function (logMgr, modulename, context) {
                 return self.logArgs(level, Array.prototype.slice.call(arguments));
             }
         };
-    }
+    };
 
     for (var idx = 0; idx < logMgr.LEVEL_ORDER.length; idx++) {
         var level = logMgr.LEVEL_ORDER[idx];

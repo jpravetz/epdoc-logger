@@ -129,6 +129,10 @@ CallbackTransport.prototype = {
         cb && cb();
     },
 
+    setLevel: function(level) {
+        this.level = level;
+    },
+
     toString: function () {
         return "Callback" + (this.uid ? (" (" + this.uid + ")") : "");
     },

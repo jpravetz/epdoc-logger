@@ -78,7 +78,7 @@ describe("Logger APIs", function () {
     it("Verify log1 levels", function (done) {
         log2 = logMgr.get('module2');
         log2.error("Doing more");
-        params = buffer.shift();
+        var params = buffer.shift();
         should(params).have.property('timestamp');
         should(params).have.properties({
             message: 'Doing more',
@@ -100,6 +100,7 @@ describe("Logger APIs", function () {
         log2.action('slide').verbose("verbose");
         var params = buffer.shift();
         should.not.exist(params);
+        logMgr.setLevel('verbose',{transports:true});
         log2.setLevel('verbose');
         log2.action('slide').verbose("verbose");
         var params = buffer.shift();
@@ -153,6 +154,7 @@ describe("Logger APIs", function () {
     var log3;
 
     it('Directly test log3 level logic',function(done) {
+        logMgr.setLevel('debug',{transports:true});
         log3 = logMgr.get('module3');
         should(log3.getLevel()).equal('debug');
         should(log3.isAboveLevel('verbose')).equal(false);
@@ -182,7 +184,7 @@ describe("Logger APIs", function () {
 
     it("Verify write count", function (done) {
         logMgr.writeCount();
-        params = buffer.shift();
+        var params = buffer.shift();
         should(params).have.property('timestamp');
         should(params).have.properties({
             action: 'counts',

@@ -141,6 +141,10 @@ var protoProps = {
         return msg;
     },
 
+    setLevel: function(level) {
+        this.level = level;
+    },
+
 
     last: true
 
