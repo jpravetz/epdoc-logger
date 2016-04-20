@@ -465,16 +465,27 @@ Logger.prototype = {
      * @return {*}
      */
     logParams: function (params) {
-        if (this.ctx && this.ctx.req) {
-            if (this.ctx.req._reqId) {
-                params.reqId = this.ctx.req._reqId;
+
+        function setParams (ctx) {
+            if (ctx._reqId) {
+                params.reqId = ctx._reqId;
+            } else if( ctx.reqId ) {
+                params.reqId = ctx.reqId;
             }
-            if (this.ctx.req.session && this.ctx.req.session.id) {
-                params.sid = this.ctx.req.session.id;
-            } else if (this.ctx.req.sessionId) {
-                params.sid = this.ctx.req.sessionId;
-            } else if (this.ctx.req.sid) {
-                params.sid = this.ctx.req.sid;
+            if (ctx.session && ctx.session.id) {
+                params.sid = ctx.session.id;
+            } else if (ctx.sessionId) {
+                params.sid = ctx.sessionId;
+            } else if (ctx.sid) {
+                params.sid = ctx.sid;
+            }
+        }
+
+        if (this.ctx) {
+            if (this.ctx.req) {
+                setParams(this.ctx.req);
+            } else {
+                setParams(this.ctx);
             }
         }
         this.logMgr.logParams(params, this.logLevel);

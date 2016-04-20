@@ -482,7 +482,7 @@ LogManager.prototype = {
      */
     setLevel: function (level,options) {
         this.logLevel = level;
-        if( options && options.transports ) {
+        if( this.transports ) {
             for (var tdx = 0; tdx < this.transports.length; tdx++) {
                 var transport = this.transports[tdx];
                 transport.setLevel(level);

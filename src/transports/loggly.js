@@ -24,8 +24,6 @@ var request = require('request');
  *   loggly in a host column.
  * @param [options.timestamp=ms] {string} - Set the format for timestamp output, must be one of
  *   'ms' or 'iso'.
- * @param [options.format=jsonArray] {string} - Set the format for the output line. Must be one of
- *   'json' or 'jsonArray'.
  * @param [options.custom=true] {boolean} - Set whether to output a 'custom' column.
  * @param [options.bufferSize=100] {number} - The maximum number of lines of log messages to buffer
  *   before writing to loggly.
@@ -45,6 +43,8 @@ var LogglyTransport = function (options) {
     var tags = [ 'epdoc'];
     if( _.isArray(options.tags) && options.tags.length ) {
         tags = tags.concat(options.tags);
+    } else if( _.isString(options.tags) ) {
+        tags.push(options.tags);
     }
     this.tags = '/tag/' + tags.join(',') + '/';
     this.sType = 'loggly';
