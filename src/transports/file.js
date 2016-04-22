@@ -6,7 +6,7 @@
 var _ = require('underscore');
 var Path = require('path');
 var fs = require('fs');
-var format = require('./util/format');
+var format = require('./../format');
 
 
 /**

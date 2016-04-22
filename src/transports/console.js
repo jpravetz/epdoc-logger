@@ -4,7 +4,7 @@
  *****************************************************************************/
 
 var _ = require('underscore');
-var format = require('./util/format');
+var format = require('./../format');
 
 /**
  * Create a new Console transport to output log messages to the console.

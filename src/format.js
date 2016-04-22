@@ -3,8 +3,6 @@
  * CONFIDENTIAL Copyright 2012-2016 James Pravetz. All Rights Reserved.
  *****************************************************************************/
 
-var dateutil = require('../../dateutil');
-
 var self = {
 
     /**
@@ -41,7 +39,7 @@ var self = {
         if (options.levelMap && options.levelMap.verbose && json.level === 'VERBOSE') {
             json.level = options.levelMap.verbose;
         }
-        if( options.levelUppercase ) {
+        if (options.levelUppercase) {
             json.level = json.level.toUpperCase();
         }
         if (options.sid) {
@@ -102,14 +100,60 @@ var self = {
         } else if (format === 'iso') {
             return params.time.toISOString();
         } else {
-            return dateutil.formatMS(params.timeDiff);
+            return self.formatMS(params.timeDiff);
         }
     },
 
+    /**
+     *
+     * @param n {number} number to pad with leading zeros.
+     * @param width {number} total width of string (eg. 3 for '005').
+     * @param [z='0'] {char} character with which to pad string.
+     * @returns {String}
+     */
     pad: function (n, width, z) {
         z = z || '0';
-        n = n + '';
+        n = String(n);
         return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
+    },
+
+    formatMS: function (ms) {
+        var milliseconds = ms % 1000;
+        var seconds = Math.floor(ms / 1000) % 60;
+        var minutes = Math.floor(ms / ( 60 * 1000 ));
+        return self.pad(minutes, 2) + ':' + self.pad(seconds, 2) + '.' + self.pad(milliseconds, 3);
+    },
+
+
+    /**
+     * Handle  various types of error messages, including MongooseError
+     * @param err
+     * @returns {string}
+     */
+    errorToStringArray: function (err) {
+        if (err instanceof Error) {
+            var msgs = [err.message];
+            if (err.errors instanceof Array) {
+                for (var idx = 0; idx < err.errors.length; ++idx) {
+                    var e = err.errors[idx];
+                    if (typeof e === 'string') {
+                        msgs.push(e);
+                    } else if (_.isString(e.message)) {
+                        msgs.push(e.message);
+                    }
+                }
+            } else if (err.errors instanceof Object && Object.keys(err.errors).length) {
+                Object.keys(err.errors).forEach(function (name) {
+                    var e = err.errors[name];
+                    if (typeof e === 'string') {
+                        msgs.push(e);
+                    } else if (typeof e.message === 'string') {
+                        msgs.push(e.message);
+                    }
+                });
+            }
+            return msgs;
+        }
     }
 
 };

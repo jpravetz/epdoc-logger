@@ -4,7 +4,7 @@
  *****************************************************************************/
 
 var _ = require('underscore');
-var format = require('./util/format');
+var format = require('./../format');
 
 /**
  * Create a new Callback transport where output is added to a data array or a callback is used to

@@ -3,7 +3,7 @@
 
 
 var util = require('util');
-var DateUtil = require('./dateutil');
+var format = require('./format');
 var moment = require('moment');
 var _ = require('underscore');
 
@@ -93,12 +93,7 @@ var Logger = function (logMgr, modulename, context) {
          */
         return function (err) {
             if (err instanceof Error) {
-                var msgs = [err.message];
-                if (_.isArray(err.errors)) {
-                    for (var idx = 0; idx < err.errors.length; ++idx) {
-                        msgs.push(err.errors[idx]);
-                    }
-                }
+                var msgs = format.errorToStringArray(err);
                 if (self.bErrorStack && err.stack) {
                     var items = err.stack.split(/\n\s*/);
                     self.data({ error: { code: err.code, stack: items } });
@@ -354,7 +349,7 @@ Logger.prototype = {
             this.data({
                 localtime: moment(d).format('YYYY-MM-DDTHH:mm:ss.SSSZ'),
                 utctime: d.toISOString(),
-                uptime: DateUtil.formatMS(d - this.logMgr.getStartTime())
+                uptime: format.formatMS(d - this.logMgr.getStartTime())
             });
             this.logArgs(this.logMgr.LEVEL_INFO, []);
         }
