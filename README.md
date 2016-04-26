@@ -2,6 +2,9 @@
 
 Logging module supporting built-in and custom transports, Express 4 response mixins, and chainable method syntax for creating log events.
 
+Version 2 is currently [under development in the develop branch](https://github.com/jpravetz/epdoc-logger/tree/develop). 
+It is recommended you use the alpha of version 2 rather than using 1.9.x.
+
 Includes support for formatted logging to the following transports:
 
 * console (default)
