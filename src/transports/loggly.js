@@ -39,10 +39,10 @@ var LogglyTransport = function (options) {
     this.bIncludeSid = (options && ( options.sid === false || options.bIncludeSid === false)) ? false : true;
     this.bIncludeCustom = (options && options.custom === false ) ? false : true;
     this.level = this.options.level;
-    var tags = [ 'epdoc'];
-    if( _.isArray(options.tags) && options.tags.length ) {
+    var tags = ['epdoc'];
+    if (_.isArray(options.tags) && options.tags.length) {
         tags = tags.concat(options.tags);
-    } else if( _.isString(options.tags) ) {
+    } else if (_.isString(options.tags)) {
         tags.push(options.tags);
     }
     this.tags = '/tag/' + tags.join(',') + '/';
@@ -51,12 +51,12 @@ var LogglyTransport = function (options) {
 
     this.url = options.url || 'https://' + this.subdomain + '.loggly.com/bulk/' + this.token + this.tags;
     this.bufferSize = options.bufferSize || 100;
+    this.maxBufferSize = options.maxBufferSize || 1000;
     this.flushInterval = options.flushInterval || 5000;
     if (false !== options.host) {
         this.host = options.host || os.hostname();
     }
     this.buffer = [];
-
 };
 
 LogglyTransport.prototype = {
@@ -118,12 +118,6 @@ LogglyTransport.prototype = {
     clear: function () {
     },
 
-    flush: function (opt_cb) {
-        var msgs = this.buffer;
-        this.buffer = [];
-        this._send(msgs, opt_cb);
-    },
-
     /**
      * Write a log line
      * @param params {Object} Parameters to be logged:
@@ -140,15 +134,55 @@ LogglyTransport.prototype = {
      * @param {Object} params.data - Arbitrary data to be logged in the 'data' column
      */
     write: function (params) {
-        var msg = this._formatLogMessage(params);
-        // console.log('>> %j (%s/%s)', msg, this.buffer.length, this.bufferSize);
-        if (this.host) {
-            msg.hostname = this.host;
-        }
-        this.buffer.push(JSON.stringify(msg));
+        this._write(params);
         if (this.buffer.length >= this.bufferSize) {
             this.flush();
         }
+    },
+
+    _write: function (params) {
+        var msg = this._formatLogMessage(params);
+        if (this.host) {
+            msg.hostname = this.host;
+        }
+        if (this.buffer.length < this.maxBufferSize) {
+            this.buffer.push(JSON.stringify(msg));
+        } else if (this.buffer.length === this.maxBufferSize) {
+            var params = {
+                level: 'warn',
+                emitter: 'logger.transport.loggly',
+                action: "buffer.limit.exceeded.dropping.messages",
+                message: "Loggly buffer limit exceeded. Dropping messages."
+            };
+            var msg = this._formatLogMessage(params);
+            if (this.host) {
+                msg.hostname = this.host;
+            }
+            this.buffer.push(JSON.stringify(msg));
+        } else {
+            // drop the message on the floor
+        }
+    },
+
+    flush: function (opt_cb) {
+        var self = this;
+        var msgs = self.buffer;
+        self.buffer = [];
+        self._send(msgs, function (err) {
+            if (err) {
+                var params = {
+                    level: 'warn',
+                    emitter: 'logger.transport.loggly',
+                    action: "send.warning.will.retry",
+                    message: "Error sending message to loggly . " + err
+                };
+                self.buffer = msgs.concat(self.buffer);
+                // write without forcing an immediate flush, giving possible time for error
+                // conditions to disappear
+                self._write(params);
+            }
+            opt_cb && opt_cb();
+        });
     },
 
     _send: function (msgs, cb) {
@@ -169,12 +203,8 @@ LogglyTransport.prototype = {
         };
 
         request(opts, function (err, res) {
-            // console.log('<< %s', res && res.statusCode);
-            if (err && self.onError) {
-                self.onError(err);
-            }
-            if (res && res.statusCode >= 400 && self.onError) {
-                self.onError(new Error(res.statusCode + ' response'));
+            if (!err && res && res.statusCode >= 400) {
+                err = new Error(res.statusCode + ' response');
             }
             cb && cb(err, res);
         });
@@ -197,7 +227,7 @@ LogglyTransport.prototype = {
         this.end(cb);
     },
 
-    setLevel: function(level) {
+    setLevel: function (level) {
         this.level = level;
     },
 

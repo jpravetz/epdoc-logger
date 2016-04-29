@@ -162,7 +162,7 @@ LogManager.prototype = {
             }
 
             function onError (err) {
-                self.logMessage(self.LEVEL_WARN, "logger.warn", "Tried but failed to start transport '" + name + "'" + err);
+                self.logMessage(self.LEVEL_WARN, "logger.warn", "Tried but failed to start transport '" + name + "'. " + err);
                 self.removeTransport(transport);
                 if( !bResolved ) {
                     bResolved = true;
