@@ -23,7 +23,7 @@ var format = require('./../format');
 var CallbackTransport = function (options) {
     this.options = options || {};
     this.bIncludeSid = (options && options.sid === false) ? false : true;
-    this.bIncludeCustom = (options && options.custom === false ) ? false : true;
+    this.bIncludeStatic = (options && options.static === false ) ? false : true;
     this.level = this.options.level;
     this.sType = 'callback';
     this.bReady = true;
@@ -100,7 +100,7 @@ CallbackTransport.prototype = {
      * @param {string} params.module - name of file or module or emitter (noun)
      * @param {string} params.action - method or operation being performed (verb)
      * @param {string} params.message - text string to output
-     * @param {Object} params.custom - Arbitrary data to be logged in a 'custom' column if enabled
+     * @param {Object} params.static - Arbitrary data to be logged in a 'static' column if enabled
      *   via the LogManager.
      * @param {Object} params.data - Arbitrary data to be logged in the 'data' column
      */
@@ -108,7 +108,7 @@ CallbackTransport.prototype = {
         var opts = {
             timestamp: 'iso',
             sid: this.bIncludeSid,
-            custom: this.bIncludeCustom,
+            static: this.bIncludeStatic,
             dataObjects: true
         };
         var json = format.paramsToJson(params,opts);

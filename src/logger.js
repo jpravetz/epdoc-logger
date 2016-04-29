@@ -185,17 +185,19 @@ Logger.prototype = {
     },
 
     /**
-     * Set <i>custom data</i> that is output in a separate column called <code>custom</code>`.
-     * This column must be specifically enabled via the LogManager constructor's <code>custom</code>
-     * option.
+     * Set <i>static data</i> that is output in a separate column called <code>static</code>`.
+     * This column must be specifically enabled via the LogManager constructor's
+     * <code>static</code>
+     * option. Static data is not cleared when a log message is written, and so persists for the
+     * life of the log object.
      *
-     * @param key {String|object} If a string then sets custom.key = value, otherwise extends
-     *   custom with key
+     * @param key {String|object} If a string then sets staticData.key = value, otherwise extends
+     *   staticData with key
      * @param value {*} (Optional) Set key to this value
      * @return {Logger}
      */
     set: function (key, value) {
-        return this._setData('customData', key, value);
+        return this._setData('staticData', key, value);
     },
 
     /**
@@ -415,8 +417,8 @@ Logger.prototype = {
                 params.data = this.logData;
                 delete this.logData;
             }
-            if (this.customData) {
-                params.custom = this.customData;
+            if (this.staticData) {
+                params.static = this.staticData;
             }
             if (this.logAction) {
                 params.action = this.logAction;
@@ -464,7 +466,7 @@ Logger.prototype = {
         function setParams (ctx) {
             if (ctx._reqId) {
                 params.reqId = ctx._reqId;
-            } else if( ctx.reqId ) {
+            } else if (ctx.reqId) {
                 params.reqId = ctx.reqId;
             }
             if (ctx.session && ctx.session.id) {

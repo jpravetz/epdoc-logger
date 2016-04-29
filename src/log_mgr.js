@@ -31,7 +31,7 @@ var mgrIdx = 0;
  * @param {Date} [options.t0=now] - The earliest known time for when the process was started
  * @param {boolean} [options.sid=false] - Indicates whether a session ID column should be included
  *   in log output
- * @param {boolean} [options.custom=false] - Indicates whether a custom column should be included
+ * @param {boolean} [options.static=false] - Indicates whether a static column should be included
  *   in log output
  * @param {string} [options.level=debug] - The log level at and above which log messages will be
  *   written
@@ -51,10 +51,10 @@ var mgrIdx = 0;
 var LogManager = function (options) {
 
     options || ( options = {} );
-    this.name = 'LogManager#'+(++mgrIdx);
+    this.name = 'LogManager#' + (++mgrIdx);
     this.t0 = options.t0 ? options.t0.getTime() : (new Date()).getTime();
     this.sid = ( options.sid === true ) ? true : false;
-    this.custom = ( options.custom === true ) ? true : false;
+    this.static = ( options.static === true ) ? true : false;
     // Count of how many errors, warnings, etc
     this.logCount = {};
     this.LEVEL_DEFAULT = 'debug';       // Default threshold level for outputting logs
@@ -127,15 +127,15 @@ LogManager.prototype = {
         return self;
     },
 
-  /**
-   * Wraps {LogManager#start} into a Promise.
-   * @return {Promise} Resolves to this.
-   */
-  starting: function() {
+    /**
+     * Wraps {LogManager#start} into a Promise.
+     * @return {Promise} Resolves to this.
+     */
+    starting: function () {
         var self = this;
         return new Promise(function (resolve, reject) {
-            self.start(function(err) {
-                if(err) {
+            self.start(function (err) {
+                if (err) {
                     reject(err);
                 } else {
                     resolve(self);
@@ -154,7 +154,7 @@ LogManager.prototype = {
             function onSuccess () {
                 transport.clear();
                 self.logMessage(self.LEVEL_INFO, "logger.start.success", "Started transport '" + name + "'", { transport: name });
-                if( !bResolved ) {
+                if (!bResolved) {
                     bResolved = true;
                     resolve();
                 }
@@ -164,7 +164,7 @@ LogManager.prototype = {
             function onError (err) {
                 self.logMessage(self.LEVEL_WARN, "logger.warn", "Tried but failed to start transport '" + name + "'. " + err);
                 self.removeTransport(transport);
-                if( !bResolved ) {
+                if (!bResolved) {
                     bResolved = true;
                     resolve();
                 }
@@ -192,10 +192,9 @@ LogManager.prototype = {
      * @param [options.sid] {boolean} - If true then output express request and session IDs,
      *   otherwise do not output these values. Default is to use LogManager's sid setting.
      * @param [options.timestamp=ms] {string} - Set the format for timestamp output, must be one of
-     *   'ms' or
-     *   'iso'.
-     * @param [options.custom=true] {boolean} - Set whether to output a 'custom' column. Default is
-     *   to use LogManager's custom setting.
+     *   'ms' or 'iso'.
+     * @param [options.static=true] {boolean} - Set whether to output a 'static' column. By default
+     *   this inherits the value from the LogManager.
      * @param [options.level=debug] {string} - Log level for this transport.
      * @return {LogManager}
      */
@@ -228,10 +227,10 @@ LogManager.prototype = {
         if (!options.sid) {
             options.sid = this.sid;
         }
-        if (!options.custom) {
-            options.custom = this.custom;
+        if (!options.static) {
+            options.static = this.static;
         }
-        if( !options.level ) {
+        if (!options.level) {
             options.level = this.logLevel;
         }
 
@@ -480,9 +479,9 @@ LogManager.prototype = {
      * @param [options.transports=false] {Boolean} Set the level for all transports as well.
      * @return {LogManager}
      */
-    setLevel: function (level,options) {
+    setLevel: function (level, options) {
         this.logLevel = level;
-        if( this.transports ) {
+        if (this.transports) {
             for (var tdx = 0; tdx < this.transports.length; tdx++) {
                 var transport = this.transports[tdx];
                 transport.setLevel(level);

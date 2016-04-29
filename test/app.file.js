@@ -56,7 +56,7 @@ describe("Logger file test", function () {
         var logMgr = new LogMgr(opts);
         log = logMgr.get('moduleName');
         log.ctx = { req: { reqId: 'reqId', sid: 'sessionId'} };
-        log.action('bake').set({custom:true}).data({ data: { a: 2, b: 3 } }).info("Starting");
+        log.action('bake').set({static:true}).data({ data: { a: 2, b: 3 } }).info("Starting");
         log.info("Running");
         done();
     });

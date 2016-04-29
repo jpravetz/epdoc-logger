@@ -16,13 +16,13 @@ var self = {
      * @param {string} params.module - name of file or module or emitter (noun)
      * @param {string} params.action - method or operation being performed (verb)
      * @param {string} params.message - text string to output
-     * @param {Object} params.custom - Arbitrary data to be logged in a 'custom' column if enabled
+     * @param {Object} params.static - Static data to be logged in a 'static' column if enabled
      *   via the LogManager.
      * @param {Object} params.data - Arbitrary data to be logged in the 'data' column
      * @param options {Object}
      * @param [options.timestamp=ms] {string} Timestamp output format
-     * @param [options.sid=ms] {string} Include session info
-     * @param [options.custom=ms] {string} include custom
+     * @param [options.sid] {boolean} Include session info
+     * @param [options.static] {boolean} Include static data
      * @returns {Object}
      */
     paramsToJson: function (params, options) {
@@ -34,7 +34,7 @@ var self = {
             action: params.action,
             data: options.dataObjects ? params.data : JSON.stringify(params.data),
             message: params.message,
-            custom: options.dataObjects ? params.custom : JSON.stringify(params.custom)
+            static: options.dataObjects ? params.static : JSON.stringify(params.static)
         };
         if (options.levelMap && options.levelMap.verbose && json.level === 'VERBOSE') {
             json.level = options.levelMap.verbose;
@@ -46,8 +46,8 @@ var self = {
             json.sid = params.sid;
             json.reqId = params.reqId;
         }
-        if (options.custom) {
-            json.custom = params.custom;
+        if (options.static) {
+            json.static = params.static;
         }
         if (params.message instanceof Array) {
             json.message = params.message.join('\n');
@@ -66,13 +66,13 @@ var self = {
      * @param {string} params.module - name of file or module or emitter (noun)
      * @param {string} params.action - method or operation being performed (verb)
      * @param {string} params.message - text string to output
-     * @param {Object} params.custom - Arbitrary data to be logged in a 'custom' column if enabled
+     * @param {Object} params.static - Arbitrary data to be logged in a 'static' column if enabled
      *   via the LogManager.
      * @param {Object} params.data - Arbitrary data to be logged in the 'data' column
      * @param options {Object}
      * @param [options.timestamp=ms] {string} Timestamp output format
-     * @param [options.sid=ms] {string} Include session info
-     * @param [options.custom=ms] {string} include custom
+     * @param [options.sid] {boolean} Include session info
+     * @param [options.static] {boolean} Include static data
      * @returns {Object}
      */
     paramsToJsonArray: function (params, options) {
@@ -85,8 +85,8 @@ var self = {
         json.push(params.action ? params.action : "");
         json.push(params.message);
         //json = json.concat(params.message?params.message:"");
-        if (options.custom) {
-            json.push(params.custom ? params.custom : {});
+        if (options.static) {
+            json.push(params.static ? params.static : {});
         }
         if (params.data) {
             json.push(params.data);

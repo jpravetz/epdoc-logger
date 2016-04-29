@@ -23,7 +23,7 @@ var request = require('request');
  *   loggly in a host column.
  * @param [options.timestamp=ms] {string} - Set the format for timestamp output, must be one of
  *   'ms' or 'iso'.
- * @param [options.custom=true] {boolean} - Set whether to output a 'custom' column.
+ * @param [options.static=true] {boolean} - Set whether to output a 'static' column.
  * @param [options.bufferSize=100] {number} - The maximum number of lines of log messages to buffer
  *   before writing to loggly.
  * @param [options.flushInterval=5000] {number} - The maximum number of milliseconds of buffering
@@ -37,7 +37,7 @@ var LogglyTransport = function (options) {
     this.token = options.token;
     this.subdomain = 'logs-01';
     this.bIncludeSid = (options && ( options.sid === false || options.bIncludeSid === false)) ? false : true;
-    this.bIncludeCustom = (options && options.custom === false ) ? false : true;
+    this.bIncludeStatic = (options && options.static === false ) ? false : true;
     this.level = this.options.level;
     var tags = ['epdoc'];
     if (_.isArray(options.tags) && options.tags.length) {
@@ -129,7 +129,7 @@ LogglyTransport.prototype = {
      * @param {string} params.module - name of file or module or emitter (noun)
      * @param {string} params.action - method or operation being performed (verb)
      * @param {string} params.message - text string to output
-     * @param {Object} params.custom - Arbitrary data to be logged in a 'custom' column if enabled
+     * @param {Object} params.static - Arbitrary data to be logged in a 'static' column if enabled
      *   via the LogManager.
      * @param {Object} params.data - Arbitrary data to be logged in the 'data' column
      */
@@ -248,8 +248,8 @@ LogglyTransport.prototype = {
             json.sid = params.sid;
             json.reqId = params.reqId;
         }
-        if (this.bIncludeCustom) {
-            json.custom = params.custom;
+        if (this.bIncludeStatic) {
+            json.static = params.static;
         }
         if (params.message instanceof Array) {
             json.message = params.message.join('\n');

@@ -107,7 +107,7 @@ var protoProps = {
      * General method, not used by console, but used by other transports, to format the parameters
      * into a JSON objecvt.
      * @param params
-     * @returns {{timestamp: *, level: *, module: (string|*), action, data: *, message, custom: *}}
+     * @returns {{timestamp: *, level: *, module: (string|*), action, data: *, message, static: *}}
      * @private
      */
     _paramsToSOS: function (params) {
