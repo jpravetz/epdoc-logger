@@ -59,10 +59,10 @@ var Logger = function (logMgr, modulename, context) {
     // module column
     this.stack = [];
     if (_.isString(modulename)) {
-        this.name = modulename + " " + this.name;
+        this.name = "Logger#" + modulename;
         this.stack = [modulename];
     } else if (_.isArray(modulename)) {
-        this.name = modulename.join('.') + " " + this.name;
+        this.name = "Logger#" + modulename.join('.');
         this.stack = modulename;
     }
 
