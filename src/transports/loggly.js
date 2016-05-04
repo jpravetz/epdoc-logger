@@ -41,11 +41,11 @@ var LogglyTransport = function (options) {
     this.level = this.options.level;
     this.aTags = ['epdoc'];
     if (_.isArray(options.tags) && options.tags.length) {
-        aTags = aTags.concat(options.tags);
+        this.aTags = this.aTags.concat(options.tags);
     } else if (_.isString(options.tags)) {
-        aTags.push(options.tags);
+        this.aTags.push(options.tags);
     }
-    this.tags = '/tag/' + aTags.join(',') + '/';
+    this.tags = '/tag/' + this.aTags.join(',') + '/';
     this.sType = 'loggly';
     this.bReady = false;
 
