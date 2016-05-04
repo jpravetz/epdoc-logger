@@ -196,13 +196,17 @@ FileTransport.prototype = {
             return JSON.stringify(json);
         }
     },
-    
+
     setLevel: function(level) {
         this.level = level;
     },
 
     toString: function () {
         return "File (" + this.path + ")";
+    },
+
+    getOptions: function() {
+        return { path: this.path };
     },
 
     last: true

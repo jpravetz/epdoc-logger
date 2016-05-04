@@ -17,25 +17,25 @@ var protoProps = {
     socket: undefined,
     port: 5000,
 
-    validateOptions: function( previous ) {
-        if( previous && previous.type === 'socket' ) {
+    validateOptions: function (previous) {
+        if (previous && previous.type === 'socket') {
             return new Error("Cannot switch from 'socket' logger to 'socket' logger");
         }
         return null;
     },
 
-    open: function( onSuccess, onError, onClose ) {
+    open: function (onSuccess, onError, onClose) {
         var self = this;
         console.log("Socket: Attempting connection to port " + self.port);
-        this.socket = net.connect({port: self.port}, function() {
+        this.socket = net.connect({ port: self.port }, function () {
             console.log("Socket: Connected to port " + self.port);
             this.bReady = true;
             onSuccess && onSuccess();
         });
-        this.socket.on('error', function( err ) {
+        this.socket.on('error', function (err) {
             onError && onError(err);
         });
-        this.socket.on('close', function() {
+        this.socket.on('close', function () {
             this.bReady = false;
             onClose && onClose();
         });
@@ -48,51 +48,55 @@ var protoProps = {
      *   port property.
      * @returns {boolean} True if the transport matches the argument
      */
-    match: function(transport) {
-        if(  _.isString(transport) && transport === this.sType ) {
+    match: function (transport) {
+        if (_.isString(transport) && transport === this.sType) {
             return true;
         }
-        if( _.isObject(transport) && transport.type === this.sType && transport.port === this.port ) {
+        if (_.isObject(transport) && transport.type === this.sType && transport.port === this.port) {
             return true;
         }
         return false;
     },
 
-    clear: function() {
+    clear: function () {
         console.log("Socket: Clearing Socket console");
-        if( this.options.format === 'sos' ) {
+        if (this.options.format === 'sos') {
             this.socket.write("!SOS<clear/>\0");
         }
     },
 
-    write: function( params ) {
+    write: function (params) {
         var msg = this._formatLogMessage(params);
         this.socket.write(msg);
     },
 
-    end: function(cb) {
-        if( this.socket ) {
+    end: function (cb) {
+        if (this.socket) {
             this.socket.end();
         }
         this.bReady = false;
         cb && cb();
     },
 
-    destroy: function(cb) {
+    destroy: function (cb) {
         this.end();
-        if( this.socket ) {
+        if (this.socket) {
             this.socket.destroy();
         }
         this.socket = undefined;
         cb && cb();
     },
 
-    toString: function() {
+    toString: function () {
         return "Socket (port " + this.port + ")";
     },
 
+    getOptions: function () {
+        return { port: this.port };
+    },
+
     _formatLogMessage: function (params) {
-        if( this.options.format === 'sos' ) {
+        if (this.options.format === 'sos') {
             return this._paramsToSOS(params);
         } else if (this.options.format === 'json') {
             var json = this._paramsToJson(params);
@@ -113,13 +117,13 @@ var protoProps = {
     _paramsToSOS: function (params) {
         var msg = "";
         var json = [params.module ? params.module : "", params.action ? params.action : ""];
-        if( this.bIncludeSid ) {
+        if (this.bIncludeSid) {
             json.unshift(params.sid ? params.sid : "");
             json.unshift(params.reqId ? params.reqId : 0);
         }
-        if( params.message instanceof Array ) {
+        if (params.message instanceof Array) {
             json.push(params.message.shift());
-            if( params.data ) {
+            if (params.data) {
                 json.push(params.data);
             }
             msg = util.format(
@@ -130,7 +134,7 @@ var protoProps = {
             msg += "<message><![CDATA[" + params.message.join("\n") + "]]></message></showFoldMessage>\0";
         } else {
             json.push(params.message ? params.message : "");
-            if( params.data ) {
+            if (params.data) {
                 json.push(params.data);
             }
             msg = util.format(
@@ -141,7 +145,7 @@ var protoProps = {
         return msg;
     },
 
-    setLevel: function(level) {
+    setLevel: function (level) {
         this.level = level;
     },
 
@@ -150,8 +154,8 @@ var protoProps = {
 
 };
 
-var LogMXSocketTransport = function(options) {
-    Transport.call(this,options);
+var LogMXSocketTransport = function (options) {
+    Transport.call(this, options);
 };
 
 LogMXSocketTransport.prototype = Object.create(Transport.prototype);

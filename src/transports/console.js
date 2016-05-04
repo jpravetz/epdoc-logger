@@ -55,7 +55,7 @@ ConsoleTransport.prototype = {
     match: function(transport) {
         if(  _.isString(transport) && transport === this.sType ) {
             return true;
-        } 
+        }
         if( _.isObject(transport) && transport.type === this.sType ) {
             return true;
         }
@@ -116,6 +116,10 @@ ConsoleTransport.prototype = {
 
     toString: function () {
         return "Console";
+    },
+
+    getOptions: function() {
+        return undefined;
     },
 
     _formatLogMessage: function (params) {

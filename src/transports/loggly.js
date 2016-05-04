@@ -39,13 +39,13 @@ var LogglyTransport = function (options) {
     this.bIncludeSid = (options && ( options.sid === false || options.bIncludeSid === false)) ? false : true;
     this.bIncludeStatic = (options && options.static === false ) ? false : true;
     this.level = this.options.level;
-    var tags = ['epdoc'];
+    this.aTags = ['epdoc'];
     if (_.isArray(options.tags) && options.tags.length) {
-        tags = tags.concat(options.tags);
+        aTags = aTags.concat(options.tags);
     } else if (_.isString(options.tags)) {
-        tags.push(options.tags);
+        aTags.push(options.tags);
     }
-    this.tags = '/tag/' + tags.join(',') + '/';
+    this.tags = '/tag/' + aTags.join(',') + '/';
     this.sType = 'loggly';
     this.bReady = false;
 
@@ -233,6 +233,10 @@ LogglyTransport.prototype = {
 
     toString: function () {
         return "Loggly";
+    },
+
+    getOptions: function() {
+        return { tags: this.aTags };
     },
 
     _formatLogMessage: function (params) {

@@ -137,6 +137,10 @@ CallbackTransport.prototype = {
         return "Callback" + (this.uid ? (" (" + this.uid + ")") : "");
     },
 
+    getOptions: function() {
+        return undefined;
+    },
+
     pad: function (n, width, z) {
         z = z || '0';
         n = n + '';

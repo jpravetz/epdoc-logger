@@ -204,9 +204,13 @@ LogManager.prototype = {
             this.running = false;
             this.transports.unshift(newTransport);
             var name = newTransport.toString();
-            this.logMessage(this.LEVEL_INFO, "logger.transport.add", "Added transport '" + name + "'", { transport: name });
+            var topts = newTransport.getOptions();
+            var sOptions = topts ? ' (' + JSON.stringify(topts) + ')' : '';
+            this.logMessage(this.LEVEL_INFO, "logger.transport.add", "Added transport '" + name + "'" + sOptions,
+                { transport: name, options: topts });
         } else {
-            this.logMessage(this.LEVEL_WARN, "logger.transport.add.warn", ("Unsupported addTransport operation: " + err.message ), { options: options });
+            this.logMessage(this.LEVEL_WARN, "logger.transport.add.warn",
+                ("Unsupported addTransport operation: " + err.message ), { options: options });
         }
         return this;
     },
@@ -252,7 +256,8 @@ LogManager.prototype = {
             if (!err) {
                 return newTransport;
             } else {
-                this.logMessage(this.LEVEL_WARN, "logger.push.warn", ("Unsupported setLogger operation: " + err.message ), { options: options });
+                this.logMessage(this.LEVEL_WARN, "logger.push.warn",
+                    ("Unsupported setLogger operation: " + err.message ), { options: options });
             }
         }
         return this;
