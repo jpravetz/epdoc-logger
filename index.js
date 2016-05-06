@@ -60,6 +60,11 @@ var self = {
         return self.logMgr().get(name, context);
     },
 
+    logListener: function(options) {
+        var LogListener = require('./src/log_listener');
+        return new LogListener(options);
+    },
+
     /**
      * Return Express Middleware.
      * @example
