@@ -3,10 +3,12 @@
  * CONFIDENTIAL Copyright 2016 James Pravetz. All Rights Reserved.
  *****************************************************************************/
 
+var _ = require('underscore');
 
 var LogListener = function (options) {
     this.buffer = [];
-    this.output = (options && options.output);
+    this.output = (options && options.output) ? options.output : false;
+    this.interval = (options && options.interval) || 500;
 };
 
 LogListener.prototype.clear = function () {
@@ -15,7 +17,7 @@ LogListener.prototype.clear = function () {
 
 LogListener.prototype.onMessage = function (params) {
     this.buffer.push(params);
-    if (this.output) {
+    if (this.output === true) {
         console.log(JSON.stringify(params));
     }
 };
@@ -34,7 +36,7 @@ LogListener.prototype.wait = function (params, bClear) {
         for (var pdx = 0; bMatch && pdx < pkeys.length; pdx++) {
             var pkey = pkeys[pdx];
             if (p[pkey] instanceof RegExp) {
-                if( typeof obj[pkey] !== 'string' || !p[pkey].test(obj[pkey]) ) {
+                if (typeof obj[pkey] !== 'string' || !p[pkey].test(obj[pkey])) {
                     bMatch = false;
                 }
             } else if (typeof p[pkey] === 'object') {
@@ -59,19 +61,43 @@ LogListener.prototype.wait = function (params, bClear) {
         return -1;
     }
 
-    return new Promise(function (resolve) {
-        var timer = setInterval(function () {
-            var idx = findIndex();
-            if (idx >= 0) {
-                var msg = self.buffer[idx];
-                if (bClear) {
-                    self.buffer = self.buffer.slice(idx + 1);
+    if (self.output === 'pre') {
+        console.log('Waiting to match ' + JSON.stringify(params));
+    }
+
+    function getFirstMatch () {
+        var msg;
+        var idx = findIndex();
+        if (idx >= 0) {
+            msg = self.buffer[idx];
+            if (bClear) {
+                if (self.output === 'pre') {
+                    var pre = self.buffer.slice(0, idx+1);
+                    var actions = _.map(pre, function (item) {
+                        return item.action;
+                    });
+                    console.log("Deleting: " + actions.join(', '));
                 }
-                clearInterval(timer);
-                resolve(msg);
+                self.buffer = self.buffer.slice(idx + 1);
             }
-        }, 500);
-    });
+        }
+        return msg;
+    }
+
+    var msg = getFirstMatch();
+    if (msg) {
+        return Promise.resolve(msg);
+    } else {
+        return new Promise(function (resolve) {
+            var timer = setInterval(function () {
+                var msg = getFirstMatch();
+                if (msg) {
+                    clearInterval(timer);
+                    resolve(msg);
+                }
+            }, self.interval);
+        });
+    }
 };
 
 module.exports = LogListener;
