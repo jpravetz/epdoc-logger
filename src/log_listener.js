@@ -23,7 +23,7 @@ LogListener.prototype.onMessage = function (params) {
 };
 
 
-LogListener.prototype.wait = function (params, bClear) {
+LogListener.prototype.wait = function (params, bClear, bRemove) {
 
     var self = this;
 
@@ -79,6 +79,8 @@ LogListener.prototype.wait = function (params, bClear) {
                     console.log("Deleting: " + actions.join(', '));
                 }
                 self.buffer = self.buffer.slice(idx + 1);
+            } else if( bRemove ) {
+                self.buffer = self.buffer.splice(idx,1);
             }
         }
         return msg;
