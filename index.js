@@ -1,6 +1,7 @@
-/**
- * Returns an epdoc-logger singleton to expose classes and objects from the epdoc-logger module.
- */
+/*****************************************************************************
+ * log_listener.js.js
+ * CONFIDENTIAL Copyright 2016 James Pravetz. All Rights Reserved.
+ *****************************************************************************/
 
 
 var self = {
@@ -26,7 +27,7 @@ var self = {
      * @param options
      * @returns {LogManager} Existing or new global LogManager object
      */
-    logMgr: function (options) {
+    getLogManager: function (options) {
         if (!self._gLogManager) {
             self._gLogManager = new self.LogManager(options);
         }
@@ -37,17 +38,8 @@ var self = {
      * Test if the global LogManager singleton has been initialized
      * @returns {boolean} Do we have a global LogManager singleton?
      */
-    hasLogMgr: function () {
+    hasLogManager: function () {
         return self._gLogManager ? true : false;
-    },
-
-    /**
-     * Shortcut to calling the global LogManager's start method.
-     * @see {@link LogManager#start}
-     * @returns {LogManager}
-     */
-    start: function () {
-        return self.logMgr().start();
     },
 
     /**
@@ -56,13 +48,50 @@ var self = {
      * @param context {Object} Context object, with optional req and res properties.
      * @returns {Logger} New Logger object
      */
-    get: function (name, context) {
-        return self.logMgr().get(name, context);
+    getLogger: function (name, context) {
+        return self.getLogManager().get(name, context);
     },
 
-    logListener: function(options) {
+    getLogListener: function(options) {
         var LogListener = require('./src/log_listener');
         return new LogListener(options);
+    },
+
+    /**
+     * Shortcut to calling the global LogManager's start method.
+     * @see {@link LogManager#start}
+     * @returns {LogManager}
+     */
+    start: function () {
+        return self.getLogManager().start();
+    },
+
+    /**
+     * @deprecated
+     */
+    hasLogMgr: function () {
+        return self.hasLogManager();
+    },
+
+    /**
+     * @deprecated
+     */
+    logMgr: function(options) {
+        return self.getLogManager(options);
+    },
+
+    /**
+     * @deprecated
+     */
+    get: function (name, context) {
+        return self.getLogger(name, context);
+    },
+
+    /**
+     * @deprecated
+     */
+    logListener: function(options) {
+        return self.getLogListener(options);
     },
 
     /**
@@ -83,12 +112,12 @@ var self = {
     },
 
     /**
-     * This module is not stable
+     * This module is under development
      */
     Response: require('./src/stubs/response'),
 
     /**
-     * This module is not stable
+     * This module is under development
      */
     Request: require('./src/stubs/request')
 };

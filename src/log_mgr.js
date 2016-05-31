@@ -153,7 +153,7 @@ LogManager.prototype = {
 
             function onSuccess () {
                 transport.clear();
-                self.logMessage(self.LEVEL_INFO, "logger.start.success", "Started transport '" + name + "'", { transport: name });
+                self.logMessage(self.LEVEL_INFO, "logger.start.success", "Started transport '" + name + "'", {transport: name});
                 if (!bResolved) {
                     bResolved = true;
                     resolve();
@@ -207,10 +207,10 @@ LogManager.prototype = {
             var topts = newTransport.getOptions();
             var sOptions = topts ? ' (' + JSON.stringify(topts) + ')' : '';
             this.logMessage(this.LEVEL_INFO, "logger.transport.add", "Added transport '" + name + "'" + sOptions,
-                { transport: name, options: topts });
+                {transport: name, options: topts});
         } else {
             this.logMessage(this.LEVEL_WARN, "logger.transport.add.warn",
-                ("Unsupported addTransport operation: " + err.message ), { options: options });
+                ("Unsupported addTransport operation: " + err.message ), {options: options});
         }
         return this;
     },
@@ -257,7 +257,7 @@ LogManager.prototype = {
                 return newTransport;
             } else {
                 this.logMessage(this.LEVEL_WARN, "logger.push.warn",
-                    ("Unsupported setLogger operation: " + err.message ), { options: options });
+                    ("Unsupported setLogger operation: " + err.message ), {options: options});
             }
         }
         return this;
@@ -291,7 +291,7 @@ LogManager.prototype = {
                     });
                 });
                 jobs.push(job);
-                self.logMessage(self.LEVEL_INFO, "logger.transport.remove", "Removed transport '" + t.toString() + "'", { transport: t.toString() });
+                self.logMessage(self.LEVEL_INFO, "logger.transport.remove", "Removed transport '" + t.toString() + "'", {transport: t.toString()});
             } else {
                 remainingTransports.push(this.transports[idx])
             }
@@ -411,8 +411,15 @@ LogManager.prototype = {
      *   columns are left blank on output.
      * @return A new {logger} object.
      */
-    get: function (moduleName, context) {
+    getLogger: function (moduleName, context) {
         return new Logger(this, moduleName, context);
+    },
+
+    /**
+     * @deprecated
+     */
+    get: function (moduleName, context) {
+        return this.getLogger(moduleName, context);
     },
 
     /**
@@ -425,7 +432,7 @@ LogManager.prototype = {
      * @see {LogManager#logParams}
      */
     logMessage: function (level, action, message, data) {
-        var params = { module: 'logger', level: level, action: action, message: message };
+        var params = {module: 'logger', level: level, action: action, message: message};
         if (data) {
             params.data = data;
         }
