@@ -24,28 +24,11 @@ var mgrIdx = 0;
  * [get(emitterName)]{@link LogManager#get} to get a new {@link Logger} object for each emitter and
  * then call methods on this {@link Logger} object to log messages.
  *
+ * <p>Refer to {@link LogManager#setOptions} for options documentation.
+ *
  * @class A LogManager is used to manage logging, including transports, startup, shutdown and
  *   various options.
  *
- * @param {Object} [options] -
- * @param {Date} [options.t0=now] - The earliest known time for when the process was started
- * @param {boolean} [options.sid=false] - Indicates whether a session ID column should be included
- *   in log output
- * @param {boolean} [options.static=false] - Indicates whether a static column should be included
- *   in log output
- * @param {string} [options.level=debug] - The log level at and above which log messages will be
- *   written
- * @param {boolean} [options.errorStack=false] - Include the error stack in the data column when
- *   writing Error objects to the log.
- * @param {Object[]} [options.transports] - Add transports now rather than calling {#addTransport}.
- *   Objects in the array contain the config for the transport and must include a <code>type</code>
- *   property.
- * @param {boolean} [options.autoRun=false] - If set to true then logging will be immediately
- *   enabled and a call to {@link LogManager#start} will not be necessary. If no transports have
- *   been provided then a default console transport will be added.
- * @param {boolean} [options.allTransportsReady=true] - If true then all transports must be ready
- *   before messages will be written. If false then any transport can be ready before flushing will
- *   occur, which may result in transports that are not ready missing some messages.
  * @constructor
  */
 var LogManager = function (options) {
@@ -53,47 +36,77 @@ var LogManager = function (options) {
     options || ( options = {} );
     this.name = 'LogManager#' + (++mgrIdx);
     this.t0 = options.t0 ? options.t0.getTime() : (new Date()).getTime();
-    this.sid = ( options.sid === true ) ? true : false;
-    this.static = ( options.static === true ) ? true : false;
     // Count of how many errors, warnings, etc
     this.logCount = {};
-    this.LEVEL_DEFAULT = 'debug';       // Default threshold level for outputting logs
-    this.LEVEL_INFO = 'info';           // If changing LEVEL_ORDER, what level should internally
-                                        // generated info messages be output at?
-    this.LEVEL_WARN = 'warn';           // If changing LEVEL_ORDER, what level should internally
-                                        // generated warn messages be output at?
-    this.LEVEL_ORDER = ['verbose', 'debug', 'info', 'warn', 'error', 'fatal'];
-    this.logLevel = options.level ? options.level : this.LEVEL_DEFAULT;
-// A stack of tranports, with the console transport always installed by default as a fallback
-    // A queue of messages that may build up while we are switching streams
-    this.queue = [];
-    this.bErrorStack = (options.errorStack === true) ? true : false;
-// Indicates whether we have started logging or not
-    this.running = false;
-    this.allTransportsReady = options.allTransportsReady === false ? false : true;
-    this.transports = [];
-    var tarray = [];
-    if (_.isArray(options.transports)) {
-        tarray = options.transports;
-    } else if (options.transports) {
-        tarray.push(options.transports);
-    }
-    if (tarray.length) {
-        for (var tdx = 0; tdx < tarray.length; tdx++) {
-            this.addTransport(tarray[tdx]);
-        }
-    }
-    if (options.autoRun === true) {
-        if (!tarray.length) {
-            this.addTransport('console');
-        }
-        this.start();
-    }
+
+    this.setOptions(options);
 };
 
 LogManager.prototype = {
 
     constructor: LogManager,
+
+    /**
+     * Setup LogManager and transports based on config.
+     * @param {Object} [options] - Configuration information, can be from a configuration file
+     * @param {Date} [options.t0=now] - The earliest known time for when the process was started
+     * @param {boolean} [options.sid=false] - Indicates whether a session ID column should be included
+     *   in log output
+     * @param {boolean} [options.static=false] - Indicates whether a static column should be included
+     *   in log output
+     * @param {string} [options.level=debug] - The log level at and above which log messages will be
+     *   written
+     * @param {boolean} [options.errorStack=false] - Include the error stack in the data column when
+     *   writing Error objects to the log.
+     * @param {Object[]} [options.transports] - Add transports now rather than calling {#addTransport}.
+     *   Objects in the array contain the config for the transport and must include a <code>type</code>
+     *   property.
+     * @param {boolean} [options.autoRun=false] - If set to true then logging will be immediately
+     *   enabled and a call to {@link LogManager#start} will not be necessary. If no transports have
+     *   been provided then a default console transport will be added.
+     * @param {boolean} [options.allTransportsReady=true] - If true then all transports must be ready
+     *   before messages will be written. If false then any transport can be ready before flushing will
+     *   occur, which may result in transports that are not ready missing some messages.
+     */
+    setOptions: function (options) {
+        this.sid = ( options.sid === true ) ? true : false;
+        this.static = ( options.static === true ) ? true : false;
+        // Default threshold level for outputting logs
+        this.LEVEL_DEFAULT = options.levelDefault || 'debug';
+        // If changing LEVEL_ORDER, what level should internally generated info messages be output
+        // at?
+        this.LEVEL_INFO = options.levelInfo || 'info';
+        // If changing LEVEL_ORDER, what level should internally generated warn messages be output
+        // at?
+        this.LEVEL_WARN = options.levelWarn || 'warn';
+        this.LEVEL_ORDER = options.levelOrder || ['verbose', 'debug', 'info', 'warn', 'error', 'fatal'];
+        this.logLevel = options.level ? options.level : this.LEVEL_DEFAULT;
+        // A stack of tranports, with the console transport always installed by default as a
+        // fallback A queue of messages that may build up while we are switching streams
+        this.queue = [];
+        this.bErrorStack = (options.errorStack === true) ? true : false;
+        // Indicates whether we have started logging or not
+        this.running = false;
+        this.allTransportsReady = options.allTransportsReady === false ? false : true;
+        this.transports = [];
+        var tarray = [];
+        if (_.isArray(options.transports)) {
+            tarray = options.transports;
+        } else if (options.transports) {
+            tarray.push(options.transports);
+        }
+        if (tarray.length) {
+            for (var tdx = 0; tdx < tarray.length; tdx++) {
+                this.addTransport(tarray[tdx]);
+            }
+        }
+        if (options.autoRun === true) {
+            if (!tarray.length) {
+                this.addTransport('console');
+            }
+            this.start();
+        }
+    },
 
     /**
      * Starts all transports, if not already started. This enables logs to be written to the
