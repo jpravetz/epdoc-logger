@@ -235,8 +235,8 @@ LogglyTransport.prototype = {
         return "Loggly";
     },
 
-    getOptions: function() {
-        return { tags: this.aTags };
+    getOptions: function () {
+        return {tags: this.aTags};
     },
 
     _formatLogMessage: function (params) {
@@ -245,18 +245,21 @@ LogglyTransport.prototype = {
             level: params.level,
             emitter: params.module,
             action: params.action,
-            data: params.data,
-            message: params.message
+            data: params.data
         };
+        if (params.message) {
+            if (typeof params.message === 'string' && params.message.length) {
+                json.message = params.message;
+            } else if (params.message instanceof Array) {
+                json.message = params.message.join('\n');
+            }
+        }
         if (this.bIncludeSid) {
             json.sid = params.sid;
             json.reqId = params.reqId;
         }
         if (this.bIncludeStatic) {
             json.static = params.static;
-        }
-        if (params.message instanceof Array) {
-            json.message = params.message.join('\n');
         }
         return json;
     },
