@@ -50,23 +50,27 @@ LogManager.prototype = {
      * Setup LogManager and transports based on config.
      * @param {Object} [options] - Configuration information, can be from a configuration file
      * @param {Date} [options.t0=now] - The earliest known time for when the process was started
-     * @param {boolean} [options.sid=false] - Indicates whether a session ID column should be included
-     *   in log output
-     * @param {boolean} [options.static=false] - Indicates whether a static column should be included
-     *   in log output
-     * @param {string} [options.level=debug] - The log level at and above which log messages will be
+     * @param {boolean} [options.sid=false] - Indicates whether a session ID column should be
+     *   included in log output
+     * @param {boolean} [options.static=false] - Indicates whether a static column should be
+     *   included in log output
+     * @param {string} [options.level=debug] - The log level at and above which log messages will
+     *   be
      *   written
-     * @param {boolean} [options.errorStack=false] - Include the error stack in the data column when
+     * @param {boolean} [options.errorStack=false] - Include the error stack in the data column
+     *   when
      *   writing Error objects to the log.
-     * @param {Object[]} [options.transports] - Add transports now rather than calling {#addTransport}.
-     *   Objects in the array contain the config for the transport and must include a <code>type</code>
-     *   property.
+     * @param {Object[]} [options.transports] - Add transports now rather than calling
+     *   {#addTransport}. Objects in the array contain the config for the transport and must
+     *   include a <code>type</code> property.
      * @param {boolean} [options.autoRun=false] - If set to true then logging will be immediately
-     *   enabled and a call to {@link LogManager#start} will not be necessary. If no transports have
+     *   enabled and a call to {@link LogManager#start} will not be necessary. If no transports
+     *   have
      *   been provided then a default console transport will be added.
-     * @param {boolean} [options.allTransportsReady=true] - If true then all transports must be ready
-     *   before messages will be written. If false then any transport can be ready before flushing will
-     *   occur, which may result in transports that are not ready missing some messages.
+     * @param {boolean} [options.allTransportsReady=true] - If true then all transports must be
+     *   ready before messages will be written. If false then any transport can be ready before
+     *   flushing will occur, which may result in transports that are not ready missing some
+     *   messages.
      */
     setOptions: function (options) {
         this.sid = ( options.sid === true ) ? true : false;
@@ -97,7 +101,7 @@ LogManager.prototype = {
         }
         if (tarray.length) {
             for (var tdx = 0; tdx < tarray.length; tdx++) {
-                this.addTransport(tarray[tdx]);
+                this.addTransport(tarray[tdx],options[tarray[tdx]]);
             }
         }
         if (options.autoRun === true) {
@@ -221,9 +225,6 @@ LogManager.prototype = {
             var sOptions = topts ? ' (' + JSON.stringify(topts) + ')' : '';
             this.logMessage(this.LEVEL_INFO, "logger.transport.add", "Added transport '" + name + "'" + sOptions,
                 {transport: name, options: topts});
-        } else {
-            this.logMessage(this.LEVEL_WARN, "logger.transport.add.warn",
-                ("Unsupported addTransport operation: " + err.message ), {options: options});
         }
         return this;
     },
@@ -241,26 +242,29 @@ LogManager.prototype = {
         }
         options || ( options = {} );
 
-        if (!options.sid) {
+        if (_.isUndefined(options.sid)) {
             options.sid = this.sid;
         }
-        if (!options.static) {
+        if (_.isUndefined(options.static)) {
             options.static = this.static;
         }
-        if (!options.level) {
+        if (_.isUndefined(options.level)) {
             options.level = this.logLevel;
         }
 
         var Transport;
+        var name = '';
 
         if (type) {
             var p = Path.resolve(__dirname, 'transports', type);
             Transport = require(p);
+            name = type;
         } else if (options) {
             Transport = type;
         } else {
             var p = Path.resolve(__dirname, 'transports/console');
             Transport = require(p);
+            name = 'console';
         }
 
         if (Transport) {
@@ -269,8 +273,9 @@ LogManager.prototype = {
             if (!err) {
                 return newTransport;
             } else {
-                this.logMessage(this.LEVEL_WARN, "logger.push.warn",
-                    ("Unsupported setLogger operation: " + err.message ), {options: options});
+                this.logMessage(this.LEVEL_WARN, "logger.transport.add.warn",
+                    ("Could not add transport '" + name + "'. " + err.message ), {options: options});
+                return;
             }
         }
         return this;
