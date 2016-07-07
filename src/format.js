@@ -3,6 +3,12 @@
  * CONFIDENTIAL Copyright 2012-2016 James Pravetz. All Rights Reserved.
  *****************************************************************************/
 
+
+/**
+ * Formatting routines that are used internally. Some of these may have external applications
+ * and can be accessed by the module's 'format' export property
+ */
+
 var self = {
 
     /**

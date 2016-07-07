@@ -66,6 +66,11 @@ var self = {
         return self.getLogManager().start();
     },
 
+  /**
+   * Utility formatting routines
+   */
+  format: require('./src/format'),
+
     /**
      * @deprecated
      */
