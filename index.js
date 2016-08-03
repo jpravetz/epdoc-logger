@@ -12,7 +12,8 @@ var self = {
     _gLogManager: undefined,
 
     /**
-     * @return {LogManager} class
+     * @return {LogManager} class. Use this class to create your own LogManager if you don't
+     * want a global LogManager.
      */
     LogManager: require('./src/log_mgr'),
 
