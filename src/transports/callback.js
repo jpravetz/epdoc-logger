@@ -4,7 +4,7 @@
  *****************************************************************************/
 
 var _ = require('underscore');
-var dateutil = require('../dateutil');
+var format = require('./../format');
 
 /**
  * Create a new Callback transport where output is added to a data array or a callback is used to
@@ -23,6 +23,7 @@ var dateutil = require('../dateutil');
 var CallbackTransport = function (options) {
     this.options = options || {};
     this.bIncludeSid = (options && options.sid === false) ? false : true;
+    this.bIncludeStatic = (options && options.static === false ) ? false : true;
     this.level = this.options.level;
     this.sType = 'callback';
     this.bReady = true;
@@ -99,15 +100,22 @@ CallbackTransport.prototype = {
      * @param {string} params.module - name of file or module or emitter (noun)
      * @param {string} params.action - method or operation being performed (verb)
      * @param {string} params.message - text string to output
-     * @param {Object} params.custom - Arbitrary data to be logged in a 'custom' column if enabled
+     * @param {Object} params.static - Arbitrary data to be logged in a 'static' column if enabled
      *   via the LogManager.
      * @param {Object} params.data - Arbitrary data to be logged in the 'data' column
      */
     write: function (params) {
+        var opts = {
+            timestamp: 'iso',
+            sid: this.bIncludeSid,
+            static: this.bIncludeStatic,
+            dataObjects: true
+        };
+        var json = format.paramsToJson(params,opts);
         if (this.logCallback) {
-            this.logCallback(params);
+            this.logCallback(json);
         } else {
-            this.data.push(params);
+            this.data.push(json);
         }
     },
 
@@ -121,8 +129,16 @@ CallbackTransport.prototype = {
         cb && cb();
     },
 
+    setLevel: function(level) {
+        this.level = level;
+    },
+
     toString: function () {
         return "Callback" + (this.uid ? (" (" + this.uid + ")") : "");
+    },
+
+    getOptions: function() {
+        return undefined;
     },
 
     pad: function (n, width, z) {

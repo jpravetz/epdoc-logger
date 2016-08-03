@@ -4,7 +4,7 @@
  *****************************************************************************/
 
 var _ = require('underscore');
-var format = require('./util/format');
+var format = require('./../format');
 
 /**
  * Create a new Console transport to output log messages to the console.
@@ -14,7 +14,7 @@ var format = require('./util/format');
  *   do not output these values
  * @param [options.timestamp=ms] {string} - Set the format for timestamp output, must be one of 'ms' or 'iso'.
  * @param [options.format=jsonArray] {string} - Set the format for the output line. Must be one of 'json' or 'jsonArray'.
- * @param [options.custom=true] {boolean} - Set whether to output a 'custom' column.
+ * @param [options.static=true] {boolean} - Set whether to output a 'static' column.
  * @param [options.level] {string} - Log level above which to output log messages, overriding setting for LogManager.
  * @constructor
  */
@@ -22,7 +22,7 @@ var format = require('./util/format');
 var ConsoleTransport = function (options) {
     this.options = options || {};
     this.bIncludeSid = (options && ( options.sid === false || options.bIncludeSid === false) ) ? false : true;
-    this.bIncludeCustom = (options && options.custom === false ) ? false : true;
+    this.bIncludeStatic = (options && options.static === false ) ? false : true;
     this.timestampFormat = this.options.timestamp || 'ms';
     this.level = this.options.level;
     this.sType = 'console';
@@ -55,7 +55,7 @@ ConsoleTransport.prototype = {
     match: function(transport) {
         if(  _.isString(transport) && transport === this.sType ) {
             return true;
-        } 
+        }
         if( _.isObject(transport) && transport.type === this.sType ) {
             return true;
         }
@@ -92,7 +92,7 @@ ConsoleTransport.prototype = {
      * @param {string} params.module - name of file or module or emitter (noun)
      * @param {string} params.action - method or operation being performed (verb)
      * @param {string} params.message - text string to output
-     * @param {Object} params.custom - Arbitrary data to be logged in a 'custom' column if enabled via the LogManager.
+     * @param {Object} params.static - Arbitrary data to be logged in a 'static' column if enabled via the LogManager.
      * @param {Object} params.data - Arbitrary data to be logged in the 'data' column
      */
     write: function (params) {
@@ -110,15 +110,23 @@ ConsoleTransport.prototype = {
         cb && cb();
     },
 
+    setLevel: function(level) {
+        this.level = level;
+    },
+
     toString: function () {
         return "Console";
+    },
+
+    getOptions: function() {
+        return undefined;
     },
 
     _formatLogMessage: function (params) {
         var opts = {
             timestamp: this.timestampFormat,
             sid: this.bIncludeSid,
-            custom: this.bIncludeCustom
+            static: this.bIncludeStatic
         };
         if (this.options.format === 'json') {
             var json = format.paramsToJson(params,opts);

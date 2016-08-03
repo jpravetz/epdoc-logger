@@ -1,6 +1,6 @@
 {
   "name": "epdoc-logger",
-  "version": "2.0.0-alpha.36",
+  "version": "2.0.0",
   "description": "Logging module with express middleware mixins and extendable transports",
   "bugs": {
     "url": "https://github.com/jpravetz/epdoc-logger/issues"
@@ -15,22 +15,24 @@
     "url": "git://github.com/jpravetz/epdoc-logger.git"
   },
   "scripts": {
-    "docs": "gulp doc"
+    "docs": "gulp doc",
+    "test": "NODE_ENV=test mocha"
   },
   "dependencies": {
-    "moment": "^2.11.2",
-    "request": "^2.69.0",
-    "underscore": "~1.8.2"
+    "moment": "^2.14.1",
+    "request": "^2.72.0",
+    "underscore": "^1.8.3"
   },
   "devDependencies": {
     "del": "^2.2.0",
-    "express": "^4.13.4",
+    "express": "^4.14.0",
     "gulp": "^3.9.1",
     "gulp-jsdoc3": "^0.2.1",
     "gulp-util": "^3.0.7",
     "gutil": "^1.6.4",
     "jsdoc": "^3.4.0",
-    "should": "^8.1.1",
+    "mocha": "^3.0.0",
+    "should": "^8.4.0",
     "supertest": "^1.2.0",
     "watchify": "^3.7.0"
   }

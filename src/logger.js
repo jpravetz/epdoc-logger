@@ -3,7 +3,7 @@
 
 
 var util = require('util');
-var DateUtil = require('./dateutil');
+var format = require('./format');
 var moment = require('moment');
 var _ = require('underscore');
 
@@ -59,10 +59,10 @@ var Logger = function (logMgr, modulename, context) {
     // module column
     this.stack = [];
     if (_.isString(modulename)) {
-        this.name = modulename + " " + this.name;
+        this.name = "Logger#" + modulename;
         this.stack = [modulename];
     } else if (_.isArray(modulename)) {
-        this.name = modulename.join('.') + " " + this.name;
+        this.name = "Logger#" + modulename.join('.');
         this.stack = modulename;
     }
 
@@ -93,13 +93,8 @@ var Logger = function (logMgr, modulename, context) {
          */
         return function (err) {
             if (err instanceof Error) {
-                var msgs = [err.message];
-                if (_.isArray(err.errors)) {
-                    for (var idx = 0; idx < err.errors.length; ++idx) {
-                        msgs.push(err.errors[idx]);
-                    }
-                }
-                if (self.errorStack() && err.stack) {
+                var msgs = format.errorToStringArray(err);
+                if (self.bErrorStack && err.stack) {
                     var items = err.stack.split(/\n\s*/);
                     self.data({ error: { code: err.code, stack: items } });
                 } else if (!_.isUndefined(err.code)) {
@@ -110,7 +105,7 @@ var Logger = function (logMgr, modulename, context) {
                 return self.logArgs(level, Array.prototype.slice.call(arguments));
             }
         };
-    }
+    };
 
     for (var idx = 0; idx < logMgr.LEVEL_ORDER.length; idx++) {
         var level = logMgr.LEVEL_ORDER[idx];
@@ -130,6 +125,12 @@ Logger.prototype = {
         return this;
     },
 
+    /**
+     * Set whether to log a stack for Error objects. If not set in the constructor, then inherits
+     * this value from the LogManager.
+     * @param [bShow=true] {boolean}
+     * @returns {Logger}
+     */
     errorStack: function (bShow) {
         this.bErrorStack = (bShow === false) ? false : true;
         return this;
@@ -184,17 +185,19 @@ Logger.prototype = {
     },
 
     /**
-     * Set <i>custom data</i> that is output in a separate column called <code>custom</code>`.
-     * This column must be specifically enabled via the LogManager constructor's <code>custom</code>
-     * option.
+     * Set <i>static data</i> that is output in a separate column called <code>static</code>`.
+     * This column must be specifically enabled via the LogManager constructor's
+     * <code>static</code>
+     * option. Static data is not cleared when a log message is written, and so persists for the
+     * life of the log object.
      *
-     * @param key {String|object} If a string then sets custom.key = value, otherwise extends
-     *   custom with key
+     * @param key {String|object} If a string then sets staticData.key = value, otherwise extends
+     *   staticData with key
      * @param value {*} (Optional) Set key to this value
      * @return {Logger}
      */
     set: function (key, value) {
-        return this._setData('customData', key, value);
+        return this._setData('staticData', key, value);
     },
 
     /**
@@ -240,8 +243,8 @@ Logger.prototype = {
      *
      * <p>This method is usually called at the entry point of a function. Can also be
      * called by submodules, in which case the submodules should call [popName]{@link
-     * Logger#popName} when returning. Note that it is not necessary to call [popName]{@link
-     * Logger#popName} when used in the context of an Express context and terminating a request
+        * Logger#popName} when returning. Note that it is not necessary to call [popName]{@link
+        * Logger#popName} when used in the context of an Express context and terminating a request
      * with a response.
      *
      * @param name (required) String in the form 'api.org.create' (route.method or
@@ -348,7 +351,7 @@ Logger.prototype = {
             this.data({
                 localtime: moment(d).format('YYYY-MM-DDTHH:mm:ss.SSSZ'),
                 utctime: d.toISOString(),
-                uptime: DateUtil.formatMS(d - this.logMgr.getStartTime())
+                uptime: format.formatMS(d - this.logMgr.getStartTime())
             });
             this.logArgs(this.logMgr.LEVEL_INFO, []);
         }
@@ -414,8 +417,8 @@ Logger.prototype = {
                 params.data = this.logData;
                 delete this.logData;
             }
-            if (this.customData) {
-                params.custom = this.customData;
+            if (this.staticData) {
+                params.static = this.staticData;
             }
             if (this.logAction) {
                 params.action = this.logAction;
@@ -459,16 +462,27 @@ Logger.prototype = {
      * @return {*}
      */
     logParams: function (params) {
-        if (this.ctx && this.ctx.req) {
-            if (this.ctx.req._reqId) {
-                params.reqId = this.ctx.req._reqId;
+
+        function setParams (ctx) {
+            if (ctx._reqId) {
+                params.reqId = ctx._reqId;
+            } else if (ctx.reqId) {
+                params.reqId = ctx.reqId;
             }
-            if (this.ctx.req.session && this.ctx.req.session.id) {
-                params.sid = this.ctx.req.session.id;
-            } else if (this.ctx.req.sessionId) {
-                params.sid = this.ctx.req.sessionId;
-            } else if (this.ctx.req.sid) {
-                params.sid = this.ctx.req.sid;
+            if (ctx.session && ctx.session.id) {
+                params.sid = ctx.session.id;
+            } else if (ctx.sessionId) {
+                params.sid = ctx.sessionId;
+            } else if (ctx.sid) {
+                params.sid = ctx.sid;
+            }
+        }
+
+        if (this.ctx) {
+            if (this.ctx.req) {
+                setParams(this.ctx.req);
+            } else {
+                setParams(this.ctx);
             }
         }
         this.logMgr.logParams(params, this.logLevel);
@@ -488,6 +502,14 @@ Logger.prototype = {
     setLevel: function (level) {
         this.logLevel = level;
         return this;
+    },
+
+    /**
+     * Get the log level for this object
+     * @returns {string} The currently set log level for this Logger object.
+     */
+    getLevel: function () {
+        return this.logLevel;
     },
 
     /**

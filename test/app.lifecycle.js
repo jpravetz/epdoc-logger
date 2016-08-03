@@ -34,37 +34,37 @@ describe("Logger lifecycle", function () {
         logMgr.addTransport('callback', { callback: onMessage, uid: 1 }).start(function () {
             try {
                 var params = buffer[1].shift();
-                should(params).have.property('time');
+                should(params).have.property('timestamp');
                 should(params).have.properties({
                     action: 'bake',
                     message: 'Starting',
-                    module: 'moduleName',
+                    emitter: 'moduleName',
                     level: 'info'
                 });
                 params = buffer[1].shift();
-                should(params).have.property('time');
+                should(params).have.property('timestamp');
                 should(params).have.properties({
                     message: 'Running { a: 2, b: 3 }',
-                    module: 'moduleName',
+                    emitter: 'moduleName',
                     level: 'debug'
                 });
                 should.not.exist(params.action);
                 should(params.data).have.properties({ c: 4, e: 7 });
                 params = buffer[1].shift();
-                should(params).have.property('time');
+                should(params).have.property('timestamp');
                 should(params).have.properties({
                     action: 'logger.transport.add',
                     message: "Added transport 'Callback (1)'",
-                    module: 'logger',
+                    emitter: 'logger',
                     level: 'info'
                 });
                 should(params.data).have.properties({ transport: 'Callback (1)' });
                 params = buffer[1].shift();
-                should(params).have.property('time');
+                should(params).have.property('timestamp');
                 should(params).have.properties({
                     action: 'logger.start.success',
                     message: "Started transport 'Callback (1)'",
-                    module: 'logger',
+                    emitter: 'logger',
                     level: 'info'
                 });
                 should(params.data).have.properties({ transport: 'Callback (1)' });
@@ -81,16 +81,16 @@ describe("Logger lifecycle", function () {
         log = logMgr.get('module2');
         log.info("Doing more");
         params = buffer[1].shift();
-        should(params).have.property('time');
-        should(params).have.properties({ message: 'Doing more', module: 'module2', level: 'info' });
+        should(params).have.property('timestamp');
+        should(params).have.properties({ message: 'Doing more', emitter: 'module2', level: 'info' });
         should.not.exist(params.action);
         log.action('slide').warn("end");
         var params = buffer[1].shift();
-        should(params).have.property('time');
+        should(params).have.property('timestamp');
         should(params).have.properties({
             action: 'slide',
             message: 'end',
-            module: 'module2',
+            emitter: 'module2',
             level: 'warn'
         });
         params = buffer[1].shift();
@@ -103,30 +103,30 @@ describe("Logger lifecycle", function () {
         logMgr.addTransport('callback', { callback: onMessage2, uid: 2 }).start(function () {
             try {
                 _.each([1, 2], function (n) {
-                    params = buffer[n].shift();
-                    should(params).have.property('time');
+                    var params = buffer[n].shift();
+                    should(params).have.property('timestamp');
                     should(params).have.properties({
                         action: 'logger.transport.add',
                         message: "Added transport 'Callback (2)'",
-                        module: 'logger',
+                        emitter: 'logger',
                         level: 'info'
                     });
                     should(params.data).have.properties({ transport: 'Callback (2)' });
                     params = buffer[n].shift();
-                    should(params).have.property('time');
+                    should(params).have.property('timestamp');
                     should(params).have.properties({
                         action: 'logger.start.success',
                         message: "Started transport 'Callback (2)'",
-                        module: 'logger',
+                        emitter: 'logger',
                         level: 'info'
                     });
                     should(params.data).have.properties({ transport: 'Callback (2)' });
                     params = buffer[n].shift();
-                    should(params).have.property('time');
+                    should(params).have.property('timestamp');
                     should(params).have.properties({
                         action: 'logger.start.success',
                         message: "Started transport 'Callback (1)'",
-                        module: 'logger',
+                        emitter: 'logger',
                         level: 'info'
                     });
                     should(params.data).have.properties({ transport: 'Callback (1)' });
@@ -143,11 +143,11 @@ describe("Logger lifecycle", function () {
     it("Verify new messages 2", function (done) {
         log.info("Doing even more");
         _.each([1, 2], function (n) {
-            params = buffer[n].shift();
-            should(params).have.property('time');
+            var params = buffer[n].shift();
+            should(params).have.property('timestamp');
             should(params).have.properties({
                 message: 'Doing even more',
-                module: 'module2',
+                emitter: 'module2',
                 level: 'info'
             });
             should.not.exist(params.action);
@@ -160,24 +160,24 @@ describe("Logger lifecycle", function () {
 
     it("Verify removing transport", function (done) {
         logMgr.removeTransport({type:'callback',uid:1});
-        params = buffer[2].shift();
+        var params = buffer[2].shift();
         should.not.exist(params);
         logMgr.start(function() {
             try {
                 params = buffer[2].shift();
-                should(params).have.property('time');
+                should(params).have.property('timestamp');
                 should(params).have.properties({
                     message: "Removed transport 'Callback (1)'",
                     action: 'logger.transport.remove',
-                    module: 'logger',
+                    emitter: 'logger',
                     level: 'info'
                 });
                 params = buffer[2].shift();
-                should(params).have.property('time');
+                should(params).have.property('timestamp');
                 should(params).have.properties({
                     action: 'logger.start.success',
                     message: "Started transport 'Callback (2)'",
-                    module: 'logger',
+                    emitter: 'logger',
                     level: 'info'
                 });
                 should(params.data).have.properties({ transport: 'Callback (2)' });
@@ -194,11 +194,11 @@ describe("Logger lifecycle", function () {
 
     it("Verify write count",function(done) {
         logMgr.writeCount();
-        params = buffer[2].shift();
-        should(params).have.property('time');
+        var params = buffer[2].shift();
+        should(params).have.property('timestamp');
         should(params).have.properties({
             action: 'counts',
-            module: 'logger',
+            emitter: 'logger',
             level: 'info'
         });
         should(params.data).have.properties({ info: 11, debug: 1, warn: 1 });
