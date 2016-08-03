@@ -40,14 +40,14 @@
 			<li class="dropdown">
 				<a href="classes.list.html" class="dropdown-toggle" data-toggle="dropdown">Classes<b class="caret"></b></a>
 				<ul class="dropdown-menu ">
-					<li><a href="CallbackTransport.html">CallbackTransport</a></li><li><a href="ConsoleTransport.html">ConsoleTransport</a></li><li><a href="FileTransport.html">FileTransport</a></li><li><a href="Logger.html">Logger</a></li><li><a href="LogglyTransport.html">LogglyTransport</a></li><li><a href="LogManager.html">LogManager</a></li>
+					<li><a href="CallbackTransport.html">CallbackTransport</a></li><li><a href="ConsoleTransport.html">ConsoleTransport</a></li><li><a href="FileTransport.html">FileTransport</a></li><li><a href="global.html#Logger">Logger</a></li><li><a href="LogglyTransport.html">LogglyTransport</a></li><li><a href="global.html#LogManager">LogManager</a></li>
 				</ul>
 			</li>
 			
 			<li class="dropdown">
 				<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Global<b class="caret"></b></a>
 				<ul class="dropdown-menu ">
-					<li><a href="global.html#formatMS">formatMS</a></li><li><a href="global.html#Request">Request</a></li><li><a href="global.html#self">self</a></li>
+					<li><a href="global.html#_gLogManager">_gLogManager</a></li><li><a href="global.html#format">format</a></li><li><a href="global.html#get">get</a></li><li><a href="global.html#getLogger">getLogger</a></li><li><a href="global.html#getLogManager">getLogManager</a></li><li><a href="global.html#hasLogManager">hasLogManager</a></li><li><a href="global.html#hasLogMgr">hasLogMgr</a></li><li><a href="global.html#logListener">logListener</a></li><li><a href="global.html#logMgr">logMgr</a></li><li><a href="global.html#middleware">middleware</a></li><li><a href="global.html#Request">Request</a></li><li><a href="global.html#Response">Response</a></li><li><a href="global.html#self">self</a></li><li><a href="global.html#start">start</a></li>
 				</ul>
 			</li>
 			
@@ -99,18 +99,38 @@
 
     <section class="readme-section">
         <article><h1>epdoc-logger</h1><p>A logging module supporting built-in and custom transports, Express 4 response mixins, 
-rich message and data syntax, and chainable methods for recording log events.
+rich message and data syntax, chainable methods for recording log events, and a 
+callback transport to allow unit testing via log messages.
 Generally supports <a href="https://github.com/winstonjs/winston">Winston's</a> logging method calls
-for simpler messages, but with the addition of a substantial number of new methods, 
+for simpler messages, but with the addition of a number of new methods, 
 many of which can be chained to create richer output with more columns of data.</p>
 <p><a href="http://jpravetz.github.io/epdoc-logger/out/index.html">This page and API Reference are also formatted and available here</a>.</p>
-<h2>Install</h2><pre class="prettyprint source lang-bash"><code>npm install --save epdoc-logger</code></pre><h2>Quick Start</h2><p>Log to the console.</p>
-<pre class="prettyprint source lang-javascript"><code>var log = require('epdoc-logger').start().get();
+<h2>Install</h2><pre class="prettyprint source lang-bash"><code>npm install --save epdoc-logger</code></pre><h2>Quick Start</h2><h3>Log to the console</h3><pre class="prettyprint source lang-javascript"><code>var log = require('epdoc-logger').start().getLogger();
 
 log.info(&quot;Hello world&quot;);</code></pre><pre class="prettyprint source lang-bash"><code>[&quot;00:00.001&quot;,&quot;INFO&quot;,0,&quot;&quot;,&quot;logger&quot;,&quot;logger.push.success&quot;,&quot;Set logger to Console&quot;,{},{&quot;transport&quot;:&quot;Console&quot;}]
-[&quot;00:00.015&quot;,&quot;INFO&quot;,0,&quot;&quot;,&quot;&quot;,&quot;&quot;,&quot;Hello world&quot;,{}]</code></pre><p>Buffer messages until your logger is set up, then output to a file.</p>
-<pre class="prettyprint source lang-javascript"><code>var logMgr = require('epdoc-logger').logMgr();
-var log = logMgr.get('main');
+[&quot;00:00.015&quot;,&quot;INFO&quot;,0,&quot;&quot;,&quot;&quot;,&quot;&quot;,&quot;Hello world&quot;,{}]</code></pre><h3>Configuring LogManager Using Config</h3><p>The easiest way to configure the LogManager is using config settings.</p>
+<pre class="prettyprint source lang-javascript"><code>var config = require('config');
+var elogger = require('epdoc-logger');
+var logMgr = elogger.getLogManager(config.elogger).start();
+
+log.action('say.hello').set({static1:'value1'}).info(&quot;Hello world&quot;);</code></pre><p>Here you can see an example LogManager configuration, also showing how transports are configured.
+The list of transports started is <code>elogger.transports</code>.</p>
+<pre class="prettyprint source lang-json"><code>{
+  &quot;elogger&quot;: {
+    &quot;sid&quot;: true,
+    &quot;static&quot;: true,
+    &quot;transports&quot;: [&quot;console&quot;],
+    &quot;level&quot;: &quot;info&quot;,
+    &quot;console&quot;: {
+      &quot;timestamp&quot;: &quot;iso&quot;
+    },
+    &quot;loggly&quot;: {
+      &quot;token&quot;: &quot;xxxxxxxx&quot;
+    }
+  }
+}</code></pre><p>Refer to <a href="global.html#LogManager">Logger API Reference</a> <code>setOptions</code> method for config object documentation.</p>
+<h3>Buffer messages until your logger is set up</h3><pre class="prettyprint source lang-javascript"><code>var logMgr = require('epdoc-logger').getLogManager();
+var log = logMgr.getLogger('main');
 log.info(&quot;Starting application&quot;);
 
 var config = require('config.json');
@@ -120,8 +140,8 @@ log.info(&quot;Hello world&quot;);</code></pre><pre class="prettyprint source la
 [&quot;2016-03-29T04:19:45.922Z&quot;,&quot;INFO&quot;,&quot;logger&quot;,&quot;logger.push&quot;,&quot;Setting logger to File (/path/to/file.log)&quot;,{&quot;transport&quot;:&quot;File (/path/to/file.log)&quot;}]
 [&quot;2016-03-29T04:19:45.924Z&quot;,&quot;INFO&quot;,&quot;logger&quot;,&quot;logger.push.success&quot;,&quot;Set logger to File (/path/to/file.log)&quot;,{&quot;transport&quot;:&quot;File (/path/to/file.log)&quot;}]
 [&quot;2016-03-29T04:19:45.926Z&quot;,&quot;INFO&quot;,&quot;main&quot;,&quot;&quot;,&quot;Hello world&quot;]</code></pre><p>Log to <a href="http://loggly.com">loggly.com</a>, buffering and making batch calls to loggly.</p>
-<pre class="prettyprint source lang-javascript"><code>var logMgr = require('epdoc-logger').logMgr();
-var log = logMgr.get('main');
+<pre class="prettyprint source lang-javascript"><code>var logMgr = require('epdoc-logger').getLogManager();
+var log = logMgr.getLogger('main');
 log.info(&quot;Starting application&quot;);
 
 logMgr.setTransport('loggly',{token:'MyToken'}); 
@@ -138,75 +158,76 @@ logMgr.destroying().then(function() {
     done(err);
 });</code></pre><h2>Classes</h2><p>There are two main objects used for logging:</p>
 <ul>
-<li><a href="LogManager.html">LogManager</a><ul>
+<li><a href="global.html#LogManager">LogManager</a><ul>
 <li>Usually a singleton</li>
-<li>Used to configure the transport, set global options, and start writing to the transport</li>
-<li>Can also be used to directly write to the transport (see <a href="LogManager.html#logParams">LogManager#logParams</a> and <a href="LogManager.html#logMessage">LogManager#logMessage</a>)</li>
-<li>See the <a href="LogManager.html">Log Manager API Reference</a></li>
+<li>Used to configure the transports, set global options, and start writing to the transport</li>
+<li>Can also be used to directly write to the transports (see <a href="global.html#LogManager#logParams">LogManager#logParams</a> and <a href="global.html#LogManager#logMessage">LogManager#logMessage</a>)</li>
+<li>See the <a href="global.html#LogManager">LogManager API Reference</a></li>
 </ul>
 </li>
-<li><a href="Logger.html">Logger</a><ul>
+<li><a href="global.html#Logger">Logger</a><ul>
 <li>A per-emitter object</li>
-<li>Create a new log object for every file (emitter), or for every request</li>
+<li>Advise is to create a new Logger object for every file (emitter), or for every request</li>
 <li>Chainable methods via which to write log output</li>
-<li>See the <a href="LogManager.html">Logger API Reference</a></li>
+<li>See the <a href="global.html#LogManager">Logger API Reference</a></li>
 </ul>
 </li>
 </ul>
-<p>You can access these two classes off of the exported epdoc-logger module:</p>
+<p>You can access these two classes from the exported epdoc-logger module:</p>
 <pre class="prettyprint source lang-javascript"><code>var epdocLogger = require('epdoc-logger');
 var LogManager = epdocLogger.LogManager;
-var Logger = epdocLogger.Logger;</code></pre><h3>LogManager Class</h3><p>A shortcut for getting a <a href="LogManager.html">LogManager</a> singleton is to call the module's <code>logMgr</code> method.</p>
-<pre class="prettyprint source lang-javascript"><code>var logMgr = require('epdoc-logger').logMgr();</code></pre><p>This is equivalent to:</p>
+var Logger = epdocLogger.Logger;</code></pre><h3>LogManager Class</h3><p>A shortcut for getting a <a href="global.html#LogManager">LogManager</a> singleton is to call the module's <code>getLogManager</code> method.</p>
+<pre class="prettyprint source lang-javascript"><code>var logMgr = require('epdoc-logger').getLogManager();</code></pre><p>This is equivalent to:</p>
 <pre class="prettyprint source lang-javascript"><code>var epdocLogger = require('epdoc-logger');
 var LogManager = epdocLogger.LogManager;
 var logMgr = new LogManager();</code></pre><p>Because you may need to load config information before configuring your transport you must 
-explicitly start logging by calling <a href="LogManager.html#start">LogManager#start</a>. And because some 
-log tranports are buffered, you should also call <a href="LogManager.html#flushing">LogManager#flushing</a> or 
-<a href="LogManager.html#destroying">LogManager#destroying</a> before shutting down.</p>
-<h2>Logger Class</h2><p><a href="Logger.html">Logger</a> object are created by calling <code>new Logger()</code>. Typically you would create a new Logger object for
-every javascript file and set a unique module name (<em>aka emitter</em>)_ for that object. 
+explicitly start logging by calling <a href="global.html#LogManager#start">LogManager#start</a>. And, because some 
+log tranports are buffered, you should also call <a href="global.html#LogManager#flushing">LogManager#flushing</a> or 
+<a href="global.html#LogManager#destroying">LogManager#destroying</a> before shutting down.</p>
+<h2>Logger Class</h2><p><a href="global.html#Logger">Logger</a> object are created by calling <code>new Logger()</code>. Typically you would create a new Logger object for
+every javascript file and set a unique <em>emitter</em> name for that object. 
 Alternatively, when responding to requests, for example when using <a href="http://expressjs.com">Express</a>,
 it is a better idea to tie the emitter to the request. This is described later in this document.</p>
-<p>Loggers are created by calling <a href="LogManager.html#get">LogManager#get</a>.</p>
-<pre class="prettyprint source lang-javascript"><code>var log = logMgr.get('emitter-name');
+<p>Loggers are created by calling <a href="global.html#LogManager#getLogger">LogManager#getLogger</a>.</p>
+<pre class="prettyprint source lang-javascript"><code>var log = logMgr.getLogger('emitter-name');
 
 // This is equivalent
 var log = new Logger(logMgr,'emitter-name');
 
 // A shortcut that is also equivalent and that uses a global LogManager object
-var log = require('epdoc-logger').get('emitter-name');</code></pre><h2>Configuring Transports</h2><p>The module has built-in support for the following transports and can output to multiple transports at the same time.</p>
+var log = require('epdoc-logger').getLogger('emitter-name');</code></pre><h2>Configuring Transports</h2><p>The module has built-in support for the following transports and can output to multiple transports at the same time.</p>
 <ul>
 <li><a href="ConsoleTransport.html">ConsoleTransport</a> - logs to the console (default)</li>
 <li><a href="FileTransport.html">FileTransport</a> - logs to a file</li>
 <li>SOSTransport - Logs to <a href="http://www.sos.powerflasher.com/developer-tools/sosmax/home/">SOS Max</a>. <em>SOS max is the POWERFLASHER Socket Output Server - a fast and helpful programmer tool with graphical
 user interface to display log messages for debugging purpose.</em> Note that SOS Max appears to not work on the latest version of Mac OS X.</li>
-<li><a href="CallbackTransport.html">CallbackTransport</a> - A line buffer/callback transport used only for automated testing</li>
+<li><a href="CallbackTransport.html">CallbackTransport</a> - A line buffer/callback transport useful for automated testing</li>
 <li><a href="LogglyTransport.html">LogglyTransport</a> - Logs to the online <a href="http://loggly.com">loggly.com</a> service.</li>
 </ul>
 <p>On startup the logger can wait for a transport to be initialized before starting to write log messages, or will begin writing log messages
 immediately when LogManager#autoRun is set. 
 By default the logger uses the Console Transport and must be started manually.</p>
-<p>If LogManager#autoRun is not set, then a call to <a href="LogManager.html#start">LogManager#start</a> will begin logging. 
+<p>If LogManager#autoRun is not set, then a call to <a href="global.html#LogManager#start">LogManager#start</a> will begin logging. 
 Messages are buffered prior to this method being called, so prior to this event no messages will be lost and there is time to configure transports.</p>
-<p>Transports are configured via properties passed to LogManager#setTransport, <a href="LogManager.html#addTransport">LogManager#addTransport</a> 
+<p>Transports are configured via properties passed to LogManager#setTransport, <a href="global.html#LogManager#addTransport">LogManager#addTransport</a> 
 or LogManager#new. 
 Transport configuration properties are passed directly to the transport. Refer to the individual transport API reference documents for more information.</p>
-<p>Multiple transports can be configured to be run at the same time using <a href="LogManager.html#addTransport">LogManager#addTransport</a>. 
-When either the LogManager#setTransport or <a href="LogManager.html#addTransport">LogManager#addTransport</a> methods are called, the default transport is disabled.</p>
+<p>Multiple transports can be configured to be run at the same time using <a href="global.html#LogManager#addTransport">LogManager#addTransport</a>. 
+When either the LogManager#setTransport or <a href="global.html#LogManager#addTransport">LogManager#addTransport</a> methods are called, the default transport is disabled.</p>
 <h3>Logging to Console</h3><p>Main File</p>
-<pre class="prettyprint source lang-javascript"><code>var gLogMgr = require('epdoc-logger').logMgr(a).start();
-var log = gLogMgr.get('main');
+<pre class="prettyprint source lang-javascript"><code>var gLogMgr = require('epdoc-logger').getLogManager().start();
+var log = gLogMgr.getLogger('main');
 
 log.info(&quot;Return value for %s is %s&quot;, &quot;hello&quot;, &quot;world&quot; );
 log.data('req',{a:3}).info();
-log.data('res',{b:4}).info(&quot;My message with %s support&quot;, 'formatting');</code></pre><p>Other File</p>
-<pre class="prettyprint source lang-javascript"><code>var log = require('epdoc-logger').get('other');
+log.data('res',{b:4}).info(&quot;My message with %s support&quot;, 'formatting');</code></pre><p>Other js files</p>
+<pre class="prettyprint source lang-javascript"><code>var log = require('epdoc-logger').getLogger('other');
 
-log.info(&quot;Hello world&quot;);</code></pre><h3>Logging to a File</h3><p>This shows the more general use of the logger object.</p>
-<pre class="prettyprint source lang-javascript"><code>var gLogMgr = require('epdoc-logger').logger();
-var log = gLogMgr.get('MyModule');
-logger.setTransport( 'file', { path: 'path/to/myfile.log' } );
+log.info(&quot;Hello world&quot;);</code></pre><h3>Logging to a File</h3><p>This shows the more hands-on use of the Logger object to set transports.</p>
+<pre class="prettyprint source lang-javascript"><code>var gLogMgr = require('epdoc-logger').getLogManager();
+gLogMgr.setTransport( 'file', { path: 'path/to/myfile.log' } );
+
+var log = gLogMgr.getLogger('MyModule');
 
 log.info(&quot;Return value for %s is %s&quot;, &quot;hello&quot;, &quot;world&quot; );
 log.data('req',{a:3}).info();
@@ -216,24 +237,43 @@ under the LogMessage function (below).</p>
 initialize. In the meantime log messages are queued up and getLogger() returns the SOS logger. Once the
 connection is made the messages are flushed. If the connection is refused the messages are flushed to the
 previously set logger output (usually the console).</p>
-<pre class="prettyprint source lang-javascript"><code>var logger = require('epdoc-logger').logger({autoRun:false});
-var log = Logger.get('MyModule');
-logger.setTransport( { type: 'sos', bIncludeSessionId: false } );
+<pre class="prettyprint source lang-javascript"><code>var logMgr = require('epdoc-logger').getLogManager({autoRun:false});
+logMgr.setTransport( { type: 'sos', bIncludeSessionId: false } );
+
+var log = logMgr.getLogger('MyModule');
 
 log.info(&quot;Return value for %s is %s&quot;, &quot;hello&quot;, &quot;world&quot; );</code></pre><h3>Logging to Loggly</h3><p>Loggly output is buffered and sent in batches. As a result it is important to shutdown logging before exiting.
-See the example earlier in this readme showing how this is done.</p>
-<h3>Advanced</h3><p>Transports can also be closed using LogManager#clearTransports, or can sometimes close on their own.
-In this event logging will revert to the default (Console) transport. 
+See the example earlier in this readme showing how the destroying method is used to get this done.</p>
+<h3>Configuring LogManager Using Config</h3><p>The easiest way to configure the LogManager is using config settings.</p>
+<pre class="prettyprint source lang-javascript"><code>var config = require('config');
+var elogger = require('epdoc-logger');
+var logMgr = elogger.getLogManager(config.elogger);</code></pre><p>Here you can see an example LogManager configuration, also showing how transports are configured.
+The list of transports started is <code>elogger.transports</code>.</p>
+<pre class="prettyprint source lang-json"><code>{
+  &quot;elogger&quot;: {
+    &quot;sid&quot;: true,
+    &quot;static&quot;: true,
+    &quot;transports&quot;: [&quot;console&quot;],
+    &quot;level&quot;: &quot;info&quot;,
+    &quot;console&quot;: {
+      &quot;timestamp&quot;: &quot;iso&quot;
+    },
+    &quot;loggly&quot;: {
+      &quot;token&quot;: &quot;xxxxxxxx&quot;
+    }
+  }
+}</code></pre><h3>Advanced</h3><p>Transports can be closed using LogManager#clearTransports, or can sometimes close on their own.
+In this event logging will revert to the default (Console) transport if no other transports are running.
 For example, if you specify an SOS transport and the SOS application is closed, 
 logging will return back to the console and the console will be (re)started automatically. 
 If an active transport closes on it's own (<em>e.g.</em> SOS Max application exits) 
 the transport is removed.</p>
 <p>The Logger will buffer messages while switching transports,
-however individual transports can do their own buffering (<em>e.g.</em> file).
+however individual transports can do their own buffering (<em>e.g.</em> file and loggly).
 If a transport closes prematurely, it's buffer may be lost.</p>
 <h2>Logging Example</h2><pre class="prettyprint source lang-javascript"><code>// Get the global logger object
 
-var logMgr = require('epdoc-logger').logMgr({sid:false});
+var logMgr = require('epdoc-logger').getLogManager({sid:false});
 
 // Logger static methods
 
@@ -244,7 +284,7 @@ var startTime = logMgr.getStartTime();                    // Milliseconds
 
 // Get a Logger object for this file or module
 
-var log = logMgr.get('MyClassName');
+var log = logMgr.getLogger('MyClassName');
 
 // Instance methods. Each line outputs a message.
 
@@ -264,7 +304,7 @@ log.separator();        // Output a line separator
 log.log( 'info', &quot;This method %s supports util.format style formating&quot;, &quot;also&quot; );
 
 // Enable verbose messages to be output for this log object (overrides global setting)
-log.setLevel( &quot;verbose&quot; );</code></pre><h3><a href="Logger.html">Logger</a> Method Chaining</h3><p>Most <a href="Logger.html">Logger</a> methods support chaining.</p>
+log.setLevel( &quot;verbose&quot; );</code></pre><h3><a href="global.html#Logger">Logger</a> Method Chaining</h3><p>Most <a href="global.html#Logger">Logger</a> methods support chaining.</p>
 <p>The following methods all add column values to the message that is output but do not output the message:</p>
 <ul>
 <li><code>action</code> - Sets the action column value to this string.</li>
@@ -301,8 +341,8 @@ Any subsequently created Logger objects will have methods with the names you hav
 Please use lowercase log level names. They will be changed to uppercase by transports, where appropriate.</p>
 <p>The level at which messages are output can be controlled at three points:</p>
 <ul>
-<li>Logger#constructor or <a href="Logger.html#setLevel">Logger#setLevel</a> - This log level will override log levels set by the LogManager</li>
-<li>LogManager#constructor or <a href="LogManager.html#setLevel">LogManager#setLevel</a> - This becomes the default log level for all <a href="Logger.html">Logger</a> objects and transports.</li>
+<li>Logger#constructor or <a href="global.html#Logger#setLevel">Logger#setLevel</a> - This log level will override log levels set by the LogManager</li>
+<li>LogManager#constructor or <a href="global.html#LogManager#setLevel">LogManager#setLevel</a> - This becomes the default log level for all <a href="global.html#Logger">Logger</a> objects and transports.</li>
 <li>At the Transport level by passing in the option <code>level</code>. This will override the value set for the LogManager.</li>
 </ul>
 <h2>Express Middleware</h2><p>The included express middleware are instantiated as follows:</p>
@@ -333,7 +373,7 @@ to each log message.</p>
 <li>Add koa middleware (I don't currently have a koa project going, so this may not happen for awhile)</li>
 <li>More unit tests</li>
 </ul>
-<h2>Author</h2><p>Jim Pravetz <a href="&#109;&#97;&#x69;&#x6c;&#x74;&#x6f;&#58;&#106;&#112;&#114;&#97;&#x76;&#x65;&#x74;&#x7a;&#x40;&#x65;&#x70;&#x64;&#x6f;&#x63;&#x2e;&#x63;&#111;&#109;">&#106;&#112;&#114;&#97;&#x76;&#x65;&#x74;&#x7a;&#x40;&#x65;&#x70;&#x64;&#x6f;&#x63;&#x2e;&#x63;&#111;&#109;</a></p>
+<h2>Author</h2><p>Jim Pravetz <a href="&#x6d;&#x61;&#x69;&#x6c;&#x74;&#x6f;&#58;&#x6a;&#112;&#114;&#x61;&#118;&#x65;&#x74;&#x7a;&#x40;&#101;&#112;&#100;&#x6f;&#99;&#x2e;&#99;&#111;&#109;">&#x6a;&#112;&#114;&#x61;&#118;&#x65;&#x74;&#x7a;&#x40;&#101;&#112;&#100;&#x6f;&#99;&#x2e;&#99;&#111;&#109;</a></p>
 <h2>License</h2><p><a href="https://github.com/strongloop/express/blob/master/LICENSE">MIT</a></p></article>
     </section>
 
@@ -378,7 +418,7 @@ to each log message.</p>
 <span class="jsdoc-message">
 	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a>
 	
-		on 2016-03-30T10:11:52-07:00
+		on 2016-08-03T14:49:48-07:00
 	
 	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
 </span>
