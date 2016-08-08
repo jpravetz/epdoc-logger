@@ -47,7 +47,7 @@
 			<li class="dropdown">
 				<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Global<b class="caret"></b></a>
 				<ul class="dropdown-menu ">
-					<li><a href="global.html#formatMS">formatMS</a></li><li><a href="global.html#Request">Request</a></li><li><a href="global.html#self">self</a></li>
+					<li><a href="global.html#_gLogManager">_gLogManager</a></li><li><a href="global.html#format">format</a></li><li><a href="global.html#get">get</a></li><li><a href="global.html#getLogger">getLogger</a></li><li><a href="global.html#getLogManager">getLogManager</a></li><li><a href="global.html#hasLogManager">hasLogManager</a></li><li><a href="global.html#hasLogMgr">hasLogMgr</a></li><li><a href="global.html#logListener">logListener</a></li><li><a href="global.html#logMgr">logMgr</a></li><li><a href="global.html#middleware">middleware</a></li><li><a href="global.html#Request">Request</a></li><li><a href="global.html#Response">Response</a></li><li><a href="global.html#self">self</a></li><li><a href="global.html#start">start</a></li>
 				</ul>
 			</li>
 			
@@ -99,7 +99,7 @@
         
 <hr>
 <dt>
-    <h4 class="name" id="LogManager"><span class="type-signature"></span>new LogManager(<span class="optional">options</span>)</h4>
+    <h4 class="name" id="LogManager"><span class="type-signature"></span>new LogManager()</h4>
     
     
 </dt>
@@ -109,15 +109,19 @@
     <div class="description">
         Create a new LogManager object with no transports. Logged messages will not begin
 writing to the transport until a transport is added and <a href="LogManager.html#start">start()</a> is
-called. To add a transport call <a href="LogManager.html#addTransport">addTransport()</a>. More than one
+called. Pass in configuration options to configure the logger and transports.
+
+<p>To manually add a transport call <a href="LogManager.html#addTransport">addTransport()</a>. More than one
 transport can be configured at the same time. Alternatively the LogManager can be started up
 immediately by setting <code>options.autoRun</code> to true. In this situation, if
 <code>options.transports</code> is set, then the specified transports will be used. But if
 <code>options.transports</code> is not set, then the default <a href="ConsoleTransport.html">ConsoleTransport</a> is used.
 
 <p>It is normal to have one LogManager per application, and to call
-<a href="LogManager.html#get">get(emitterName)</a> to get a new <a href="Logger.html">Logger</a> object for each emitter and
+<a href="LogManager.html#getLogger">get(emitterName)</a> to get a new <a href="Logger.html">Logger</a> object for each emitter and
 then call methods on this <a href="Logger.html">Logger</a> object to log messages.
+
+<p>Refer to <a href="LogManager.html#setOptions">LogManager#setOptions</a> for options documentation.
     </div>
     
 
@@ -126,426 +130,6 @@ then call methods on this <a href="Logger.html">Logger</a> object to log message
     
 
     
-    
-        <h5>Parameters:</h5>
-        
-
-<table class="params table table-striped">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-        <th>Argument</th>
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>options</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Object</span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last">-
-                <h6 class="method-params-label method-subparams-label">Properties</h6>
-                
-
-<table class="params table table-striped">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-        <th>Argument</th>
-        
-
-        
-        <th>Default</th>
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>t0</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Date</span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                    now
-                
-                </td>
-            
-
-            <td class="description last">The earliest known time for when the process was started</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>sid</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">boolean</span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                    false
-                
-                </td>
-            
-
-            <td class="description last">Indicates whether a session ID column should be included
-  in log output</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>custom</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">boolean</span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                    false
-                
-                </td>
-            
-
-            <td class="description last">Indicates whether a custom column should be included
-  in log output</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>level</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                    debug
-                
-                </td>
-            
-
-            <td class="description last">The log level at and above which log messages will be
-  written</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>errorStack</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">boolean</span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                    false
-                
-                </td>
-            
-
-            <td class="description last">Include the error stack in the data column when
-  writing Error objects to the log.</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>transports</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Array.&lt;Object></span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                </td>
-            
-
-            <td class="description last">Add transports now rather than calling {#addTransport}.
-  Objects in the array contain the config for the transport and must include a <code>type</code>
-  property.</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>autoRun</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">boolean</span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                    false
-                
-                </td>
-            
-
-            <td class="description last">If set to true then logging will be immediately
-  enabled and a call to <a href="LogManager.html#start">LogManager#start</a> will not be necessary. If no transports have
-  been provided then a default console transport will be added.</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>allTransportsReady</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">boolean</span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                    true
-                
-                </td>
-            
-
-            <td class="description last">If true then all transports must be ready
-  before messages will be written. If false then any transport can be ready before flushing will
-  occur, which may result in transports that are not ready missing some messages.</td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-            </td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
     
 
     
@@ -625,7 +209,7 @@ then call methods on this <a href="Logger.html">Logger</a> object to log message
             
 <hr>
 <dt>
-    <h4 class="name" id="addTransport"><span class="type-signature"></span>addTransport(<span class="optional">type</span>, options)</h4>
+    <h4 class="name" id="addTransport"><span class="type-signature"></span>addTransport( [type], options)</h4>
     
     
 </dt>
@@ -842,15 +426,14 @@ messages to be sent to more than one destination.
             
 
             <td class="description last">Set the format for timestamp output, must be one of
-  'ms' or
-  'iso'.</td>
+  'ms' or 'iso'.</td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>custom</code></td>
+                <td class="name"><code>static</code></td>
             
 
             <td class="type">
@@ -883,8 +466,48 @@ messages to be sent to more than one destination.
                 </td>
             
 
-            <td class="description last">Set whether to output a 'custom' column. Default is
-  to use LogManager's custom setting.</td>
+            <td class="description last">Set whether to output a 'static' column. By default
+  this inherits the value from the LogManager.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>level</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    debug
+                
+                </td>
+            
+
+            <td class="description last">Log level for this transport.</td>
         </tr>
 
     
@@ -979,7 +602,7 @@ messages to be sent to more than one destination.
             
 <hr>
 <dt>
-    <h4 class="name" id="destroying"><span class="type-signature"></span>destroying(<span class="optional">callback</span>)</h4>
+    <h4 class="name" id="destroying"><span class="type-signature"></span>destroying( [callback])</h4>
     
     
 </dt>
@@ -1141,7 +764,7 @@ should wait for buffers to be flushed and the callback to be called before exiti
             
 <hr>
 <dt>
-    <h4 class="name" id="errorStack"><span class="type-signature"></span>errorStack(<span class="optional">bShow</span>)</h4>
+    <h4 class="name" id="errorStack"><span class="type-signature"></span>errorStack( [bShow])</h4>
     
     
 </dt>
@@ -1312,7 +935,7 @@ Error is logged.
             
 <hr>
 <dt>
-    <h4 class="name" id="flushing"><span class="type-signature"></span>flushing(<span class="optional">callback</span>)</h4>
+    <h4 class="name" id="flushing"><span class="type-signature"></span>flushing( [callback])</h4>
     
     
 </dt>
@@ -1472,7 +1095,194 @@ Error is logged.
             
 <hr>
 <dt>
-    <h4 class="name" id="get"><span class="type-signature"></span>get(moduleName, <span class="optional">context</span>)</h4>
+    <h4 class="name" id="get"><span class="type-signature"></span>get()</h4>
+    
+    
+</dt>
+<dd>
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+	<dt class="important tag-deprecated method-doc-label method-doc-details-label">Deprecated:</dt>
+	
+    <dd class="yes-def tag-deprecated">
+        <ul class="dummy">
+            <li>Yes</li>
+        </ul>
+    </dd>
+    
+    
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="getCount"><span class="type-signature"></span>getCount()</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        Return a count object containing a count of the number of log messages produced at the
+various log levels defined in LogManager#LEVEL_ORDER.
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    with properties for 'warn', 'info', etc. where the value of each property
+  is a number.
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Object</span>
+
+
+
+    </dd>
+</dl>
+
+
+        
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="getLogger"><span class="type-signature"></span>getLogger(moduleName [, context])</h4>
     
     
 </dt>
@@ -1657,110 +1467,6 @@ Although it's a new logger instance, it still uses the same underlying
     <dd>
         
 <span class="param-type">logger</span>
-
-
-
-    </dd>
-</dl>
-
-
-        
-
-    
-</dd>
-
-        
-            
-<hr>
-<dt>
-    <h4 class="name" id="getCount"><span class="type-signature"></span>getCount()</h4>
-    
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        Return a count object containing a count of the number of log messages produced at the
-various log levels defined in LogManager#LEVEL_ORDER.
-    </div>
-    
-
-    
-
-    
-
-    
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <h5>Returns:</h5>
-    
-            
-<div class="param-desc">
-    with properties for 'warn', 'info', etc. where the value of each property
-  is a number.
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">Object</span>
 
 
 
@@ -2086,7 +1792,7 @@ it is suggested you subclass or copy one of the existing transports.
             
 <hr>
 <dt>
-    <h4 class="name" id="isAboveLevel"><span class="type-signature"></span>isAboveLevel(level, <span class="optional">thresholdLevel</span>)</h4>
+    <h4 class="name" id="isAboveLevel"><span class="type-signature"></span>isAboveLevel(level [, thresholdLevel])</h4>
     
     
 </dt>
@@ -2428,7 +2134,7 @@ property.
             
 <hr>
 <dt>
-    <h4 class="name" id="logMessage"><span class="type-signature"></span>logMessage(level, action, message, <span class="optional">data</span>)</h4>
+    <h4 class="name" id="logMessage"><span class="type-signature"></span>logMessage(level, action, message [, data])</h4>
     
     
 </dt>
@@ -3110,7 +2816,7 @@ possible to log directly to a transport using this method and never need to crea
             
 <hr>
 <dt>
-    <h4 class="name" id="removeTransport"><span class="type-signature"></span>removeTransport(transport, <span class="optional">callback</span>)</h4>
+    <h4 class="name" id="removeTransport"><span class="type-signature"></span>removeTransport(transport [, callback])</h4>
     
     
 </dt>
@@ -3308,7 +3014,7 @@ possible to log directly to a transport using this method and never need to crea
             
 <hr>
 <dt>
-    <h4 class="name" id="setLevel"><span class="type-signature"></span>setLevel(level)</h4>
+    <h4 class="name" id="setLevel"><span class="type-signature"></span>setLevel(level [, options])</h4>
     
     
 </dt>
@@ -3316,7 +3022,7 @@ possible to log directly to a transport using this method and never need to crea
 
     
     <div class="description">
-        Set the <a href="LogManager.html">LogManager</a> objects's minimum log level
+        Set the <a href="LogManager.html">LogManager</a> objects's minimum log level.
     </div>
     
 
@@ -3338,6 +3044,8 @@ possible to log directly to a transport using this method and never need to crea
 
         <th>Type</th>
 
+        
+        <th>Argument</th>
         
 
         
@@ -3365,10 +3073,122 @@ possible to log directly to a transport using this method and never need to crea
             </td>
 
             
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
 
             
 
             <td class="description last">Must be one of LogManager#LEVEL_ORDER</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>options</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last">
+                <h6 class="method-params-label method-subparams-label">Properties</h6>
+                
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Argument</th>
+        
+
+        
+        <th>Default</th>
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>transports</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Boolean</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    false
+                
+                </td>
+            
+
+            <td class="description last">Set the level for all transports as well.</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+            </td>
         </tr>
 
     
@@ -3448,6 +3268,508 @@ possible to log directly to a transport using this method and never need to crea
 
 
         
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="setOptions"><span class="type-signature"></span>setOptions( [options])</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        Setup LogManager and transports based on config.
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Argument</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>options</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last">Configuration information, can be from a configuration file
+                <h6 class="method-params-label method-subparams-label">Properties</h6>
+                
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Argument</th>
+        
+
+        
+        <th>Default</th>
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>t0</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Date</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    now
+                
+                </td>
+            
+
+            <td class="description last">The earliest known time for when the process was started</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>sid</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    false
+                
+                </td>
+            
+
+            <td class="description last">Indicates whether a session ID column should be
+  included in log output</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>static</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    false
+                
+                </td>
+            
+
+            <td class="description last">Indicates whether a static column should be
+  included in log output</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>level</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    debug
+                
+                </td>
+            
+
+            <td class="description last">The log level at and above which log messages will
+  be
+  written</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>errorStack</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    false
+                
+                </td>
+            
+
+            <td class="description last">Include the error stack in the data column
+  when
+  writing Error objects to the log.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>transports</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Array.&lt;Object></span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last">Add transports now rather than calling
+  {#addTransport}. Objects in the array contain the config for the transport and must
+  include a <code>type</code> property.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>autoRun</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    false
+                
+                </td>
+            
+
+            <td class="description last">If set to true then logging will be immediately
+  enabled and a call to <a href="LogManager.html#start">LogManager#start</a> will not be necessary. If no transports
+  have
+  been provided then a default console transport will be added.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>allTransportsReady</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    true
+                
+                </td>
+            
+
+            <td class="description last">If true then all transports must be
+  ready before messages will be written. If false then any transport can be ready before
+  flushing will occur, which may result in transports that are not ready missing some
+  messages.</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+            </td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
 
     
 </dd>
@@ -3605,7 +3927,7 @@ the earliest known time that the application was started.
             
 <hr>
 <dt>
-    <h4 class="name" id="start"><span class="type-signature"></span>start(<span class="optional">callback</span>)</h4>
+    <h4 class="name" id="start"><span class="type-signature"></span>start( [callback])</h4>
     
     
 </dt>
@@ -3616,7 +3938,8 @@ the earliest known time that the application was started.
         Starts all transports, if not already started. This enables logs to be written to the
 transports. It is necessary to manually start the transports if not using the default
 transport, to allow time for the transports to be setup. Log messages will be buffered until
-all transports are ready.
+all transports are ready. If there are no transports configured then this method will
+add the console transport to ensure that there is at least one transport.
     </div>
     
 
@@ -3769,7 +4092,109 @@ all transports are ready.
             
 <hr>
 <dt>
-    <h4 class="name" id="writeCount"><span class="type-signature"></span>writeCount(<span class="optional">message</span>)</h4>
+    <h4 class="name" id="starting"><span class="type-signature"></span>starting()</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        Wraps {LogManager#start} into a Promise.
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    Resolves to this.
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise</span>
+
+
+
+    </dd>
+</dl>
+
+
+        
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="writeCount"><span class="type-signature"></span>writeCount( [message])</h4>
     
     
 </dt>
@@ -3974,7 +4399,7 @@ output. This is a useful function to call when the application is shutdown.
 <span class="jsdoc-message">
 	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a>
 	
-		on 2016-03-30T10:11:52-07:00
+		on 2016-08-08T14:15:41-07:00
 	
 	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
 </span>

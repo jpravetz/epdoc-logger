@@ -47,7 +47,7 @@
 			<li class="dropdown">
 				<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Global<b class="caret"></b></a>
 				<ul class="dropdown-menu ">
-					<li><a href="global.html#formatMS">formatMS</a></li><li><a href="global.html#Request">Request</a></li><li><a href="global.html#self">self</a></li>
+					<li><a href="global.html#_gLogManager">_gLogManager</a></li><li><a href="global.html#format">format</a></li><li><a href="global.html#get">get</a></li><li><a href="global.html#getLogger">getLogger</a></li><li><a href="global.html#getLogManager">getLogManager</a></li><li><a href="global.html#hasLogManager">hasLogManager</a></li><li><a href="global.html#hasLogMgr">hasLogMgr</a></li><li><a href="global.html#logListener">logListener</a></li><li><a href="global.html#logMgr">logMgr</a></li><li><a href="global.html#middleware">middleware</a></li><li><a href="global.html#Request">Request</a></li><li><a href="global.html#Response">Response</a></li><li><a href="global.html#self">self</a></li><li><a href="global.html#start">start</a></li>
 				</ul>
 			</li>
 			
@@ -108,7 +108,7 @@ action, message and arbitrary data.
         
 <hr>
 <dt>
-    <h4 class="name" id="Logger"><span class="type-signature"></span>new Logger(logMgr, <span class="optional">modulename</span>, <span class="optional">context</span>)</h4>
+    <h4 class="name" id="Logger"><span class="type-signature"></span>new Logger(logMgr [, modulename] [, context])</h4>
     
     
 </dt>
@@ -532,7 +532,7 @@ machine-searchable verb that uniquely describes the type of log event.
             
 <hr>
 <dt>
-    <h4 class="name" id="data"><span class="type-signature"></span>data(key, <span class="optional">value</span>)</h4>
+    <h4 class="name" id="data"><span class="type-signature"></span>data(key [, value])</h4>
     
     
 </dt>
@@ -844,6 +844,175 @@ Requirement: One of the following three must be initialized:
             
 <hr>
 <dt>
+    <h4 class="name" id="errorStack"><span class="type-signature"></span>errorStack( [bShow])</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        Set whether to log a stack for Error objects. If not set in the constructor, then inherits
+this value from the LogManager.
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Argument</th>
+        
+
+        
+        <th>Default</th>
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>bShow</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    true
+                
+                </td>
+            
+
+            <td class="description last"></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="Logger.html">Logger</a></span>
+
+
+
+    </dd>
+</dl>
+
+
+        
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
     <h4 class="name" id="getHrElapsed"><span class="type-signature"></span>getHrElapsed()</h4>
     
     
@@ -947,7 +1116,109 @@ Returns the response time in milliseconds with two digits after the decimal.
             
 <hr>
 <dt>
-    <h4 class="name" id="hrElapsed"><span class="type-signature"></span>hrElapsed(<span class="optional">key</span>)</h4>
+    <h4 class="name" id="getLevel"><span class="type-signature"></span>getLevel()</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        Get the log level for this object
+    </div>
+    
+
+    
+
+    
+
+    
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+<div class="param-desc">
+    The currently set log level for this Logger object.
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">string</span>
+
+
+
+    </dd>
+</dl>
+
+
+        
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="hrElapsed"><span class="type-signature"></span>hrElapsed( [key])</h4>
     
     
 </dt>
@@ -1272,7 +1543,7 @@ Returns the response time in milliseconds with two digits after the decimal.
             
 <hr>
 <dt>
-    <h4 class="name" id="log"><span class="type-signature"></span>log(<span class="optional">level</span>, msg)</h4>
+    <h4 class="name" id="log"><span class="type-signature"></span>log( [level], msg)</h4>
     
     
 </dt>
@@ -1464,7 +1735,7 @@ line",'third']]); );
             
 <hr>
 <dt>
-    <h4 class="name" id="logObj"><span class="type-signature"></span>logObj(key, <span class="optional">value</span>)</h4>
+    <h4 class="name" id="logObj"><span class="type-signature"></span>logObj(key [, value])</h4>
     
     
 </dt>
@@ -2311,9 +2582,11 @@ with a response.
 
     
     <div class="description">
-        Set <i>custom data</i> that is output in a separate column called <code>custom</code>`.
-This column must be specifically enabled via the LogManager constructor's <code>custom</code>
-option.
+        Set <i>static data</i> that is output in a separate column called <code>static</code>`.
+This column must be specifically enabled via the LogManager constructor's
+<code>static</code>
+option. Static data is not cleared when a log message is written, and so persists for the
+life of the log object.
     </div>
     
 
@@ -2368,8 +2641,8 @@ option.
 
             
 
-            <td class="description last">If a string then sets custom.key = value, otherwise extends
-  custom with key</td>
+            <td class="description last">If a string then sets staticData.key = value, otherwise extends
+  staticData with key</td>
         </tr>
 
     
@@ -2677,7 +2950,7 @@ option.
 <span class="jsdoc-message">
 	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a>
 	
-		on 2016-03-30T10:11:52-07:00
+		on 2016-08-08T14:15:41-07:00
 	
 	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
 </span>
