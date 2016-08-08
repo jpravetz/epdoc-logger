@@ -102,13 +102,10 @@ LogManager.prototype = {
         }
         if (tarray.length) {
             for (var tdx = 0; tdx < tarray.length; tdx++) {
-                this.addTransport(tarray[tdx],options[tarray[tdx]]);
+                this.addTransport(tarray[tdx], options[tarray[tdx]]);
             }
         }
         if (options.autoRun === true) {
-            if (!tarray.length) {
-                this.addTransport('console');
-            }
             this.start();
         }
     },
@@ -117,7 +114,8 @@ LogManager.prototype = {
      * Starts all transports, if not already started. This enables logs to be written to the
      * transports. It is necessary to manually start the transports if not using the default
      * transport, to allow time for the transports to be setup. Log messages will be buffered until
-     * all transports are ready.
+     * all transports are ready. If there are no transports configured then this method will
+     * add the console transport to ensure that there is at least one transport.
      * @param {function} [callback] Called when all transports are ready to receive messages. It is
      *   not normally necessary to wait for this callback.
      * @return {LogManager}
@@ -126,6 +124,9 @@ LogManager.prototype = {
         var self = this;
         if (!self.running) {
             var jobs = [];
+            if (!self.transports.length) {
+                self.addTransport('console');
+            }
             if (self.transports.length) {
                 for (var idx = 0; idx < self.transports.length; idx++) {
                     var transport = self.transports[idx];
@@ -171,7 +172,7 @@ LogManager.prototype = {
 
             function onSuccess () {
                 transport.clear();
-                self.logMessage(self.LEVEL_INFO, "logger.start.success", "Started transport '" + name + "'", {transport: name});
+                self.logMessage(self.LEVEL_INFO, "logger.start.success", "Started transport '" + name + "'", { transport: name });
                 if (!bResolved) {
                     bResolved = true;
                     resolve();
@@ -225,7 +226,7 @@ LogManager.prototype = {
             var topts = newTransport.getOptions();
             var sOptions = topts ? ' (' + JSON.stringify(topts) + ')' : '';
             this.logMessage(this.LEVEL_INFO, "logger.transport.add", "Added transport '" + name + "'" + sOptions,
-                {transport: name, options: topts});
+                { transport: name, options: topts });
         }
         return this;
     },
@@ -275,7 +276,7 @@ LogManager.prototype = {
                 return newTransport;
             } else {
                 this.logMessage(this.LEVEL_WARN, "logger.transport.add.warn",
-                    ("Could not add transport '" + name + "'. " + err.message ), {options: options});
+                    ("Could not add transport '" + name + "'. " + err.message ), { options: options });
                 return;
             }
         }
@@ -310,7 +311,7 @@ LogManager.prototype = {
                     });
                 });
                 jobs.push(job);
-                self.logMessage(self.LEVEL_INFO, "logger.transport.remove", "Removed transport '" + t.toString() + "'", {transport: t.toString()});
+                self.logMessage(self.LEVEL_INFO, "logger.transport.remove", "Removed transport '" + t.toString() + "'", { transport: t.toString() });
             } else {
                 remainingTransports.push(this.transports[idx])
             }
@@ -451,7 +452,7 @@ LogManager.prototype = {
      * @see {LogManager#logParams}
      */
     logMessage: function (level, action, message, data) {
-        var params = {module: 'logger', level: level, action: action, message: message};
+        var params = { module: 'logger', level: level, action: action, message: message };
         if (data) {
             params.data = data;
         }

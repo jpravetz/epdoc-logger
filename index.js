@@ -50,7 +50,7 @@ var self = {
      * @returns {Logger} New Logger object
      */
     getLogger: function (name, context) {
-        return self.getLogManager().get(name, context);
+        return self.getLogManager().getLogger(name, context);
     },
 
     getLogListener: function(options) {

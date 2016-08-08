@@ -19,7 +19,7 @@ var jsdoc = require('gulp-jsdoc3');
 
 
 gulp.task('clean', function () {
-    return del(['doc']);
+    return del(['out']);
 });
 
 gulp.task('doc', function (cb) {
