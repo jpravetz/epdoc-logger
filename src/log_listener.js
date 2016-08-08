@@ -1,7 +1,8 @@
 /*****************************************************************************
- * log_listener.js.js
- * CONFIDENTIAL Copyright 2016 James Pravetz. All Rights Reserved.
+ * log_listener.js
+ * Copyright 2016 Jim Pravetz. May be freely distributed under the MIT license.
  *****************************************************************************/
+'use strict';
 
 var _ = require('underscore');
 

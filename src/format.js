@@ -1,7 +1,8 @@
 /*****************************************************************************
  * format.js
- * CONFIDENTIAL Copyright 2012-2016 James Pravetz. All Rights Reserved.
+ * Copyright 2012-2016 Jim Pravetz. May be freely distributed under the MIT license.
  *****************************************************************************/
+'use strict';
 
 
 /**

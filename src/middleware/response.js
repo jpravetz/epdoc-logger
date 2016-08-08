@@ -1,7 +1,8 @@
 /*****************************************************************************
- * response.js
- * CONFIDENTIAL Copyright 2012-2016 Jim Pravetz. All Rights Reserved.
+ * middleware/response.js
+ * Copyright 2012-2016 Jim Pravetz. May be freely distributed under the MIT license.
  *****************************************************************************/
+'use strict';
 
 
 /**

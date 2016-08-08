@@ -1,7 +1,8 @@
 /*****************************************************************************
- * console.js
- * CONFIDENTIAL Copyright 2012-2016 Jim Pravetz. All Rights Reserved.
+ * transports/console.js
+ * Copyright 2012-2016 Jim Pravetz. May be freely distributed under the MIT license.
  *****************************************************************************/
+'use strict';
 
 var _ = require('underscore');
 var format = require('./../format');
