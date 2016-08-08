@@ -1,7 +1,8 @@
 /*****************************************************************************
- * route_logger.js
- * CONFIDENTIAL Copyright 2012-2016 Jim Pravetz. All Rights Reserved.
+ * middleware/route_logger.js
+ * Copyright 2012-2016 Jim Pravetz. May be freely distributed under the MIT license.
  *****************************************************************************/
+'use strict';
 
 /**
  * [Express]{@link http://expressjs.com/} middleware outputs a log message for every route.

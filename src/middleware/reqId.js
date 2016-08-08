@@ -1,7 +1,8 @@
 /*****************************************************************************
- * reqId.js
- * CONFIDENTIAL Copyright 2012-2016 Jim Pravetz. All Rights Reserved.
+ * middleware/reqId.js
+ * Copyright 2012-2016 Jim Pravetz. May be freely distributed under the MIT license.
  *****************************************************************************/
+'use strict';
 
 /**
  * Express middleware adds a unique id <code>_reqId</code> and high-resolution start time

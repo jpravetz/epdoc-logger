@@ -19,7 +19,7 @@ var jsdoc = require('gulp-jsdoc3');
 
 
 gulp.task('clean', function () {
-    return del(['doc']);
+    return del(['out']);
 });
 
 gulp.task('doc', function (cb) {
@@ -29,7 +29,7 @@ gulp.task('doc', function (cb) {
 });
 
 gulp.task('watch', function(cb) {
-    gulp.watch(['README.md', './src/**/*.js'], ['doc']);
+    gulp.watch(['README.md', 'index.js', './src/**/*.js'], ['doc']);
 });
 
 gulp.task('default',['doc']);

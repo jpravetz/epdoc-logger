@@ -1,7 +1,8 @@
-/*************************************************************************
- * Copyright(c) 2012-2016 Jim Pravetz <jpravetz@epdoc.com>
- * May be freely distributed under the MIT license.
- **************************************************************************/
+/*****************************************************************************
+ * app.misc.js
+ * Copyright 2012-2016 Jim Pravetz. May be freely distributed under the MIT license.
+ *****************************************************************************/
+'use strict';
 
 var epdocLogger = require('../index');
 var should = require('should');

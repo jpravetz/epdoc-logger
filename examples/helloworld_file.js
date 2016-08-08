@@ -1,10 +1,12 @@
+#!/usr/bin/env node
 /*****************************************************************************
  * helloworld_file.js
- * CONFIDENTIAL Copyright 2016 James Pravetz. All Rights Reserved.
+ * Copyright 2016 Jim Pravetz. May be freely distributed under the MIT license.
  *****************************************************************************/
+'use strict';
 
-var logMgr = require('../index').logMgr();
-var log = logMgr.get('main');
+var logMgr = require('../index').getLogManager();
+var log = logMgr.getLogger('main');
 log.info("Starting application");
 
 var config = {
@@ -12,6 +14,6 @@ var config = {
     timestamp: 'iso'
 };
 //var config = require('config.json');
-logMgr.setTransport('file',config);
+logMgr.addTransport('file',config).start();
 
 log.info("Hello world");

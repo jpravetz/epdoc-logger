@@ -1,9 +1,10 @@
 /*****************************************************************************
- * response_logger.js
- * CONFIDENTIAL Copyright 2012-2016 Jim Pravetz. All Rights Reserved.
+ * middleware/response_logger.js
+ * Copyright 2012-2016 Jim Pravetz. May be freely distributed under the MIT license.
  *****************************************************************************/
+'use strict';
 
-_ = require('underscore');
+var _ = require('underscore');
 var Response = require('./response');
 var Logger = require('../logger');
 
@@ -41,7 +42,7 @@ module.exports = function (options) {
     var objName = options.objName || 'log';
     var logMgr = options.logMgr;
     if (!logMgr) {
-        logMgr = require('../../index').logMgr();
+        logMgr = require('../../index').getLogManager();
     }
 
     return function (req, res, next) {
