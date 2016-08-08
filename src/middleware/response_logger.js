@@ -42,7 +42,7 @@ module.exports = function (options) {
     var objName = options.objName || 'log';
     var logMgr = options.logMgr;
     if (!logMgr) {
-        logMgr = require('../../index').logMgr();
+        logMgr = require('../../index').getLogManager();
     }
 
     return function (req, res, next) {
