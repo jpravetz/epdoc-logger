@@ -10,6 +10,7 @@ var LogMgr = require('../src/log_mgr');
 describe("Logger file test", function () {
 
     var token = '4d7f2890-1e74-4b61-9844-ffd8acc62911';
+    var log;
 
     it("Write file as json array", function (done) {
         var opts = {
@@ -20,7 +21,7 @@ describe("Logger file test", function () {
             autoRun: true
         };
         var logMgr = new LogMgr(opts);
-        log = logMgr.get('moduleName');
+        log = logMgr.getLogger('moduleName');
         log.action('bake').info("Starting");
         log.info("Running", { a: 2, b: 3 });
         done();
@@ -37,7 +38,7 @@ describe("Logger file test", function () {
             autoRun: true
         };
         var logMgr = new LogMgr(opts);
-        log = logMgr.get('moduleName');
+        log = logMgr.getLogger('moduleName');
         log.action('bake').info("Starting");
         log.info("Running", { a: 2, b: 3 });
         done();
@@ -55,7 +56,7 @@ describe("Logger file test", function () {
             autoRun: true
         };
         var logMgr = new LogMgr(opts);
-        log = logMgr.get('moduleName');
+        log = logMgr.getLogger('moduleName');
         log.ctx = { req: { reqId: 'reqId', sid: 'sessionId'} };
         log.action('bake').set({static:true}).data({ data: { a: 2, b: 3 } }).info("Starting");
         log.info("Running");

@@ -4,6 +4,7 @@
  *****************************************************************************/
 'use strict';
 
+var _ = require('underscore');
 var epdocLogger = require('../index');
 var should = require('should');
 

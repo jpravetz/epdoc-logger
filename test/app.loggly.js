@@ -14,8 +14,8 @@ describe.skip("Loggly test", function () {
     var token = '4d7f2890-1e74-4b61-9844-ffd8acc62911';
 
     it("Logger console", function (done) {
-        logMgr = epdocLogger.logMgr();
-        log = epdocLogger.get('moduleName');
+        logMgr = epdocLogger.getLogManager();
+        log = epdocLogger.getLogger('moduleName');
         log.action('bake').info("Starting");
         log.data({c:4,e:7}).debug("Running",{a:2,b:3});
         done();
@@ -32,9 +32,9 @@ describe.skip("Loggly test", function () {
         var opts = {
             token: token
         };
-        var logMgr = Logger.logMgr();
+        var logMgr = Logger.getLogManager();
         logMgr.setTransport('loggly',opts);
-        log = logMgr.get('module3');
+        log = logMgr.getLogger('module3');
         log.info("Doing even more");
         log.action('myaction').info("end");
         logMgr.writeCount();

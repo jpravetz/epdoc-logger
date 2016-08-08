@@ -15,21 +15,23 @@ var mgrIdx = 0;
 /**
  * Create a new LogManager object with no transports. Logged messages will not begin
  * writing to the transport until a transport is added and [start()]{@link LogManager#start} is
- * called. To add a transport call [addTransport()]{@link LogManager#addTransport}. More than one
+ * called. Pass in configuration options to configure the logger and transports.
+ *
+ * <p>To manually add a transport call [addTransport()]{@link LogManager#addTransport}. More than one
  * transport can be configured at the same time. Alternatively the LogManager can be started up
  * immediately by setting <code>options.autoRun</code> to true. In this situation, if
  * <code>options.transports</code> is set, then the specified transports will be used. But if
  * <code>options.transports</code> is not set, then the default {@link ConsoleTransport} is used.
  *
  * <p>It is normal to have one LogManager per application, and to call
- * [get(emitterName)]{@link LogManager#get} to get a new {@link Logger} object for each emitter and
+ * [get(emitterName)]{@link LogManager#getLogger} to get a new {@link Logger} object for each emitter and
  * then call methods on this {@link Logger} object to log messages.
  *
  * <p>Refer to {@link LogManager#setOptions} for options documentation.
  *
  * @class A LogManager is used to manage logging, including transports, startup, shutdown and
  *   various options.
- *
+
  * @constructor
  */
 var LogManager = function (options) {

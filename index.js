@@ -14,11 +14,13 @@ var self = {
     /**
      * @return {LogManager} class. Use this class to create your own LogManager if you don't
      * want a global LogManager.
+     * @ignore
      */
     LogManager: require('./src/log_mgr'),
 
     /**
      * @return {Logger} class
+     * @ignore
      */
     Logger: require('./src/logger'),
 

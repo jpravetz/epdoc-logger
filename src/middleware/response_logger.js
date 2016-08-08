@@ -4,7 +4,7 @@
  *****************************************************************************/
 'use strict';
 
-_ = require('underscore');
+var _ = require('underscore');
 var Response = require('./response');
 var Logger = require('../logger');
 
