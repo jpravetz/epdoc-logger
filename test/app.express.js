@@ -1,7 +1,8 @@
 /*****************************************************************************
  * app.express.js
- * CONFIDENTIAL Copyright 2016 James Pravetz. All Rights Reserved.
+ * Copyright 2016 Jim Pravetz. May be freely distributed under the MIT license.
  *****************************************************************************/
+'use strict';
 
 var express = require('express');
 var request = require('supertest');

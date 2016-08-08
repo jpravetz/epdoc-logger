@@ -1,7 +1,8 @@
 /*****************************************************************************
  * helloworld_file.js
- * CONFIDENTIAL Copyright 2016 James Pravetz. All Rights Reserved.
+ * Copyright 2016 Jim Pravetz. May be freely distributed under the MIT license.
  *****************************************************************************/
+'use strict';
 
 var logMgr = require('../index').logMgr();
 var log = logMgr.get('main');

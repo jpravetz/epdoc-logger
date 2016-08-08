@@ -1,7 +1,8 @@
-/*************************************************************************
- * Copyright(c) 2012-2016 Jim Pravetz <jpravetz@epdoc.com>
- * May be freely distributed under the MIT license.
- **************************************************************************/
+/*****************************************************************************
+ * app.file.js
+ * Copyright 2012-2016 Jim Pravetz. May be freely distributed under the MIT license.
+ *****************************************************************************/
+'use strict';
 
 var Path = require('path');
 var LogMgr = require('../src/log_mgr');
