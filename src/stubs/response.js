@@ -1,7 +1,8 @@
-/*************************************************************************
- * Copyright(c) 2012-2014 Jim Pravetz <jpravetz@epdoc.com>
- * May be freely distributed under the MIT license.
- **************************************************************************/
+/*****************************************************************************
+ * stubs/response.js
+ * Copyright 2012-2016 Jim Pravetz. May be freely distributed under the MIT license.
+ *****************************************************************************/
+'use strict';
 
 /**
  * Stub for express.response object, used when passing response object around for logging purposes

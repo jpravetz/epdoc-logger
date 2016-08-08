@@ -1,8 +1,9 @@
 #!/usr/bin/env node
-/*************************************************************************
- * Copyright(c) 2012-2014 Jim Pravetz <jpravetz@epdoc.com>
- * May be freely distributed under the MIT license.
- **************************************************************************/
+/*****************************************************************************
+ * archive/reqtest.js
+ * Copyright 2012-2016 Jim Pravetz. May be freely distributed under the MIT license.
+ *****************************************************************************/
+'use strict';
 
 var type = "console";
 //var type = "sos";
