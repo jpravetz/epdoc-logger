@@ -20,7 +20,7 @@ var self = {
      * @param {string} params.reqId - express request ID, if provided (output if options.sid is
      *   true)
      * @param {string} params.sid - express session ID, if provided (output if options.sid is true)
-     * @param {string} params.module - name of file or module or emitter (noun)
+     * @param {string} params.emitter - name of file or module or emitter (noun)
      * @param {string} params.action - method or operation being performed (verb)
      * @param {string} params.message - text string to output
      * @param {Object} params.static - Static data to be logged in a 'static' column if enabled
@@ -37,7 +37,7 @@ var self = {
         var json = {
             timestamp: self.getTimestamp(params, options.timestamp),
             level: params.level,
-            emitter: params.module,
+            emitter: params.emitter,
             action: params.action,
             data: options.dataObjects ? params.data : JSON.stringify(params.data),
             message: params.message,
@@ -70,7 +70,7 @@ var self = {
      * @param {string} params.reqId - express request ID, if provided (output if options.sid is
      *   true)
      * @param {string} params.sid - express session ID, if provided (output if options.sid is true)
-     * @param {string} params.module - name of file or module or emitter (noun)
+     * @param {string} params.emitter - name of file or module or emitter (noun)
      * @param {string} params.action - method or operation being performed (verb)
      * @param {string} params.message - text string to output
      * @param {Object} params.static - Arbitrary data to be logged in a 'static' column if enabled
@@ -88,7 +88,7 @@ var self = {
             json.push(params.reqId ? params.reqId : 0);
             json.push(params.sid ? params.sid : "");
         }
-        json.push(params.module ? params.module : "");
+        json.push(params.emitter ? params.emitter : "");
         json.push(params.action ? params.action : "");
         json.push(params.message);
         //json = json.concat(params.message?params.message:"");

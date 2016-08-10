@@ -112,12 +112,12 @@ var protoProps = {
      * General method, not used by console, but used by other transports, to format the parameters
      * into a JSON objecvt.
      * @param params
-     * @returns {{timestamp: *, level: *, module: (string|*), action, data: *, message, static: *}}
+     * @returns {{timestamp: *, level: *, emitter: (string|*), action, data: *, message, static: *}}
      * @private
      */
     _paramsToSOS: function (params) {
         var msg = "";
-        var json = [params.module ? params.module : "", params.action ? params.action : ""];
+        var json = [params.emitter ? params.emitter : "", params.action ? params.action : ""];
         if (this.bIncludeSid) {
             json.unshift(params.sid ? params.sid : "");
             json.unshift(params.reqId ? params.reqId : 0);
