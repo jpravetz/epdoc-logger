@@ -415,7 +415,7 @@ LogManager.prototype = {
     },
 
     /**
-     * Get the time at which the module was initialized
+     * Get the time at which the app or this module was initialized
      * @return {Number} Start time in milliseconds
      */
     getStartTime: function () {
@@ -423,18 +423,18 @@ LogManager.prototype = {
     },
 
     /**
-     * Return a new module {@link Logger} object with the specified module name.
+     * Return a new {@link Logger} object with the specified emitter name.
      * Although it's a new logger instance, it still uses the same underlying
      * 'writeMessageParams' method, and whatever transport is set globally by this LogManager.
-     * @param {string} moduleName Name of module or file, added as a column to log output
+     * @param {string} emitter Name of emitter, module or file, added as a column to log output
      * @param {object} [context] A context object. For Express or koa this would have 'req' and
      *   'res' properties. The context.req may also have reqId and sid/sessionId/session.id
      *   properties that are used to populate their respective columns of output. Otherwise these
      *   columns are left blank on output.
      * @return A new {logger} object.
      */
-    getLogger: function (moduleName, context) {
-        return new Logger(this, moduleName, context);
+    getLogger: function (emitter, context) {
+        return new Logger(this, emitter, context);
     },
 
     /**
@@ -454,7 +454,7 @@ LogManager.prototype = {
      * @see {LogManager#logParams}
      */
     logMessage: function (level, action, message, data) {
-        var params = { module: 'logger', level: level, action: action, message: message };
+        var params = { emitter: 'logger', level: level, action: action, message: message };
         if (data) {
             params.data = data;
         }
@@ -470,7 +470,7 @@ LogManager.prototype = {
      * @param {Object} msgParams - The message to be written
      * @param {string} [msgParams.level=info] - Must be one of LEVEL_ORDER values, all lower case
      * @param {string} [msgParams.sid] - sessionID to display
-     * @param {string} [msgParams.module] - Module or emitter descriptor to display (usually of
+     * @param {string} [msgParams.emitter] - Module or emitter descriptor to display (usually of
      *   form route.obj.function)
      * @param {string} [msgParams.time=now] - A date object with the current time
      * @param {string} [msgParams.timeDiff=calculated] - The difference in milliseconds between
@@ -550,7 +550,7 @@ LogManager.prototype = {
      */
     writeCount: function (message) {
         return this.logParams({
-            module: 'logger',
+            emitter: 'logger',
             action: 'counts',
             data: this.logCount,
             message: message

@@ -27,7 +27,7 @@ module.exports = function () {
                 level: 'error',
                 reqId: req._reqId,
                 sid: (req.session) ? req.session.id : undefined,
-                module: 'app',
+                emitter: 'app',
                 action: 'exception',
                 data: {error: {status: err.status, message: err.message}, params: params},
                 message: err.message

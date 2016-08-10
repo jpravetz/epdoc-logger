@@ -48,7 +48,7 @@ log.warn("Warning message");
 log.log('info', ["First line of message", "Second line of message", "third line of message"]);
 Logger.logMessage({
     message: "Calling Logger.writeMessage",
-    module: "MyModule",
+    emitter: "MyModule",
     sid: "MySessionId",
     data: {key: "value"}
 });
