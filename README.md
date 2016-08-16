@@ -417,7 +417,8 @@ Adds an information line to the log file for each new route.
 
 ## Action Items
 
-* Add koa middleware (I don't currently have a koa project going, so this may not happen for awhile)
+* Supported formatted console output with colors
+* Add koa middleware (I don't currently have a koa project going, so this may not happen for a long while)
 * More unit tests
 * Document and add unit tests for {@link LogListener}, an object that makes it easier to use log the callback transport in unit tests.
 
