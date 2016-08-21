@@ -224,6 +224,25 @@ var log = require('epdoc-logger').getLogger('other');
 log.info("Hello world");
 ```
 
+Console and File transport output is in one of the following formats:
+- jsonArray (default) - An array of JSON values (see example below)
+- json - A JSON object with key/value pairs for the output
+- function - Provide your own function to format the output
+- string - Template-based output with optional colorization (Console only)
+
+These formats are specified as options when constructing the transport. 
+Refer to the transport documentation for more details.
+
+JSON array format looks like this 
+
+```
+["00:00.000","INFO","logger","logger.transport.add","Added transport 'Console'",{"transport":"Console"}]
+```
+
+and has array entries for [ timestamp, level, reqId, sid, emitter, action, message, static, data ]. 
+The reqId and sid fields only output if the transport ```sid``` option is true.
+The static field is only output if the transport ```static``` option is true.
+
 ### Logging to a File ###
 
 This shows the more hands-on use of the Logger object to set transports.
@@ -239,8 +258,6 @@ log.data('req',{a:3}).info();
 log.data('res',{b:4}).info("My message with %s support", 'formatting');
 ```
 
-Log output to a file is a JSON-formatted array with [ date, level, sid, module, message, data ], as defined
-under the LogMessage function (below).
 
 ### Logging to SOS ###
 
@@ -420,10 +437,12 @@ Adds an information line to the log file for each new route.
 * Add koa middleware (I don't currently have a koa project going, so this may not happen for awhile)
 * More unit tests
 * Document and add unit tests for {@link LogListener}, an object that makes it easier to use log the callback transport in unit tests.
+* Update SOS transport as a general HTTP transport and rename to 'http' transport (beware).
 
 ## Author
 
 Jim Pravetz <jpravetz@epdoc.com>
+Includes console colorize code from [Winston](https://github.com/winstonjs/winston).
 
 ## License
 
