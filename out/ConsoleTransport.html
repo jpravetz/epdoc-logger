@@ -47,7 +47,7 @@
 			<li class="dropdown">
 				<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Global<b class="caret"></b></a>
 				<ul class="dropdown-menu ">
-					<li><a href="global.html#_gLogManager">_gLogManager</a></li><li><a href="global.html#format">format</a></li><li><a href="global.html#get">get</a></li><li><a href="global.html#getLogger">getLogger</a></li><li><a href="global.html#getLogManager">getLogManager</a></li><li><a href="global.html#hasLogManager">hasLogManager</a></li><li><a href="global.html#hasLogMgr">hasLogMgr</a></li><li><a href="global.html#logListener">logListener</a></li><li><a href="global.html#logMgr">logMgr</a></li><li><a href="global.html#middleware">middleware</a></li><li><a href="global.html#Request">Request</a></li><li><a href="global.html#Response">Response</a></li><li><a href="global.html#self">self</a></li><li><a href="global.html#start">start</a></li>
+					<li><a href="global.html#_gLogManager">_gLogManager</a></li><li><a href="global.html#format">format</a></li><li><a href="global.html#get">get</a></li><li><a href="global.html#getLogger">getLogger</a></li><li><a href="global.html#getLogListener">getLogListener</a></li><li><a href="global.html#getLogManager">getLogManager</a></li><li><a href="global.html#hasLogManager">hasLogManager</a></li><li><a href="global.html#hasLogMgr">hasLogMgr</a></li><li><a href="global.html#logListener">logListener</a></li><li><a href="global.html#logMgr">logMgr</a></li><li><a href="global.html#middleware">middleware</a></li><li><a href="global.html#Request">Request</a></li><li><a href="global.html#self">self</a></li><li><a href="global.html#start">start</a></li>
 				</ul>
 			</li>
 			
@@ -192,7 +192,7 @@
             <td class="type">
             
                 
-<span class="param-type">boolean</span>
+<span class="param-type">Boolean</span>
 
 
 
@@ -225,13 +225,93 @@
 
         <tr>
             
+                <td class="name"><code>colorize</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Boolean</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    true
+                
+                </td>
+            
+
+            <td class="description last">Set to true to enable colorize formatted output.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>template</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">String</span>
+
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last">Provide a template string to use for output when
+  options.format is 'string', substitutes ${ts} %{level} ${emitter} type strings, where '%'
+  indicates string should be colorized.</td>
+        </tr>
+
+    
+
+        <tr>
+            
                 <td class="name"><code>timestamp</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">string</span>
+<span class="param-type">String</span>
 
 
 
@@ -258,7 +338,8 @@
                 </td>
             
 
-            <td class="description last">Set the format for timestamp output, must be one of 'ms' or 'iso'.</td>
+            <td class="description last">Set the format for timestamp output, must be one of
+  'ms' or 'iso'.</td>
         </tr>
 
     
@@ -271,7 +352,10 @@
             <td class="type">
             
                 
-<span class="param-type">string</span>
+<span class="param-type">String</span>
+|
+
+<span class="param-type">function</span>
 
 
 
@@ -298,7 +382,9 @@
                 </td>
             
 
-            <td class="description last">Set the format for the output line. Must be one of 'json' or 'jsonArray'.</td>
+            <td class="description last">Set the format for the output line. Must
+  be one of 'json', 'jsonArray', 'string', or a function that takes params and options as
+  parameters.</td>
         </tr>
 
     
@@ -311,7 +397,7 @@
             <td class="type">
             
                 
-<span class="param-type">boolean</span>
+<span class="param-type">Boolean</span>
 
 
 
@@ -351,7 +437,7 @@
             <td class="type">
             
                 
-<span class="param-type">string</span>
+<span class="param-type">String</span>
 
 
 
@@ -376,7 +462,8 @@
                 </td>
             
 
-            <td class="description last">Log level above which to output log messages, overriding setting for LogManager.</td>
+            <td class="description last">Log level above which to output log messages, overriding
+  setting for LogManager.</td>
         </tr>
 
     
@@ -954,7 +1041,8 @@ Otherwise the caller should buffer writes and call write when ready is true.
 
             
 
-            <td class="description last">express request ID, if provided (output if options.sid is true)</td>
+            <td class="description last">express request ID, if provided (output if options.sid is
+  true)</td>
         </tr>
 
     
@@ -985,7 +1073,7 @@ Otherwise the caller should buffer writes and call write when ready is true.
 
         <tr>
             
-                <td class="name"><code>module</code></td>
+                <td class="name"><code>emitter</code></td>
             
 
             <td class="type">
@@ -1074,7 +1162,8 @@ Otherwise the caller should buffer writes and call write when ready is true.
 
             
 
-            <td class="description last">Arbitrary data to be logged in a 'static' column if enabled via the LogManager.</td>
+            <td class="description last">Arbitrary data to be logged in a 'static' column if enabled
+  via the LogManager.</td>
         </tr>
 
     
@@ -1217,7 +1306,7 @@ Otherwise the caller should buffer writes and call write when ready is true.
 <span class="jsdoc-message">
 	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a>
 	
-		on 2016-08-08T14:15:41-07:00
+		on 2016-08-20T18:52:06-07:00
 	
 	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
 </span>
