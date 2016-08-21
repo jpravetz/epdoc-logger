@@ -127,7 +127,7 @@ LogglyTransport.prototype = {
      * @param {string} params.reqId - express request ID, if provided (output if options.sid is
      *   true)
      * @param {string} params.sid - express session ID, if provided (output if options.sid is true)
-     * @param {string} params.module - name of file or module or emitter (noun)
+     * @param {string} params.emitter - name of file or module or emitter (noun)
      * @param {string} params.action - method or operation being performed (verb)
      * @param {string} params.message - text string to output
      * @param {Object} params.static - Arbitrary data to be logged in a 'static' column if enabled
@@ -244,7 +244,7 @@ LogglyTransport.prototype = {
         var json = {
             timestamp: (params.time ? params.time.toISOString() : (new Date()).toISOString()),
             level: params.level,
-            emitter: params.module,
+            emitter: params.emitter,
             action: params.action,
             data: params.data
         };

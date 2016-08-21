@@ -55,7 +55,12 @@ var self = {
         return self.getLogManager().getLogger(name, context);
     },
 
-    getLogListener: function(options) {
+    /**
+     * Unit test helper can be used in conjunction with callback transport.
+     * @param options
+     * @returns {LogListener}
+     */
+    getLogListener: function (options) {
         var LogListener = require('./src/log_listener');
         return new LogListener(options);
     },
@@ -69,10 +74,10 @@ var self = {
         return self.getLogManager().start();
     },
 
-  /**
-   * Utility formatting routines
-   */
-  format: require('./src/format'),
+    /**
+     * Utility formatting routines
+     */
+    format: require('./src/format'),
 
     /**
      * @deprecated
@@ -84,7 +89,7 @@ var self = {
     /**
      * @deprecated
      */
-    logMgr: function(options) {
+    logMgr: function (options) {
         return self.getLogManager(options);
     },
 
@@ -98,7 +103,7 @@ var self = {
     /**
      * @deprecated
      */
-    logListener: function(options) {
+    logListener: function (options) {
         return self.getLogListener(options);
     },
 
@@ -117,17 +122,8 @@ var self = {
             routeSeparator: require('./src/middleware/route_separator'),
             errorHandler: require('./src/middleware/error_handler')
         };
-    },
+    }
 
-    /**
-     * This module is under development
-     */
-    Response: require('./src/stubs/response'),
-
-    /**
-     * This module is under development
-     */
-    Request: require('./src/stubs/request')
 };
 
 module.exports = self;

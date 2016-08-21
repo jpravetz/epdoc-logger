@@ -1,6 +1,6 @@
 {
   "name": "epdoc-logger",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Logging module with express middleware mixins and extendable transports",
   "bugs": {
     "url": "https://github.com/jpravetz/epdoc-logger/issues"
@@ -19,8 +19,9 @@
     "test": "NODE_ENV=test mocha"
   },
   "dependencies": {
+    "colors": "^1.1.2",
     "moment": "^2.14.1",
-    "request": "^2.72.0",
+    "request": "^2.74.0",
     "underscore": "^1.8.3"
   },
   "devDependencies": {

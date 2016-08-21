@@ -4,7 +4,6 @@
  *****************************************************************************/
 'use strict';
 
-
 var util = require('util');
 var format = require('./format');
 var moment = require('moment');
@@ -46,27 +45,27 @@ var _ = require('underscore');
  *
  * @param  {LogManager} logMgr - The parent LogManager object that specifies the transport and
  *   provides lower-level output methods
- * @param [modulename] {string|string[]} The name of the module or emitter that is emitting the
- *   log message, used to populate the <code>module</code> output column. This can be modified to
+ * @param [emitter] {string|string[]} The name of the module or emitter that is emitting the
+ *   log message, used to populate the <code>emitter</code> output column. This can be modified to
  *   show method call hierarchy by calling <code>pushName</code> and <code>popName</code>.
  * @param [context] {object} A context object. For [Express]{@link http://expressjs.com/} or
  *   [koa]{@link http://koajs.com/} this would have <code>req</code> and <code>res</code>
  *   properties.
  * @constructor
  */
-var Logger = function (logMgr, modulename, context) {
+var Logger = function (logMgr, emitter, context) {
 
     // The common Logger object thru which output will be written
     this.logMgr = logMgr;
 
-    // module column
+    // emitter column
     this.stack = [];
-    if (_.isString(modulename)) {
-        this.name = "Logger#" + modulename;
-        this.stack = [modulename];
-    } else if (_.isArray(modulename)) {
-        this.name = "Logger#" + modulename.join('.');
-        this.stack = modulename;
+    if (_.isString(emitter)) {
+        this.name = "Logger#" + emitter;
+        this.stack = [emitter];
+    } else if (_.isArray(emitter)) {
+        this.name = "Logger#" + emitter.join('.');
+        this.stack = emitter;
     }
 
     // Contains Express and koa req and res properties
@@ -414,7 +413,7 @@ Logger.prototype = {
         if (args.length > 1) {
             var params = {
                 level: args.shift(),
-                module: this.stack.join('.')
+                emitter: this.stack.join('.')
             };
             if (this.logData) {
                 params.data = this.logData;

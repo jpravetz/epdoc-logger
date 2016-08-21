@@ -4,6 +4,7 @@
  *****************************************************************************/
 'use strict';
 
+var colorize = require('./lib/colorize');
 
 /**
  * Formatting routines that are used internally. Some of these may have external applications
@@ -20,7 +21,7 @@ var self = {
      * @param {string} params.reqId - express request ID, if provided (output if options.sid is
      *   true)
      * @param {string} params.sid - express session ID, if provided (output if options.sid is true)
-     * @param {string} params.module - name of file or module or emitter (noun)
+     * @param {string} params.emitter - name of file or module or emitter (noun)
      * @param {string} params.action - method or operation being performed (verb)
      * @param {string} params.message - text string to output
      * @param {Object} params.static - Static data to be logged in a 'static' column if enabled
@@ -37,7 +38,7 @@ var self = {
         var json = {
             timestamp: self.getTimestamp(params, options.timestamp),
             level: params.level,
-            emitter: params.module,
+            emitter: params.emitter,
             action: params.action,
             data: options.dataObjects ? params.data : JSON.stringify(params.data),
             message: params.message,
@@ -70,7 +71,7 @@ var self = {
      * @param {string} params.reqId - express request ID, if provided (output if options.sid is
      *   true)
      * @param {string} params.sid - express session ID, if provided (output if options.sid is true)
-     * @param {string} params.module - name of file or module or emitter (noun)
+     * @param {string} params.emitter - name of file or module or emitter (noun)
      * @param {string} params.action - method or operation being performed (verb)
      * @param {string} params.message - text string to output
      * @param {Object} params.static - Arbitrary data to be logged in a 'static' column if enabled
@@ -88,7 +89,7 @@ var self = {
             json.push(params.reqId ? params.reqId : 0);
             json.push(params.sid ? params.sid : "");
         }
-        json.push(params.module ? params.module : "");
+        json.push(params.emitter ? params.emitter : "");
         json.push(params.action ? params.action : "");
         json.push(params.message);
         //json = json.concat(params.message?params.message:"");
@@ -101,6 +102,75 @@ var self = {
         return json;
     },
 
+    // RegExp cache
+    regs: {},
+
+    /**
+     * General method to format parameters into a formatted string that can handle winston-like
+     * console output. See the default template in the code to see how format string templates. Non
+     * colorized strings use '${ts}' format, while colorized used '%{ts}' format.
+     * @param params {Object} Parameters to be logged:
+     * @param {Date} params.time - Date object
+     * @param {string} params.level - log level (info, warn, error, etc)
+     * @param {string} params.reqId - express request ID, if provided (output if options.sid is
+     *   true)
+     * @param {string} params.sid - express session ID, if provided (output if options.sid is true)
+     * @param {string} params.emitter - name of file or module or emitter (noun)
+     * @param {string} params.action - method or operation being performed (verb)
+     * @param {string} params.message - text string to output
+     * @param {Object} params.static - Arbitrary data to be logged in a 'static' column if enabled
+     *   via the LogManager.
+     * @param {Object} params.data - Arbitrary data to be logged in the 'data' column
+     * @param options {Object}
+     * @param [options.timestamp=ms] {string} Timestamp output format
+     * @param [options.sid] {boolean} Include session info
+     * @param [options.static] {boolean} Include static data
+     * @returns {Object}
+     */
+    paramsToString: function (params, options) {
+
+        var template = options.template;
+        if (!template) {
+            template = "${ts} - %{level} [${emitter}/${action}] %{message}";
+            if (options.sid) {
+                template += " ${reqId}/${sid}";
+            }
+        }
+        var output = template;
+
+        function replace (key, value) {
+            var reg = self.regs[key];
+            if( !reg ) {
+                reg = new RegExp('(\\$|\%)\{' + key + '\}', 'g');
+                self.regs[key] = reg;
+            }
+            var m = output.match(reg);
+            if (m) {
+                if (m[0][0] === '%' && options.colorize ) {
+                    value = colorize.colorize(params.level, value);
+                }
+                output = output.replace(reg, value);
+            }
+        }
+
+        replace('ts', self.getTimestamp(params, options.timestamp));
+        replace('level', String(params.level.toUpperCase() + '       ').substr(0, 7));
+
+        if (options.sid) {
+            replace('reqId', params.reqId ? params.reqId : '0');
+            replace('sid', params.sid ? params.sid : '');
+        }
+        replace('emitter', params.emitter);
+        replace('action', params.action);
+        replace('message', params.message);
+
+        if (options.static) {
+            replace('static', JSON.stringify(params.static ? params.static : {}));
+        }
+        replace('${data}', JSON.stringify(params.data ? params.data : {}));
+        return output;
+    },
+
     getTimestamp: function (params, format) {
         if (format === 'smstime') {
             return String(params.time.getTime());
@@ -110,6 +180,7 @@ var self = {
             return self.formatMS(params.timeDiff);
         }
     },
+
 
     /**
      *
