@@ -228,7 +228,7 @@ Console and File transport output is in one of the following formats:
 - jsonArray (default) - An array of JSON values (see example below)
 - json - A JSON object with key/value pairs for the output
 - function - Provide your own function to format the output
-- string - Template-based output with optional colorization (Console only)
+- template - Template-based output with optional colorization (colorization on Console only)
 
 These formats are specified as options when constructing the transport. 
 Refer to the transport documentation for more details.
@@ -434,7 +434,7 @@ Adds an information line to the log file for each new route.
 
 ## Action Items
 
-* Add koa middleware (I don't currently have a koa project going, so this may not happen for awhile)
+* Add koa middleware (I don't currently have a koa project going, so this may not happen for a long while)
 * More unit tests
 * Document and add unit tests for {@link LogListener}, an object that makes it easier to use log the callback transport in unit tests.
 * Update SOS transport as a general HTTP transport and rename to 'http' transport (beware).
