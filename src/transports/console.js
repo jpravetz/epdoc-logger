@@ -20,7 +20,7 @@ var format = require('./../format');
  * @param [options.timestamp=ms] {String} - Set the format for timestamp output, must be one of
  *   'ms' or 'iso'.
  * @param [options.format=jsonArray] {String|function} - Set the format for the output line. Must
- *   be one of 'json', 'jsonArray', 'string', or a function that takes params and options as
+ *   be one of 'json', 'jsonArray', 'template', or a function that takes params and options as
  *   parameters.
  * @param [options.static=true] {Boolean} - Set whether to output a 'static' column.
  * @param [options.level] {String} - Log level above which to output log messages, overriding
@@ -144,7 +144,7 @@ ConsoleTransport.prototype = {
         };
         if (_.isFunction(this.options.format)) {
             return this.options.format(params, opts);
-        } else if (this.options.format === 'string') {
+        } else if (this.options.format === 'template') {
             return format.paramsToString(params, opts);
         } else if (this.options.format === 'json') {
             var json = format.paramsToJson(params, opts);

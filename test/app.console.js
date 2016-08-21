@@ -43,7 +43,7 @@ describe("Console", function () {
             var opts = {
                 transports: [ 'console' ],
                 console: {
-                    format: 'string',
+                    format: 'template',
                     colorize: true
                 }
             };
@@ -64,7 +64,7 @@ describe("Console", function () {
             var opts = {
                 transports: [ 'console' ],
                 console: {
-                    format: 'string',
+                    format: 'template',
                     colorize: true,
                     template: '%{action} %{ts} %{message} %{level}'
                 }

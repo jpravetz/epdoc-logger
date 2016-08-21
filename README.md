@@ -228,7 +228,7 @@ Console and File transport output is in one of the following formats:
 - jsonArray (default) - An array of JSON values (see example below)
 - json - A JSON object with key/value pairs for the output
 - function - Provide your own function to format the output
-- string - Template-based output with optional colorization (Console only)
+- template - Template-based output with optional colorization (colorization on Console only)
 
 These formats are specified as options when constructing the transport. 
 Refer to the transport documentation for more details.

@@ -21,7 +21,7 @@ var format = require('./../format');
  *   'ms' or
  *   'iso'.
  * @param [options.format=jsonArray] {String|function} - Set the format for the output line. Must
- *   be one of 'json', 'jsonArray', 'string', or a function that takes params and options as
+ *   be one of 'json', 'jsonArray', 'template', or a function that takes params and options as
  *   parameters.
  * @param [options.template] {String} - Provide a template string to use for output when
  *   options.format is 'string', substitutes ${ts} %{level} ${emitter} type strings, where '%'
@@ -198,7 +198,7 @@ FileTransport.prototype = {
         };
         if (_.isFunction(this.options.format)) {
             return this.options.format(params, opts);
-        } else if (this.options.format === 'string') {
+        } else if (this.options.format === 'template') {
             return format.paramsToString(params, opts);
         } else if (this.options.format === 'json') {
             var json = format.paramsToJson(params, opts);
