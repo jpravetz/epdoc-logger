@@ -20,10 +20,15 @@ var format = require('./../format');
  * @param [options.timestamp=ms] {string} - Set the format for timestamp output, must be one of
  *   'ms' or
  *   'iso'.
- * @param [options.format=jsonArray] {string} - Set the format for the output line. Must be one of
- *   'json' or 'jsonArray'.
+ * @param [options.format=jsonArray] {String|function} - Set the format for the output line. Must
+ *   be one of 'json', 'jsonArray', 'template', or a function that takes params and options as
+ *   parameters.
+ * @param [options.template] {String} - Provide a template string to use for output when
+ *   options.format is 'string', substitutes ${ts} %{level} ${emitter} type strings, where '%'
+ *   indicates string should be colorized.
  * @param [options.static=true] {boolean} - Set whether to output a 'static' column.
- * @param [options.level] {string} - Log level above which to output log messages, overriding setting for LogManager.
+ * @param [options.level] {string} - Log level above which to output log messages, overriding
+ *   setting for LogManager.
  * @constructor
  */
 
@@ -90,11 +95,11 @@ FileTransport.prototype = {
      *   path property.
      * @returns {boolean} True if the transport matches the argument
      */
-    match: function(transport) {
-        if(  _.isString(transport) && transport === this.sType ) {
+    match: function (transport) {
+        if (_.isString(transport) && transport === this.sType) {
             return true;
         }
-        if( _.isObject(transport) && transport.type === this.sType && transport.path === this.path ) {
+        if (_.isObject(transport) && transport.type === this.sType && transport.path === this.path) {
             return true;
         }
         return false;
@@ -187,18 +192,24 @@ FileTransport.prototype = {
         var opts = {
             timestamp: this.timestampFormat,
             sid: this.bIncludeSid,
-            static: this.bIncludeStatic
+            static: this.bIncludeStatic,
+            colorize: false,
+            template: this.options.template
         };
-        if (this.options.format === 'json') {
-            var json = format.paramsToJson(params,opts);
+        if (_.isFunction(this.options.format)) {
+            return this.options.format(params, opts);
+        } else if (this.options.format === 'template') {
+            return format.paramsToString(params, opts);
+        } else if (this.options.format === 'json') {
+            var json = format.paramsToJson(params, opts);
             return JSON.stringify(json);
         } else {
-            var json = format.paramsToJsonArray(params,opts);
+            var json = format.paramsToJsonArray(params, opts);
             return JSON.stringify(json);
         }
     },
 
-    setLevel: function(level) {
+    setLevel: function (level) {
         this.level = level;
     },
 
@@ -206,7 +217,7 @@ FileTransport.prototype = {
         return "File (" + this.path + ")";
     },
 
-    getOptions: function() {
+    getOptions: function () {
         return { path: this.path };
     },
 
