@@ -117,7 +117,7 @@ ConsoleTransport.prototype = {
         cb && cb();
     },
 
-    destroy: function (cb) {
+    stop: function (cb) {
         this.end();
         cb && cb();
     },

@@ -212,6 +212,10 @@ LogglyTransport.prototype = {
     },
 
 
+    /**
+     * Flushes the queue and closes the connections to loggly.
+     * @param cb
+     */
     end: function (cb) {
         this.flush(function (err, res) {
             if (err) {
@@ -224,7 +228,7 @@ LogglyTransport.prototype = {
         });
     },
 
-    destroy: function (cb) {
+    stop: function (cb) {
         this.end(cb);
     },
 

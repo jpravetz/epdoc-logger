@@ -105,6 +105,8 @@ LogManager.prototype = {
             for (var tdx = 0; tdx < tarray.length; tdx++) {
                 this.addTransport(tarray[tdx], options[tarray[tdx]]);
             }
+        } else {
+            this.consoleOptions = options.console;
         }
         if (options.autoRun === true) {
             this.start();
@@ -126,7 +128,7 @@ LogManager.prototype = {
         if (!self.running) {
             var jobs = [];
             if (!self.transports.length) {
-                self.addTransport('console');
+                self.addTransport('console', this.consoleOptions);
             }
             if (self.transports.length) {
                 for (var idx = 0; idx < self.transports.length; idx++) {
@@ -143,6 +145,8 @@ LogManager.prototype = {
                 // again with the remaining transports
                 self.start(callback);
             });
+        } else {
+            callback && callback();
         }
         return self;
     },
@@ -200,6 +204,8 @@ LogManager.prototype = {
     /**
      * Add a log transport. Multiple transports can be in operation at the same time, allowing log
      * messages to be sent to more than one destination.
+     * If you are adding a transport while logging is on, you should first call logMgr.stopping,
+     * add the transport, then call logMgr.start.
      *
      * @param {string|Object} [type] - For the provided loggers, one of 'sos', 'file', 'callback',
      *   'console' or 'loggly'. For a custom transport this should be a transport class object that
@@ -303,7 +309,7 @@ LogManager.prototype = {
             var t = this.transports[idx];
             if (t.match(transport)) {
                 var job = new Promise(function (resolve, reject) {
-                    t.destroy(function (err) {
+                    t.stop(function (err) {
                         if (err) {
                             reject(err);
                         } else {
@@ -582,20 +588,38 @@ LogManager.prototype = {
     },
 
     /**
-     * Performs a managed shutdown of the logging service. This is relevant if using a buffered
-     * logger such as the loggly transport. If called when shutting down an application, the caller
-     * should wait for buffers to be flushed and the callback to be called before exiting.
+     * Stops and removes all transports. Should be called before a shutdown.
      * @param {function} [callback] - Called with err when complete.
      * @returns {Promise}
      */
     destroying: function (callback) {
+        var self = this;
+        return new Promise(function (resolve, reject) {
+            self.stopping().then(function () {
+                self.transports = [];
+                callback && callback();
+                resolve();
+            }, function (err) {
+                callback && callback(err);
+                reject(err);
+            });
+        });
+    },
+
+    /**
+     * Flushes all transport queues, disconnects all logging transports, but leaves the list of
+     * transports intact. Call the start method to restart logging and reconnect all transports.
+     * @param {function} [callback] - Called with err when complete.
+     * @returns {Promise}
+     */
+    stopping: function (callback) {
         this.running = false;
         var jobs = [];
-        while (this.transports.length) {
-            var transport = this.transports.shift();
+        for (var tdx = 0; tdx < this.transports.length; tdx++) {
+            var transport = this.transports[tdx];
             if (transport) {
                 var job = new Promise(function (resolve, reject) {
-                    transport.destroy(function (err) {
+                    transport.stop(function (err) {
                         if (err) {
                             reject(err);
                         } else {
