@@ -167,7 +167,7 @@ var self = {
         if (options.static) {
             replace('static', JSON.stringify(params.static ? params.static : {}));
         }
-        replace('${data}', JSON.stringify(params.data ? params.data : {}));
+        replace('data', JSON.stringify(params.data ? params.data : {}));
         return output;
     },
 

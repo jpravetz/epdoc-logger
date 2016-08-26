@@ -5,7 +5,7 @@
 
 var epdocLogger = require('../index');
 
-describe.only('logMgr.removeTransport', function () {
+describe('logMgr.removeTransport', function () {
 
     var logMgr = epdocLogger.getLogManager();
 
