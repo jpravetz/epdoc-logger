@@ -179,7 +179,7 @@ FileTransport.prototype = {
         cb && cb();
     },
 
-    destroy: function (cb) {
+    stop: function (cb) {
         this.end();
         if (this.stream) {
             this.stream.destroy();

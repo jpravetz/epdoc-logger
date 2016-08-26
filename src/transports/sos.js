@@ -79,7 +79,7 @@ var protoProps = {
         cb && cb();
     },
 
-    destroy: function (cb) {
+    stop: function (cb) {
         this.end();
         if (this.socket) {
             this.socket.destroy();
