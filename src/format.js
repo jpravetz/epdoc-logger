@@ -160,14 +160,14 @@ var self = {
             replace('reqId', params.reqId ? params.reqId : '0');
             replace('sid', params.sid ? params.sid : '');
         }
-        replace('emitter', params.emitter);
-        replace('action', params.action);
-        replace('message', params.message);
+        replace('emitter', params.emitter ? params.emitter : '');
+        replace('action', params.action ? params.action : '' );
+        replace('message', params.message ? params.message : '');
 
         if (options.static) {
             replace('static', JSON.stringify(params.static ? params.static : {}));
         }
-        replace('${data}', JSON.stringify(params.data ? params.data : {}));
+        replace('data', JSON.stringify(params.data ? params.data : {}));
         return output;
     },
 
