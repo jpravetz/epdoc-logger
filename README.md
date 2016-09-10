@@ -239,9 +239,26 @@ JSON array format looks like this
 ["00:00.000","INFO","logger","logger.transport.add","Added transport 'Console'",{"transport":"Console"}]
 ```
 
-and has array entries for [ timestamp, level, reqId, sid, emitter, action, message, static, data ]. 
-The reqId and sid fields only output if the transport ```sid``` option is true.
+and has array entries for [ ts (timestamp), level, reqId, sid, emitter, action, message, static, data ]. 
+The reqId and sid fields are only output if the transport ```sid``` option is true.
 The static field is only output if the transport ```static``` option is true.
+
+The example below shows a console configuration for custom colorized output.
+In this example ```$c``` specifies that ```level``` and ```message``` be colorized.
+The ```level``` field will also be padded to a minimum width of 5 characters.
+
+
+```javascript
+var econfig = {
+    transports: [ 'console' ],
+    console: {
+        format: 'template',
+        colorize: true,
+        template: '${ts} $c5{level} ${action}/${emitter} $c{message}'
+    }
+};
+```
+
 
 ### Logging to a File ###
 

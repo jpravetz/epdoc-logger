@@ -131,7 +131,7 @@ var self = {
 
         var template = options.template;
         if (!template) {
-            template = "${ts} - %{level} [${emitter}/${action}] %{message}";
+            template = "${ts} - $c5{level} [${emitter}/${action}] $c{message}";
             if (options.sid) {
                 template += " ${reqId}/${sid}";
             }
@@ -139,22 +139,29 @@ var self = {
         var output = template;
 
         function replace (key, value) {
-            var reg = self.regs[key];
-            if( !reg ) {
-                reg = new RegExp('(\\$|\%)\{' + key + '\}', 'g');
-                self.regs[key] = reg;
+            if( !self.regs[key] ) {
+                self.regs[key] = new RegExp('\\$c*\\d*\{' + key + '\}', 'g');
             }
-            var m = output.match(reg);
-            if (m) {
-                if (m[0][0] === '%' && options.colorize ) {
+            var m = output.match(self.regs[key]);
+            if (m && m.length) {
+                var regEx = /^\$(c*)(\d*)\{/;
+                var p = m[0].match(regEx);
+                if (p[2]) {
+                    var plen = parseInt(p[2],10);
+                    if(plen) {
+                        plen = Math.max(plen,String(value).length);
+                        value = self.rightPad(value,' ',plen);
+                    }
+                }
+                if (p[1] === 'c' && options.colorize) {
                     value = colorize.colorize(params.level, value);
                 }
-                output = output.replace(reg, value);
+                output = output.replace(self.regs[key], value);
             }
         }
 
         replace('ts', self.getTimestamp(params, options.timestamp));
-        replace('level', String(params.level.toUpperCase() + '       ').substr(0, 7));
+        replace('level', params.level.toUpperCase() ); // String(params.level.toUpperCase() + '       ').substr(0, 7));
 
         if (options.sid) {
             replace('reqId', params.reqId ? params.reqId : '0');
@@ -194,6 +201,13 @@ var self = {
         n = String(n);
         return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
     },
+
+    rightPad: function (str, padString, length) {
+        while (str.length < length)
+            str = str + padString;
+        return str;
+    },
+
 
     formatMS: function (ms) {
         var milliseconds = ms % 1000;
