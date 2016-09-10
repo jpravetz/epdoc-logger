@@ -6,6 +6,9 @@
 
 var colorize = require('./lib/colorize');
 
+var formatRegEx = /^\$(c*)(\d*)\{/;
+var padRegEx = /^0/;
+
 /**
  * Formatting routines that are used internally. Some of these may have external applications
  * and can be accessed by the module's 'format' export property
@@ -144,13 +147,21 @@ var self = {
             }
             var m = output.match(self.regs[key]);
             if (m && m.length) {
-                var regEx = /^\$(c*)(\d*)\{/;
-                var p = m[0].match(regEx);
+                var p = m[0].match(formatRegEx);
                 if (p[2]) {
-                    var plen = parseInt(p[2],10);
-                    if(plen) {
-                        plen = Math.max(plen,String(value).length);
-                        value = self.rightPad(value,' ',plen);
+                    var plen = parseInt(p[2], 10);
+                    if (plen) {
+                        if( padRegEx.test(p[2]) ) {
+                            if (typeof value === 'number' || String(parseInt(value,10)) === value) {
+                                value = self.pad(value, p[2]);
+                            } else {
+                                plen = Math.max(plen, String(value).length);
+                                value = self.leftPad(value, ' ', plen);
+                            }
+                        } else {
+                            plen = Math.max(plen, String(value).length);
+                            value = self.rightPad(value, ' ', plen);
+                        }
                     }
                 }
                 if (p[1] === 'c' && options.colorize) {
@@ -205,6 +216,12 @@ var self = {
     rightPad: function (str, padString, length) {
         while (str.length < length)
             str = str + padString;
+        return str;
+    },
+
+    leftPad: function (str, padString, length) {
+        while (str.length < length)
+            str = padString + str;
         return str;
     },
 

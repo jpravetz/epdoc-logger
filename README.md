@@ -245,7 +245,8 @@ The static field is only output if the transport ```static``` option is true.
 
 The example below shows a console configuration for custom colorized output.
 In this example ```$c``` specifies that ```level``` and ```message``` be colorized.
-The ```level``` field will also be padded to a minimum width of 5 characters.
+The ```level``` field will also be right padded to a minimum width of 5 characters.
+Numbers and strings can be left padded by adding a ```0``` as in ```$05{reqId}```.
 
 
 ```javascript

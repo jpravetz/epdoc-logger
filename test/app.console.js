@@ -68,13 +68,13 @@ describe("Console", function () {
                 console: {
                     format: 'template',
                     colorize: true,
-                    template: '${action} ${ts} $c{message} $c{level}'
+                    template: '${action} ${ts} $c015{message} $c{level}'
                 }
             };
             var logMgr = new elogger.LogManager(opts).start();
             var log = logMgr.getLogger('app.console.start');
-            log.action('bake').info("Green");
-            log.action('test').error("Red");
+            log.action('bake').info("Green leftpad");
+            log.action('test').error("Red leftpad");
             log.data({c:4,e:7}).action('4').debug("Blue",{a:2,b:3});
             done();
         });
