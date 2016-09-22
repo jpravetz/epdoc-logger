@@ -36,7 +36,6 @@ module.exports = function() {
         //var rawCookie = req.cookies['connect.sid'];
 
         var d = req._startTime || new Date();
-        res.log.pushName('app');
         var data = {
             method: req.method,
             path: req.path,
@@ -53,7 +52,6 @@ module.exports = function() {
             data['content-length'] = req.get('Content-Length');
         }
         res.log.action('routeInfo').data(data)._info();
-        res.log.popName();
 
         next();
     }

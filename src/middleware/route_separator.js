@@ -38,7 +38,6 @@ module.exports = function (options) {
 
         if (req.log) {
             var d = req._startTime || new Date();
-            req.log.pushName('app');
             var data = {
                 method: req.method,
                 path: decodeURI(req.path),
@@ -52,7 +51,6 @@ module.exports = function (options) {
             // data.utctime = (d).toISOString();
 
             req.log.action(data.method).data(data)._info("###################### " + data.path + " ######################".slice(0, Math.max(0, 49 - data.path.length)));
-            req.log.popName();
         }
         next();
     }

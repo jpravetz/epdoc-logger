@@ -40,6 +40,7 @@ module.exports = function (options) {
 
     options || ( options = {});
     var objName = options.objName || 'log';
+    var emitter = options.emitter || 'app';
     var logMgr = options.logMgr;
     if (!logMgr) {
         logMgr = require('../../index').getLogManager();
@@ -48,10 +49,9 @@ module.exports = function (options) {
     return function (req, res, next) {
 
         // Add a privately used state object added to the req and res object to track state when
-        // method chaining. The 'stack' property is used internally by pushRouteInfo and
-        // popRouteInfo.
+        // method chaining. The 'stack' property is used internally by pushName and popName.
         var ctx = { req: req, res: res };
-        req[objName] = new Logger(logMgr, null, ctx);
+        req[objName] = new Logger(logMgr, emitter, ctx);
         res[objName] = req[objName];
 
         // We need the super's send method because we're going to muck with it
