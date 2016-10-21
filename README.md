@@ -450,6 +450,37 @@ Adds a separator line to the log file for each new route.
 
 Adds an information line to the log file for each new route.
 
+## Sailsjs Integration ##
+
+To add epdoc-logger middleware to a [sailsjs](http://sailsjs.org) application, add an ```http.customMiddleware``` function
+to your config/http.js file as shown here.
+
+```javascript
+module.exports.http = {
+
+  customMiddleware: function (app) {
+    var middleware = require('epdoc-logger').middleware();
+    app.use(middleware.reqId());
+    app.all('*', middleware.responseLogger());
+    app.all('*', middleware.routeSeparator());
+    app.all('*', middleware.routeLogger());
+  }
+};
+```
+
+To replace the default CaptainsLog logger, add a ```log.custom``` property to your config/log.js file.
+The log object that is returned by ```getLogger()``` implements all of the methods of the CaptainsLog
+logger, with the exception of ```silent``` and ```silly```.
+
+```javascript
+var elogger = require('epdoc-logger');
+elogger.getLogManager();
+
+module.exports.log = {
+  custom: elogger.getLogger('app')
+};
+
+
 ## Action Items
 
 * Add koa middleware (I don't currently have a koa project going, so this may not happen for a long while)
