@@ -7,8 +7,8 @@
 var express = require('express');
 var request = require('supertest');
 var should = require('should');
-var epdocLogger = require('../index');
-var middleware = epdocLogger.middleware();
+var elogger = require('../index');
+var middleware = elogger.middleware();
 
 describe("Express response middleware", function () {
 
@@ -18,27 +18,38 @@ describe("Express response middleware", function () {
 
     before(function (done) {
 
-        var logMgr = new epdocLogger.LogManager();
-        logMgr.start();
+        var logMgr = new elogger.LogManager();
+        logMgr.starting().then(function () {
+            var log = logMgr.getLogger('app');
+            log.info("Adding middleware");
+            app.use(middleware.reqId());
+            //app.use(app.router);
+            app.all('*', middleware.responseLogger({logMgr:logMgr}));
+            app.all('*', middleware.routeSeparator());
+            app.all('*', middleware.routeLogger());
 
-        app.use(middleware.reqId());
-        //app.use(app.router);
-        app.all('*', middleware.responseLogger());
-        app.all('*', middleware.routeSeparator());
-        app.all('*', middleware.routeLogger());
+            app.get('/a', function (req, res) {
+                req.log.pushName('a').resetElapsed();
+                setTimeout(function () {
+                    req.log.elapsed().info("Timer should be about 500");
+                    res.send({ message: 'hello world' });
+                }, 500);
+            });
+            app.get('/b', function (req, res) {
+                res.json({ message: 'hello world' });
+            });
+            app.get('/c', function (req, res) {
+                req.log.pushName('c').resetElapsed('c');
+                setTimeout(function () {
+                    req.log.elapsed('c').info("Timer should be about 250");
+                    res.end('hello world');
+                }, 250);
+            });
 
-        app.get('/a', function (req, res) {
-            res.send({ message: 'hello world' });
-        });
-        app.get('/b', function (req, res) {
-            res.json({ message: 'hello world' });
-        });
-        app.get('/c', function (req, res) {
-            res.end('hello world');
-        });
+            app.listen(3000);
+            done();
+        }, done);
 
-        app.listen(3000);
-        done();
     });
 
     it("send", function (done) {
@@ -50,7 +61,7 @@ describe("Express response middleware", function () {
                     done(err);
                 } else {
                     should(res).have.property('body');
-                    should(res.body).have.property('message','hello world');
+                    should(res.body).have.property('message', 'hello world');
                     done();
                 }
             });
@@ -65,7 +76,7 @@ describe("Express response middleware", function () {
                     done(err);
                 } else {
                     should(res).have.property('body');
-                    should(res.body).have.property('message','hello world');
+                    should(res.body).have.property('message', 'hello world');
                     done();
                 }
             });
@@ -79,7 +90,7 @@ describe("Express response middleware", function () {
                 if (err) {
                     done(err);
                 } else {
-                    should(res).have.property('text','hello world');
+                    should(res).have.property('text', 'hello world');
                     done();
                 }
             });

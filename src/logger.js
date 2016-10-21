@@ -9,6 +9,7 @@ var format = require('./format');
 var moment = require('moment');
 var _ = require('underscore');
 
+
 /**
  * <p>Create a new log object with methods to log to the transport that is attached to
  * <code>logMgr</code>. This log object can be attached to another object, for example an
@@ -290,32 +291,53 @@ Logger.prototype = {
     // },
 
     /**
-     * Used to measure the duration of requests or other events.
-     * Add an 'elapsed' attribute to data being output, which is the time
-     * since this request object was initialized.
-     * Requirement: One of the following three must be initialized:
-     *      1. request object must set it's _delayTime
-     *      2. request object must set it's _startTime (ms)
-     *      3. must have called resetElapsed() to reset this.t0
+     * Adds a 'key' (default key = 'elapsed') attribute to data column, which is the time
+     * since the timer was reset. Must first call resetElapsed() to reset the timer, else the value
+     * will be 0.
+     * @param {string} [name='elapsed'] The timer name. This allows multiple timers to be run at
+     *   the same time, or just use the default 'elapsed' timer.
+     * @param {string} [key='elapsed'] The name of the attribute to add to the data column.
      * @return {Object} this
      */
-    elapsed: function (key) {
-        return this._setData('logData', key || 'elapsed', this.getElapsed());
+    elapsed: function (name, key) {
+        name || (name = 'elapsed');
+        key || (key = 'elapsed');
+        this.timer || (this.timer = {});
+        return this._setData('logData', key, this.getElapsed(name));
     },
 
-    getElapsed: function () {
-        if (this.ctx && this.ctx.req && this.ctx.req._delayTime) {
-            return ( parts[0] * 100000 + Math.round(parts[1] / 10000) ) / 100;
-        } else if (this.ctx && this.ctx.req && this.ctx.req._startTime) {
-            return (new Date()).getTime() - this.ctx.req._startTime;
-        } else if (this.t0) {
-            return ((new Date()).getTime() - this.t0)
+    /**
+     * Get the number of milliseconds since resetElapsed() has been called. This can be used to
+     * measure the duration of requests or other events that are made within the context of this
+     * request, when used with expressjs.
+     * @param {string} [name='elapsed'] Allows multiple timers to be run at the same time, or just
+     *   use the default timer.
+     */
+    getElapsed: function (name) {
+        name || (name = 'elapsed');
+        this.timer || (this.timer = {});
+        if (this.timer[name]) {
+            return ((new Date()).getTime() - this.timer[name]);
         }
         return 0;
     },
 
     /**
-     * Adds the High Resolution response time to the data column.
+     * Reset the elapsed time timer.
+     * @param {string} [name='elapsed'] Allows multiple timers to be run at the same time, or just
+     *   use the default timer.
+     * @return {Logger} Self
+     */
+    resetElapsed: function (name) {
+        name || (name = 'elapsed');
+        this.timer || (this.timer = {});
+        this.timer[name] = (new Date()).getTime();
+        return this;
+    },
+
+    /**
+     * Adds the High Resolution response time to the data column. This value is measured from when
+     * the request is received. It is added to the request object by the reqId middleware module.
      * @param {string} [key=elapsed] Name of property in the data column.
      * @return {Logger} Self.
      */
@@ -324,7 +346,7 @@ Logger.prototype = {
     },
 
     /**
-     * High resolution response time.
+     * High resolution response time. This value is measured from when the request is received.
      * Returns the response time in milliseconds with two digits after the decimal.
      * @return {number} Response time in milliseconds
      */
@@ -334,16 +356,6 @@ Logger.prototype = {
             return ( parts[0] * 100000 + Math.round(parts[1] / 10000) ) / 100;
         }
         return 0;
-    },
-
-
-    /**
-     * Reset the elapsed time timer.
-     * @return {Logger} Self
-     */
-    resetElapsed: function () {
-        this.t0 = (new Date()).getTime();
-        return this;
     },
 
     date: function (d, s) {
