@@ -25,7 +25,7 @@ describe("Express response middleware", function () {
             app.use(middleware.reqId());
             //app.use(app.router);
             app.all('*', middleware.responseLogger({logMgr:logMgr}));
-            app.all('*', middleware.routeSeparator());
+            app.all('*', middleware.routeSeparator({separator:'-'}));
             app.all('*', middleware.routeLogger());
 
             app.get('/a', function (req, res) {

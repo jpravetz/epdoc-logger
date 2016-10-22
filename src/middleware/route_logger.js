@@ -35,23 +35,25 @@ module.exports = function() {
 
         //var rawCookie = req.cookies['connect.sid'];
 
-        var d = req._startTime || new Date();
-        var data = {
-            method: req.method,
-            path: req.path,
-            protocol: req.protocol,
-            //sidNew: ( rawCookie ? false : true ),
-            ip: req.ip,
-            query: req.query,
-            utctime: (d).toISOString()
-        };
-        if( req.session && req.session.id ) {
-            data.sid = req.session.id;
+        if( res.log ) {
+            var d = req._startTime || new Date();
+            var data = {
+                method: req.method,
+                path: req.path,
+                protocol: req.protocol,
+                //sidNew: ( rawCookie ? false : true ),
+                ip: req.ip,
+                query: req.query,
+                utctime: (d).toISOString()
+            };
+            if( req.session && req.session.id ) {
+                data.sid = req.session.id;
+            }
+            if( req.method && req.method.toLowerCase() === 'post' ) {
+                data['content-length'] = req.get('Content-Length');
+            }
+            res.log.action('routeInfo').data(data)._info();
         }
-        if( req.method && req.method.toLowerCase() === 'post' ) {
-            data['content-length'] = req.get('Content-Length');
-        }
-        res.log.action('routeInfo').data(data)._info();
 
         next();
     }

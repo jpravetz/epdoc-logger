@@ -27,12 +27,23 @@ var moment = require('moment');
  * @example
  * var middleware = require('epdoc-logger').middleware();
  * app.all('*', middleware.responseLogger());
- * app.all('*', middleware.routeSeparator());
+ * app.all('*', middleware.routeSeparator({separator:'-'}));
  *
+ * output: "--------------------- /a -------------------------------------"
+ *
+ * @param {Object} [options]
+ * @param {Number} [options.separatorLength=22] The length of the separator preceeding the path.
+ *   Note that this options may be discontinued in a future release.
+ * @param {char} [options.separator='#'] The character to use as a separator
  * @returns {Function} Function that can be called to add middleware to an express
  * [application]{@link http://expressjs.com/en/4x/api.html#app}.
  */
 module.exports = function (options) {
+
+    options || (options = {});
+    var sepLen = options.separatorLength || 22;
+    var sep = options.separator || '#';
+    var sep0 = Array(sepLen).join(sep);
 
     return function (req, res, next) {
 
@@ -50,7 +61,8 @@ module.exports = function (options) {
             data.localtime = moment(d).format('YYYY-MM-DDTHH:mm:ss.SSSZ');
             // data.utctime = (d).toISOString();
 
-            req.log.action(data.method).data(data)._info("###################### " + data.path + " ######################".slice(0, Math.max(0, 49 - data.path.length)));
+            var sepLen2 = Math.max(0, 62 - sepLen - data.path.length);
+            req.log.action(data.method).data(data)._info(sep0 + ' ' + data.path + ' ' + Array(sepLen2).join(sep));
         }
         next();
     }

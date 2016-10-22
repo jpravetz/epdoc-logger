@@ -32,6 +32,8 @@ var Logger = require('../logger');
  * @param [options] {Object}
  * @param [options.objName=log] {string} The name of the response object property
  * to which to attach the {@link Logger} object.
+ * @param [options.excludeMethod] {string|Array of string} A list of HTTP methods for which to skip
+ *   adding log capabilities to the request. Strings are case insenstive. Eg. are 'OPTIONS', 'GET'.
  * @returns {Function} Function that can be called to add middleware to an express
  * [application]{@link http://expressjs.com/en/4x/api.html#app}.
  */
@@ -45,23 +47,37 @@ module.exports = function (options) {
     if (!logMgr) {
         logMgr = require('../../index').getLogManager();
     }
+    var excludeMethods;
+    if (typeof options.excludeMethod === 'string') {
+        excludeMethods = [options.excludeMethod]
+    } else if (options.excludeMethod instanceof Array) {
+        excludeMethods = options.excludeMethod;
+    }
 
     return function (req, res, next) {
 
-        // Add a privately used state object added to the req and res object to track state when
-        // method chaining. The 'stack' property is used internally by pushName and popName.
+        var bSkip = false;
+        if (excludeMethods) {
+            for (var mdx = 0; mdx < excludeMethods.length && !bSkip; mdx++) {
+                var method = excludeMethods[mdx].toLowerCase();
+                if (req.method && req.method.toLowerCase() === method) {
+                    bSkip = true;
+                }
+            }
+        }
         var ctx = { req: req, res: res };
         req[objName] = new Logger(logMgr, emitter, ctx);
         res[objName] = req[objName];
 
-        // We need the super's send method because we're going to muck with it
-        res._origSend = res.send;
+        if (bSkip) {
+            res[objName].silent = true;
+        } else {
+            // We need the super's send method because we're going to muck with it
+            res._origSend = res.send;
 
-        // We need the super's send method
-        res._origEnd = res.end;
-
-        // Add all the methods directly to the response object
-        _.extend(res, Response);
+            // We need the super's send method
+            res._origEnd = res.end;
+        }
 
         next();
     }

@@ -461,7 +461,9 @@ Logger.prototype = {
             if (this.ctx) {
                 this.logParams(params);
             } else {
-                this.logMgr.logParams(params, this.logLevel);
+                if( this.silent !== true ) {
+                    this.logMgr.logParams(params, this.logLevel);
+                }
             }
         }
     },
@@ -499,7 +501,9 @@ Logger.prototype = {
                 setParams(this.ctx);
             }
         }
-        this.logMgr.logParams(params, this.logLevel);
+        if( this.silent !== true ) {
+            this.logMgr.logParams(params, this.logLevel);
+        }
         return this;
     },
 
