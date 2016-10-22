@@ -479,6 +479,15 @@ elogger.getLogManager();
 module.exports.log = {
   custom: elogger.getLogger('app')
 };
+```
+
+You'll also want to find a place to start the logger, and set the config so that autoRun is true.
+This can be done in ```app.js```.
+
+```javacript
+  var elogger = require('epdoc-logger');
+  elogger.getLogManager(configOverrides.elogger);
+```
 
 
 ## Action Items
