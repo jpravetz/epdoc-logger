@@ -78,6 +78,8 @@ module.exports = function (options) {
             // We need the super's send method
             res._origEnd = res.end;
             res.end = Response.end;
+
+            res.delayTime = Response.delayTime;
         }
 
         next();
