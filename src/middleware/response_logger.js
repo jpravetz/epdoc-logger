@@ -4,7 +4,6 @@
  *****************************************************************************/
 'use strict';
 
-var _ = require('underscore');
 var Response = require('./response');
 var Logger = require('../logger');
 
@@ -74,9 +73,11 @@ module.exports = function (options) {
         } else {
             // We need the super's send method because we're going to muck with it
             res._origSend = res.send;
+            res.send = Response.send;
 
             // We need the super's send method
             res._origEnd = res.end;
+            res.end = Response.end;
         }
 
         next();
