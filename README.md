@@ -489,6 +489,8 @@ This can be done in ```app.js```.
   elogger.getLogManager(configOverrides.elogger);
 ```
 
+The above does not add logging to socketio requests. 
+Refer to examples/sails_request_logger.js to see how to log socket requests.
 
 ## Action Items
 
