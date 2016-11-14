@@ -32,6 +32,12 @@ module.exports = {
         if (res._delayTime) {
             log.data('delay', res._delayTime);
         }
+        // If you want to log more properties you can add them to res._logSendData
+        if( res._logSendData ) {
+            Object.keys(res._logSendData).forEach(function(key) {
+                log.data(key,res._logSendData[key]);
+            });
+        }
 
         if (!res._origSendCalled) {
             log.action('response.send')._info();
