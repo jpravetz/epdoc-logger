@@ -34,7 +34,8 @@ var moment = require('moment');
  * @param {Object} [options]
  * @param {Number} [options.separatorLength=22] The length of the separator preceeding the path.
  *   Note that this options may be discontinued in a future release.
- * @param {char} [options.separator='#'] The character to use as a separator
+ * @param {char} [options.separator='#'] The character to use as a separator. This is overwritten
+ * by the value set for the logManager.
  * @returns {Function} Function that can be called to add middleware to an express
  * [application]{@link http://expressjs.com/en/4x/api.html#app}.
  */
@@ -42,8 +43,8 @@ module.exports = function (options) {
 
     options || (options = {});
     var sepLen = options.separatorLength || 22;
-    var sep = options.separator || '#';
-    var sep0 = Array(sepLen).join(sep);
+    var sepChar = options.separator || '#';
+    var sep0 = Array(sepLen).join(sepChar);
 
     return function (req, res, next) {
 
@@ -61,8 +62,11 @@ module.exports = function (options) {
             data.localtime = moment(d).format('YYYY-MM-DDTHH:mm:ss.SSSZ');
             // data.utctime = (d).toISOString();
 
+            if( req.log.logMgr && req.log.logMgr.sep ) {
+                sepChar = req.log.logMgr.sepChar;
+            }
             var sepLen2 = Math.max(0, 62 - sepLen - data.path.length);
-            req.log.action(data.method).data(data)._info(sep0 + ' ' + data.path + ' ' + Array(sepLen2).join(sep));
+            req.log.action(data.method).data(data)._info(sep0 + ' ' + data.path + ' ' + Array(sepLen2).join(sepChar));
         }
         next();
     }

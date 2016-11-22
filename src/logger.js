@@ -143,9 +143,10 @@ Logger.prototype = {
      * Log a separator line that contains a message with '#' characters.
      * @return {Logger}
      */
-    separator: function () {
+    separator: function (options) {
         if (this.isAboveLevel(this.logMgr.LEVEL_INFO)) {
-            this._writeMessage(this.logMgr.LEVEL_INFO, "######################################################################");
+            var sep = this.logMgr.sep || "######################################################################";
+            this._writeMessage(this.logMgr.LEVEL_INFO, sep);
         }
         return this;
     },

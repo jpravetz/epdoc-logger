@@ -57,8 +57,9 @@ LogManager.prototype = {
      * @param {boolean} [options.static=false] - Indicates whether a static column should be
      *   included in log output
      * @param {string} [options.level=debug] - The log level at and above which log messages will
-     *   be
-     *   written
+     *   be written
+     * @param {char} [options.sepChar='#'] - Character to use for separator lines
+     * @param {number} [options.sepLen=70] - Length of separator lines
      * @param {boolean} [options.errorStack=false] - Include the error stack in the data column
      *   when
      *   writing Error objects to the log.
@@ -89,6 +90,9 @@ LogManager.prototype = {
         this.logLevel = options.level ? options.level : this.LEVEL_DEFAULT;
         // A stack of tranports, with the console transport always installed by default as a
         // fallback A queue of messages that may build up while we are switching streams
+        this.sepLen = options.sepLen || 70;
+        this.sepChar = options.sepChar || '#';
+        this.sep = Array(this.sepLen).join(this.sepChar);
         this.queue = [];
         this.bErrorStack = (options.errorStack === true) ? true : false;
         // Indicates whether we have started logging or not
