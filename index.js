@@ -110,7 +110,7 @@ var self = {
     /**
      * Return Express Middleware.
      * @example
-     * var reqId = require('logger').middleware().reqId;
+     * var reqId = require('epdoc-logger').middleware().reqId;
      * app.use(reqId());
      */
 
@@ -121,6 +121,22 @@ var self = {
             routeLogger: require('./src/middleware/route_logger'),
             routeSeparator: require('./src/middleware/route_separator'),
             errorHandler: require('./src/middleware/error_handler')
+        };
+    },
+
+    /**
+     * Return Koa2 Middleware. Requires node7.
+     * @example
+     * var reqId = require('epdoc-logger').koa().requestId;
+     * app.use(requestId());
+     */
+
+    koa: function () {
+        return {
+            requestId: require('./src/koa/request_id'),
+            requestLogger: require('./src/koa/request_logger'),
+            routeInfo: require('./src/koa/route_info'),
+            routeSeparator: require('./src/koa/route_separator')
         };
     }
 

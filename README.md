@@ -494,7 +494,6 @@ Refer to examples/sails_request_logger.js to see how to log socket requests.
 
 ## Action Items
 
-* Add koa middleware (I don't currently have a koa project going, so this may not happen for a long while)
 * More unit tests
 * Document and add unit tests for {@link LogListener}, an object that makes it easier to use log the callback transport in unit tests.
 * Update SOS transport as a general HTTP transport and rename to 'http' transport (beware).

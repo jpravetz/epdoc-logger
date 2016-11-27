@@ -352,9 +352,19 @@ Logger.prototype = {
      * @return {number} Response time in milliseconds
      */
     getHrElapsed: function () {
-        if (this.ctx && this.ctx.req && this.ctx.req._hrStartTime) {
-            var parts = process.hrtime(this.ctx.req._hrStartTime);
-            return ( parts[0] * 100000 + Math.round(parts[1] / 10000) ) / 100;
+        if (this.ctx) {
+            var val;
+            if (this.ctx._hrStartTime) {
+                val = this.ctx._hrStartTime;
+            } else if (this.ctx && this.ctx.state && this.ctx.state.hrStartTime) {
+                val = this.ctx.state.hrStartTime;
+            } else if (this.ctx.req && this.ctx.req._hrStartTime) {
+                val = this.ctx.req._hrStartTime;
+            }
+            if (val) {
+                var parts = process.hrtime(val);
+                return ( parts[0] * 100000 + Math.round(parts[1] / 10000) ) / 100;
+            }
         }
         return 0;
     },
@@ -462,7 +472,7 @@ Logger.prototype = {
             if (this.ctx) {
                 this.logParams(params);
             } else {
-                if( this.silent !== true ) {
+                if (this.silent !== true) {
                     this.logMgr.logParams(params, this.logLevel);
                 }
             }
@@ -496,13 +506,17 @@ Logger.prototype = {
         }
 
         if (this.ctx) {
-            if (this.ctx.req) {
+            if (this.ctx.state && this.ctx.app) {
+                // Attempt to determine if this is a koa context
+                setParams(this.ctx);
+            } else if (this.ctx.req) {
+                // Must be an express context
                 setParams(this.ctx.req);
             } else {
                 setParams(this.ctx);
             }
         }
-        if( this.silent !== true ) {
+        if (this.silent !== true) {
             this.logMgr.logParams(params, this.logLevel);
         }
         return this;
