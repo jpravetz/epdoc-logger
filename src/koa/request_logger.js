@@ -36,8 +36,8 @@ module.exports = function (options) {
                 }
             }
         }
-        let log = new Logger(logMgr, emitter, this);
-        this[objName] = log;
+        let log = logMgr.getLogger(emitter, ctx);
+        ctx[objName] = log;
 
         if (bSkip) {
             log.silent = true;

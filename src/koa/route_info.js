@@ -31,7 +31,7 @@
 
 module.exports = function () {
 
-    return function *routeInfo (ctx, next) {
+    return async function routeInfo (ctx, next) {
 
         //var rawCookie = req.cookies['connect.sid'];
 
@@ -55,7 +55,7 @@ module.exports = function () {
             ctx.log.action('routeInfo').data(data)._info();
         }
 
-        yield next;
+        await next();
     }
 
 };

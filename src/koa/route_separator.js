@@ -43,7 +43,7 @@ module.exports = function (options) {
     options || (options = {});
     let sepLenLeft = options.separatorLength || 22;
     let sepChar = options.separator || '#';
-    let sepLeft = Array(sepLen).join(sepChar);
+    let sepLeft = Array(sepLenLeft).join(sepChar);
 
     return async function routeSeparator (ctx, next) {
 
