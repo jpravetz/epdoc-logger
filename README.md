@@ -450,6 +450,25 @@ Adds a separator line to the log file for each new route.
 
 Adds an information line to the log file for each new route.
 
+## Koa2 Integration ##
+
+The included koa2 middleware are instantiated as follows:
+
+```javascript
+var middleware = require('epdoc-logger').koa();
+
+var app = koa();
+app.use(middleware.requestId());
+
+app.use(app.router);
+app.all('*', middleware.requestLogger());
+app.all('*', middleware.routeSeparator());
+app.all('*', middleware.routeInfo());
+```
+
+For details, refer to the similarily-named modules that are used for express, or the source code.
+
+
 ## Sailsjs Integration ##
 
 To add epdoc-logger middleware to a [sailsjs](http://sailsjs.org) application, add an ```http.customMiddleware``` function

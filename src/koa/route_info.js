@@ -1,37 +1,35 @@
 /*****************************************************************************
- * middleware/route_logger.js
  * Copyright 2012-2016 Jim Pravetz. May be freely distributed under the MIT license.
  *****************************************************************************/
 'use strict';
 
 /**
  * [Koa2]{@link http://koajs.com/} middleware outputs a log message for every route.
- * Depends on responseLogger being installed, must be added after the router.
+ * Depends on requestLogger being installed, must be added after the router.
  *
- * @module middleware/routeLogger
+ * @module middleware/routeInfo
  */
 
 
 /**
  * Return middleware that outputs a log message for every new request.
  * The log message is output via a {@link Logger} object that is attached
- * to the express [response]{@link http://expressjs.com/en/4x/api.html#res}
+ * to the koa2 [context]{@link http://koajs.com}
  * object using the [responseLogger]{@link module:middleware/responseLogger} middleware.
  *
  * @function routeLogger
  *
  * @example
- * var middleware = require('epdoc-logger').middleware();
- * app.all('*', middleware.responseLogger());
- * app.all('*', middleware.routeLogger());
+ * var middleware = require('epdoc-logger').koa();
+ * app.all('*', middleware.requestLogger());
+ * app.all('*', middleware.routeInfo());
  *
- * @returns {Function} Function that can be called to add middleware to an express
- * [application]{@link http://expressjs.com/en/4x/api.html#app}.
+ * @returns {Function} Function that can be called to add middleware to a koa application
  */
 
 module.exports = function () {
 
-    return async function routeInfo (ctx, next) {
+    return function routeInfo (ctx, next) {
 
         //var rawCookie = req.cookies['connect.sid'];
 
@@ -55,7 +53,7 @@ module.exports = function () {
             ctx.log.action('routeInfo').data(data)._info();
         }
 
-        await next();
+        return next();
     }
 
 };

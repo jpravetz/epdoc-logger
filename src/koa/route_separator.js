@@ -1,5 +1,4 @@
 /*****************************************************************************
- * middleware/route_separator.js
  * Copyright 2012-2016 Jim Pravetz. May be freely distributed under the MIT license.
  *****************************************************************************/
 'use strict';
@@ -35,8 +34,7 @@ const format = require('../format');
  *   Note that this options may be discontinued in a future release.
  * @param {char} [options.separator='#'] The character to use as a separator. This is overwritten
  * by the value set for the logManager.
- * @returns {Function} Function that can be called to add middleware to an express
- * [application]{@link http://expressjs.com/en/4x/api.html#app}.
+ * @returns {Function} Function that can be called to add middleware to a koa application.
  */
 module.exports = function (options) {
 
@@ -45,7 +43,7 @@ module.exports = function (options) {
     let sepChar = options.separator || '#';
     let sepLeft = Array(sepLenLeft).join(sepChar);
 
-    return async function routeSeparator (ctx, next) {
+    return function routeSeparator (ctx, next) {
 
         if (ctx.log) {
             let d = ctx.state.startTime || ctx._startTime || new Date();
@@ -68,7 +66,7 @@ module.exports = function (options) {
             ctx.log.action(data.method).data(data)._info(sepLeft + ' ' + data.path + ' ' + Array(sepLenRight).join(sepChar));
         }
 
-        await next();
+        return next();
     }
 
 };

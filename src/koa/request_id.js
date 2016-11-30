@@ -29,19 +29,21 @@ var reqId = 0;
  * var app = koa();
  * app.use(koa.requestId());
  *
- * @returns {Function} Function that can be called to add middleware to an express
- * [application]{@link http://expressjs.com/en/4x/api.html#app}.
+ * @returns {Function} Function that can be called to add middleware to a koa
+ * [application]{@link http://koajs.com}.
  */
 module.exports = function () {
 
-    return async function requestId (ctx, next) {
+    return function requestId (ctx, next) {
 
         ctx._reqId = ++reqId;
         ctx.state.hrStartTime = process.hrtime();
         ctx.state.startTime = new Date();
-        await next();
-        const ms = new Date() - ctx.state.startTime;
-        ctx.set('X-Response-Time', `${ms}ms`);
+        return next()
+            .then(() => {
+                const ms = new Date() - ctx.state.startTime;
+                ctx.set('X-Response-Time', `${ms}ms`);
+            });
     };
 
 };

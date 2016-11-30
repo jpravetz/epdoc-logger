@@ -1,12 +1,11 @@
 /*****************************************************************************
- * middleware/response.js
  * Copyright 2012-2016 Jim Pravetz. May be freely distributed under the MIT license.
  *****************************************************************************/
 'use strict';
 
 
 /**
- * Koa2 middelware to log a response
+ * Koa2 middleware to log a response
  */
 
 module.exports = function (options) {
@@ -25,7 +24,7 @@ module.exports = function (options) {
         excludeMethods = options.excludeMethod;
     }
 
-    return async function requestLogger (ctx, next) {
+    return function requestLogger (ctx, next) {
 
         let bSkip = false;
         if (excludeMethods) {
@@ -47,19 +46,20 @@ module.exports = function (options) {
             };
         }
 
-        await next();
-
-        log.data({ status: ctx.res.status }).hrElapsed('responseTime');
-        if (ctx.state.delayTime) {
-            log.data('delay', ctx.state.delayTime);
-        }
-        // If you want to log more properties you can add them to res._logSendData
-        if (ctx.state.logSendData) {
-            Object.keys(ctx.state.logSendData).forEach((key) => {
-                log.data(key, ctx.state.logSendData[key]);
-            });
-        }
-        log.action('response.send')._info();
+        return next().then(() => {
+            log.data({ status: ctx.res.status }).hrElapsed('responseTime');
+            if (ctx.state.delayTime) {
+                log.data('delay', ctx.state.delayTime);
+            }
+            // If you want to log more properties you can add them to res._logSendData
+            if (ctx.state.logSendData) {
+                Object.keys(ctx.state.logSendData).forEach((key) => {
+                    log.data(key, ctx.state.logSendData[key]);
+                });
+            }
+            log.action('response.send')._info();
+            return Promise.resolve();
+        });
 
     }
 };
