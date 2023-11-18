@@ -1,5 +1,8 @@
 # epdoc-logger #
 
+<span style="color:gold">**This project has been used in production, but was last updated at the end of 2016. Dependencies are in need up updating.**</span>
+
+
 A logging module supporting built-in and custom transports, Express 4 response mixins, 
 rich message and data syntax, chainable methods for recording log events, and a 
 callback transport to allow unit testing via log messages.
