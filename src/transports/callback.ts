@@ -22,135 +22,131 @@ var format = require('./../format');
  * @constructor
  */
 var CallbackTransport = function (options) {
-    this.options = options || {};
-    this.bIncludeSid = (options && options.sid === false) ? false : true;
-    this.bIncludeStatic = (options && options.static === false ) ? false : true;
-    this.level = this.options.level;
-    this.sType = 'callback';
-    this.bReady = true;
-    this.logCallback = options.callback;
-    this.uid = options.uid;
-    this.data = [];
+  this.options = options || {};
+  this.bIncludeSid = options && options.sid === false ? false : true;
+  this.bIncludeStatic = options && options.static === false ? false : true;
+  this.level = this.options.level;
+  this.sType = 'callback';
+  this.bReady = true;
+  this.logCallback = options.callback;
+  this.uid = options.uid;
+  this.data = [];
 };
 
 CallbackTransport.prototype = {
+  constructor: CallbackTransport,
 
-    constructor: CallbackTransport,
+  validateOptions: function () {
+    return null;
+  },
 
+  open: function (onSuccess) {
+    this.bReady = true;
+    onSuccess && onSuccess(true);
+  },
 
-    validateOptions: function () {
-        return null;
-    },
+  type: function () {
+    return this.sType;
+  },
 
-    open: function (onSuccess) {
-        this.bReady = true;
-        onSuccess && onSuccess(true);
-    },
+  /**
+   * Test if the transport matches the argument.
+   * @param transport {string|object} If a string, then matches if equal to 'callback'. If an
+   *   object, then matches if transport.type equals 'callback' and if transport.uid matches.
+   * @returns {boolean} True if the transport matches the argument
+   */
+  match: function (transport) {
+    if (_.isString(transport) && transport === this.sType) {
+      return true;
+    }
+    if (_.isObject(transport) && transport.type === this.sType) {
+      if (transport.uid == this.uid) {
+        return true;
+      }
+    }
+    return false;
+  },
 
-    type: function () {
-        return this.sType;
-    },
+  /**
+   * Return true if this logger is ready to accept write operations.
+   * Otherwise the caller should buffer writes and call write when ready is true.
+   * @returns {boolean}
+   */
+  ready: function () {
+    return this.bReady;
+  },
 
-    /**
-     * Test if the transport matches the argument.
-     * @param transport {string|object} If a string, then matches if equal to 'callback'. If an
-     *   object, then matches if transport.type equals 'callback' and if transport.uid matches.
-     * @returns {boolean} True if the transport matches the argument
-     */
-    match: function (transport) {
-        if (_.isString(transport) && transport === this.sType) {
-            return true;
-        }
-        if (_.isObject(transport) && transport.type === this.sType) {
-            if (transport.uid == this.uid) {
-                return true;
-            }
-        }
-        return false;
-    },
+  /**
+   * Used to clear the logger display. This is applicable only to certain transports, such
+   * as socket transports that direct logs to a UI.
+   */
+  clear: function () {
+    this.data = [];
+  },
 
-    /**
-     * Return true if this logger is ready to accept write operations.
-     * Otherwise the caller should buffer writes and call write when ready is true.
-     * @returns {boolean}
-     */
-    ready: function () {
-        return this.bReady;
-    },
+  flush: function (cb) {
+    cb && cb();
+  },
 
-    /**
-     * Used to clear the logger display. This is applicable only to certain transports, such
-     * as socket transports that direct logs to a UI.
-     */
-    clear: function () {
-        this.data = [];
-    },
+  /**
+   * Write a log line
+   * @param params {Object} Parameters to be logged:
+   *  @param {Date} params.time - Date object
+   * @param {string} params.level - log level (INFO, WARN, ERROR, or any string)
+   * @param {string} params.reqId - express request ID, if provided (output if options.sid is
+   *   true)
+   * @param {string} params.sid - express session ID, if provided (output if options.sid is true)
+   * @param {string} params.emitter - name of file or module or emitter (noun)
+   * @param {string} params.action - method or operation being performed (verb)
+   * @param {string} params.message - text string to output
+   * @param {Object} params.static - Arbitrary data to be logged in a 'static' column if enabled
+   *   via the LogManager.
+   * @param {Object} params.data - Arbitrary data to be logged in the 'data' column
+   */
+  write: function (params) {
+    var opts = {
+      timestamp: 'iso',
+      sid: this.bIncludeSid,
+      static: this.bIncludeStatic,
+      dataObjects: true
+    };
+    var json = format.paramsToJson(params, opts);
+    if (this.logCallback) {
+      this.logCallback(json);
+    } else {
+      this.data.push(json);
+    }
+  },
 
-    flush: function (cb) {
-        cb && cb();
-    },
+  end: function (cb) {
+    this.bReady = false;
+    cb && cb();
+  },
 
-    /**
-     * Write a log line
-     * @param params {Object} Parameters to be logged:
-     *  @param {Date} params.time - Date object
-     * @param {string} params.level - log level (INFO, WARN, ERROR, or any string)
-     * @param {string} params.reqId - express request ID, if provided (output if options.sid is
-     *   true)
-     * @param {string} params.sid - express session ID, if provided (output if options.sid is true)
-     * @param {string} params.emitter - name of file or module or emitter (noun)
-     * @param {string} params.action - method or operation being performed (verb)
-     * @param {string} params.message - text string to output
-     * @param {Object} params.static - Arbitrary data to be logged in a 'static' column if enabled
-     *   via the LogManager.
-     * @param {Object} params.data - Arbitrary data to be logged in the 'data' column
-     */
-    write: function (params) {
-        var opts = {
-            timestamp: 'iso',
-            sid: this.bIncludeSid,
-            static: this.bIncludeStatic,
-            dataObjects: true
-        };
-        var json = format.paramsToJson(params,opts);
-        if (this.logCallback) {
-            this.logCallback(json);
-        } else {
-            this.data.push(json);
-        }
-    },
+  stop: function (cb) {
+    this.end();
+    cb && cb();
+  },
 
-    end: function (cb) {
-        this.bReady = false;
-        cb && cb();
-    },
+  setLevel: function (level) {
+    this.level = level;
+  },
 
-    stop: function (cb) {
-        this.end();
-        cb && cb();
-    },
+  toString: function () {
+    return 'Callback' + (this.uid ? ' (' + this.uid + ')' : '');
+  },
 
-    setLevel: function(level) {
-        this.level = level;
-    },
+  getOptions: function () {
+    return undefined;
+  },
 
-    toString: function () {
-        return "Callback" + (this.uid ? (" (" + this.uid + ")") : "");
-    },
+  pad: function (n, width, z) {
+    z = z || '0';
+    n = n + '';
+    return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
+  },
 
-    getOptions: function() {
-        return undefined;
-    },
-
-    pad: function (n, width, z) {
-        z = z || '0';
-        n = n + '';
-        return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
-    },
-
-    last: true
-
+  last: true
 };
-
 
 module.exports = CallbackTransport;

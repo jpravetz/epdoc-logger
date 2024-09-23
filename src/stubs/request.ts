@@ -9,17 +9,17 @@ import { LoggerNew } from '../logger';
  */
 
 export function expressRequestStub(options: Dict) {
-    return new ExpressRequestStub(options);
+  return new ExpressRequestStub(options);
 }
 
 export class ExpressRequestStub {
-    log: LoggerNew = new LoggerNew('express.stub');
-    constructor(options: Dict) {
-        let startTime = new Date().getTime();
-        if (isObject(options)) {
-            for (let propName in options) {
-                this[propName] = options[propName];
-            }
-        }
+  log: LoggerNew = new LoggerNew('express.stub');
+  constructor(options: Dict) {
+    let startTime = new Date().getTime();
+    if (isObject(options)) {
+      for (let propName in options) {
+        this[propName] = options[propName];
+      }
     }
+  }
 }
