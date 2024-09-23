@@ -1,14 +1,4 @@
 /*****************************************************************************
-/*****************************************************************************
- * transports/console.js
- * Copyright 2012-2016 Jim Pravetz. May be freely distributed under the MIT license.
- *****************************************************************************/
-'use strict';
-
-var _ = require('underscore');
-var format = require('./../format');
-
-/**
  * Create a new Console transport to output log messages to the console.
  *
  * @param options {Object} Output options include:
@@ -29,33 +19,38 @@ var format = require('./../format');
  * @constructor
  */
 
-var ConsoleTransport = function (options) {
-    this.options = options || {};
-    this.bIncludeSid =
-        this.options.sid === false || this.options.bIncludeSid === false ? false : true;
-    this.bIncludeStatic = this.options.static === false ? false : true;
-    this.colorize = this.options.colorize !== false;
-    this.timestampFormat = this.options.timestamp || 'ms';
-    this.level = this.options.level;
-    this.sType = 'console';
-    this.bReady = true;
-};
+export class LogTransport {
+    options: any;
+    bIncludeSid: boolean;
+    bIncludeStatic: boolean;
+    colorize: boolean;
+    timestampFormat: string;
+    level: string;
+    sType: string;
+    bReady: boolean;
 
-ConsoleTransport.prototype = {
-    constructor: ConsoleTransport,
+    constructor(options) {
+        this.options = options || {};
+        this.bIncludeSid =
+            this.options.sid === false || this.options.bIncludeSid === false ? false : true;
+        this.bIncludeStatic = this.options.static === false ? false : true;
+        this.colorize = this.options.colorize !== false;
+        this.timestampFormat = this.options.timestamp || 'ms';
+        this.level = this.options.level;
+    }
 
-    validateOptions: function () {
+    validateOptions() {
         return null;
-    },
+    }
 
-    open: function (onSuccess) {
+    open(): Promise<boolean> {
         this.bReady = true;
-        onSuccess && onSuccess(true);
-    },
+        return Promise.resolve(true);
+    }
 
-    type: function () {
+    type() {
         return this.sType;
-    },
+    }
 
     /**
      * Test if the transport matches the argument.
@@ -63,7 +58,7 @@ ConsoleTransport.prototype = {
      *   then matches if transport.type equals 'console'.
      * @returns {boolean} True if the transport matches the argument
      */
-    match: function (transport) {
+    match(transport) {
         if (_.isString(transport) && transport === this.sType) {
             return true;
         }
@@ -71,26 +66,26 @@ ConsoleTransport.prototype = {
             return true;
         }
         return false;
-    },
+    }
 
     /**
      * Return true if this logger is ready to accept write operations.
      * Otherwise the caller should buffer writes and call write when ready is true.
      * @returns {boolean}
      */
-    ready: function () {
+    ready() {
         return this.bReady;
-    },
+    }
 
     /**
      * Used to clear the logger display. This is applicable only to certain transports, such
      * as socket transports that direct logs to a UI.
      */
-    clear: function () {},
+    clear() {}
 
-    flush: function (cb) {
-        cb && cb();
-    },
+    flush(): Promise<void> {
+        return Promise.resolve();
+    }
 
     /**
      * Write a log line
@@ -107,35 +102,34 @@ ConsoleTransport.prototype = {
      *   via the LogManager.
      * @param {Object} params.data - Arbitrary data to be logged in the 'data' column
      */
-    write: function (params) {
-        var msg = this._formatLogMessage(params);
+    write(params) {
+        let msg = this._formatLogMessage(params);
         console.log(msg);
-    },
+    }
 
-    end: function (cb) {
+    end(): Promise<void> {
         this.bReady = false;
-        cb && cb();
-    },
+        return Promise.resolve();
+    }
 
-    stop: function (cb) {
-        this.end();
-        cb && cb();
-    },
+    stop(): Promise<void> {
+        return this.end();
+    }
 
-    setLevel: function (level) {
+    setLevel(level) {
         this.level = level;
-    },
+    }
 
-    toString: function () {
+    toString() {
         return 'Console';
-    },
+    }
 
-    getOptions: function () {
+    getOptions() {
         return undefined;
-    },
+    }
 
-    _formatLogMessage: function (params) {
-        var opts = {
+    _formatLogMessage(params) {
+        let opts = {
             timestamp: this.timestampFormat,
             sid: this.bIncludeSid,
             static: this.bIncludeStatic,
@@ -147,13 +141,11 @@ ConsoleTransport.prototype = {
         } else if (this.options.format === 'template') {
             return format.paramsToString(params, opts);
         } else if (this.options.format === 'json') {
-            var json = format.paramsToJson(params, opts);
+            let json = format.paramsToJson(params, opts);
             return JSON.stringify(json);
         } else {
-            var json = format.paramsToJsonArray(params, opts);
+            let json = format.paramsToJsonArray(params, opts);
             return JSON.stringify(json);
         }
     }
-};
-
-module.exports = ConsoleTransport;
+}

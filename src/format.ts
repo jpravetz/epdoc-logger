@@ -1,20 +1,20 @@
-/*****************************************************************************
- * format.js
- * Copyright 2012-2016 Jim Pravetz. May be freely distributed under the MIT license.
- *****************************************************************************/
-'use strict';
+import { Dict, isDict, isError, isNonEmptyArray, pad } from '@epdoc/typeutil';
+import { LoggerError } from './error';
 
-var colorize = require('./lib/colorize');
+let colorize = require('./lib/colorize');
 
-var formatRegEx = /^\$(c*)(\d*)\{/;
-var padRegEx = /^0/;
+const REG = {
+    format: new RegExp(/^\$(c*)(\d*)\{/, 'g'),
+    pad: new RegExp(/^0/)
+};
 
 /**
  * Formatting routines that are used internally. Some of these may have external applications
  * and can be accessed by the module's 'format' export property
  */
 
-var self = {
+export class Format {
+    static regs: Record<string, RegExp> = {};
 
     /**
      * General method to format parameters into a JSON object.
@@ -36,10 +36,10 @@ var self = {
      * @param [options.static] {boolean} Include static data
      * @returns {Object}
      */
-    paramsToJson: function (params, options) {
-        options || ( options = {});
-        var json = {
-            timestamp: self.getTimestamp(params, options.timestamp),
+    static paramsToJson(params, options) {
+        options || (options = {});
+        let json: Dict = {
+            timestamp: Format.getTimestamp(params, options.timestamp),
             level: params.level,
             emitter: params.emitter,
             action: params.action,
@@ -64,7 +64,7 @@ var self = {
             json.message = params.message.join('\n');
         }
         return json;
-    },
+    }
 
     /**
      * General method to format parameters into a JSON Array.
@@ -86,14 +86,14 @@ var self = {
      * @param [options.static] {boolean} Include static data
      * @returns {Object}
      */
-    paramsToJsonArray: function (params, options) {
-        var json = [self.getTimestamp(params, options.timestamp), params.level.toUpperCase()];
+    static paramsToJsonArray(params, options) {
+        let json = [Format.getTimestamp(params, options.timestamp), params.level.toUpperCase()];
         if (options.sid) {
             json.push(params.reqId ? params.reqId : 0);
-            json.push(params.sid ? params.sid : "");
+            json.push(params.sid ? params.sid : '');
         }
-        json.push(params.emitter ? params.emitter : "");
-        json.push(params.action ? params.action : "");
+        json.push(params.emitter ? params.emitter : '');
+        json.push(params.action ? params.action : '');
         json.push(params.message);
         //json = json.concat(params.message?params.message:"");
         if (options.static) {
@@ -103,10 +103,7 @@ var self = {
             json.push(params.data);
         }
         return json;
-    },
-
-    // RegExp cache
-    regs: {},
+    }
 
     /**
      * General method to format parameters into a formatted string that can handle winston-like
@@ -130,56 +127,58 @@ var self = {
      * @param [options.static] {boolean} Include static data
      * @returns {Object}
      */
-    paramsToString: function (params, options) {
-
-        var template = options.template;
+    static paramsToString(params, options) {
+        let template = options.template;
         if (!template) {
-            template = "${ts} - $c5{level} [${emitter}/${action}] $c{message}";
+            template = '${ts} - $c5{level} [${emitter}/${action}] $c{message}';
             if (options.sid) {
-                template += " ${reqId}/${sid}";
+                template += ' ${reqId}/${sid}';
             }
         }
-        var output = template;
+        let output = template;
 
-        function replace (key, value) {
-            if( !self.regs[key] ) {
-                self.regs[key] = new RegExp('\\$c*\\d*\{' + key + '\}', 'g');
+        function replace(key, value) {
+            if (!Format.regs[key]) {
+                Format.regs[key] = new RegExp('\\$c*\\d*{' + key + '}', 'g');
             }
-            var m = output.match(self.regs[key]);
+            let m = output.match(Format.regs[key]);
             if (m && m.length) {
-                var p = m[0].match(formatRegEx);
+                let p = m[0].match(REG.format);
                 if (p[2]) {
-                    var plen = parseInt(p[2], 10);
+                    let plen = parseInt(p[2], 10);
                     if (plen) {
-                        if( padRegEx.test(p[2]) ) {
-                            if (typeof value === 'number' || String(parseInt(value,10)) === value) {
-                                value = self.pad(value, p[2]);
+                        if (REG.pad.test(p[2])) {
+                            if (
+                                typeof value === 'number' ||
+                                String(parseInt(value, 10)) === value
+                            ) {
+                                value = Format.pad(value, p[2]);
                             } else {
                                 plen = Math.max(plen, String(value).length);
-                                value = self.leftPad(value, ' ', plen);
+                                value = pad(value, plen, ' ');
                             }
                         } else {
                             plen = Math.max(plen, String(value).length);
-                            value = self.rightPad(value, ' ', plen);
+                            value = Format.rightPad(value, ' ', plen);
                         }
                     }
                 }
                 if (p[1] === 'c' && options.colorize) {
                     value = colorize.colorize(params.level, value);
                 }
-                output = output.replace(self.regs[key], value);
+                output = output.replace(Format.regs[key], value);
             }
         }
 
-        replace('ts', self.getTimestamp(params, options.timestamp));
-        replace('level', params.level.toUpperCase() ); // String(params.level.toUpperCase() + '       ').substr(0, 7));
+        replace('ts', Format.getTimestamp(params, options.timestamp));
+        replace('level', params.level.toUpperCase()); // String(params.level.toUpperCase() + '       ').substr(0, 7));
 
         if (options.sid) {
             replace('reqId', params.reqId ? params.reqId : '0');
             replace('sid', params.sid ? params.sid : '');
         }
         replace('emitter', params.emitter ? params.emitter : '');
-        replace('action', params.action ? params.action : '' );
+        replace('action', params.action ? params.action : '');
         replace('message', params.message ? params.message : '');
 
         if (options.static) {
@@ -187,18 +186,17 @@ var self = {
         }
         replace('data', JSON.stringify(params.data ? params.data : {}));
         return output;
-    },
+    }
 
-    getTimestamp: function (params, format) {
+    static getTimestamp(params, format) {
         if (format === 'smstime') {
             return String(params.time.getTime());
         } else if (format === 'iso') {
             return params.time.toISOString();
         } else {
-            return self.formatMS(params.timeDiff);
+            return Format.formatMS(params.timeDiff);
         }
-    },
-
+    }
 
     /**
      *
@@ -207,81 +205,93 @@ var self = {
      * @param [z='0'] {char} character with which to pad string.
      * @returns {String}
      */
-    pad: function (n, width, z) {
-        z = z || '0';
+    static pad(n, width, z = '0') {
         n = String(n);
         return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
-    },
+    }
 
-    rightPad: function (str, padString, length) {
-        while (str.length < length)
-            str = str + padString;
+    static rightPad(str, padString, length) {
+        while (str.length < length) str = str + padString;
         return str;
-    },
+    }
 
-    leftPad: function (str, padString, length) {
-        while (str.length < length)
-            str = padString + str;
+    static leftPad(str, padString, length) {
+        while (str.length < length) str = padString + str;
         return str;
-    },
+    }
 
+    static formatMS(ms) {
+        let milliseconds = ms % 1000;
+        let seconds = Math.floor(ms / 1000) % 60;
+        let minutes = Math.floor(ms / (60 * 1000));
+        return (
+            Format.pad(minutes, 2) +
+            ':' +
+            Format.pad(seconds, 2) +
+            '.' +
+            Format.pad(milliseconds, 3)
+        );
+    }
 
-    formatMS: function (ms) {
-        var milliseconds = ms % 1000;
-        var seconds = Math.floor(ms / 1000) % 60;
-        var minutes = Math.floor(ms / ( 60 * 1000 ));
-        return self.pad(minutes, 2) + ':' + self.pad(seconds, 2) + '.' + self.pad(milliseconds, 3);
-    },
-
-
-    toISOLocaleString: function (d, bNoMs) {
-        function tz (m) {
-            return ((m < 0) ? '+' : '-') + self.pad(Math.abs(m) / 60, 2) + ':' + self.pad(Math.abs(m) % 60, 2);
+    static toISOLocaleString(d, bNoMs) {
+        function tz(m) {
+            return (
+                (m < 0 ? '+' : '-') +
+                Format.pad(Math.abs(m) / 60, 2) +
+                ':' +
+                Format.pad(Math.abs(m) % 60, 2)
+            );
         }
-        var s = String(d.getFullYear()) + '-'
-            + self.pad(d.getMonth() + 1, 2) + '-'
-            + self.pad(d.getDate(), 2) + 'T'
-            + self.pad(d.getHours(), 2) + ':'
-            + self.pad(d.getMinutes(), 2) + ':'
-            + self.pad(d.getSeconds(), 2);
+        let s =
+            String(d.getFullYear()) +
+            '-' +
+            Format.pad(d.getMonth() + 1, 2) +
+            '-' +
+            Format.pad(d.getDate(), 2) +
+            'T' +
+            Format.pad(d.getHours(), 2) +
+            ':' +
+            Format.pad(d.getMinutes(), 2) +
+            ':' +
+            Format.pad(d.getSeconds(), 2);
         if (bNoMs !== true) {
-            s += '.' + self.pad(d.getMilliseconds(), 3)
+            s += '.' + Format.pad(d.getMilliseconds(), 3);
         }
         s += tz(d.getTimezoneOffset());
         return s;
-    },
+    }
 
     /**
      * Handle  various types of error messages, including MongooseError
      * @param err
      * @returns {string}
      */
-    errorToStringArray: function (err) {
-        if (err instanceof Error) {
-            var msgs = [err.message];
-            if (err.errors instanceof Array) {
-                for (var idx = 0; idx < err.errors.length; ++idx) {
-                    var e = err.errors[idx];
-                    if (typeof e === 'string') {
-                        msgs.push(e);
-                    } else if (_.isString(e.message)) {
-                        msgs.push(e.message);
-                    }
+    static errorToStringArray(err) {
+        if (isError(err)) {
+            let msgs = [err.message];
+            if (err instanceof LoggerError) {
+                if (isNonEmptyArray(err.errors)) {
+                    err.errors.forEach((e) => {
+                        if (typeof e === 'string') {
+                            msgs.push(e);
+                        } else if (typeof e.message === 'string') {
+                            msgs.push(e.message);
+                        }
+                    });
+                } else if (isDict(err.errors) && Object.keys(err.errors).length) {
+                    Object.keys(err.errors).forEach((name) => {
+                        let e = err.errors[name];
+                        if (typeof e === 'string') {
+                            msgs.push(e);
+                        } else if (typeof e.message === 'string') {
+                            msgs.push(e.message);
+                        }
+                    });
                 }
-            } else if (err.errors instanceof Object && Object.keys(err.errors).length) {
-                Object.keys(err.errors).forEach(function (name) {
-                    var e = err.errors[name];
-                    if (typeof e === 'string') {
-                        msgs.push(e);
-                    } else if (typeof e.message === 'string') {
-                        msgs.push(e.message);
-                    }
-                });
             }
             return msgs;
         }
     }
-
-};
+}
 
 module.exports = self;

@@ -1,17 +1,9 @@
-/*****************************************************************************
- * middleware/response.js
- * Copyright 2012-2016 Jim Pravetz. May be freely distributed under the MIT license.
- *****************************************************************************/
-'use strict';
-
-
 /**
  * Express.js methods that are either added to or replace methods of the Express response object.
  * @module Response
  */
 
-module.exports = {
-
+export const ExpressResponseHooks = {
     /**
      * Replace express's ```send``` method with our own, so that we can output a log message, but
      * then call the parent (```res```) object's ```send``` to finish the job. Will trap calls to
@@ -24,18 +16,18 @@ module.exports = {
      * @returns this
      */
     send: function (body) {
-        var res = this;
-        var req = this.log.ctx.req;
-        var log = this.log;
+        let res = this;
+        let req = this.log.ctx.req;
+        let log = this.log;
 
         log.data({ status: this.statusCode }).hrElapsed('responseTime');
         if (res._delayTime) {
             log.data('delay', res._delayTime);
         }
         // If you want to log more properties you can add them to res._logSendData
-        if( res._logSendData ) {
-            Object.keys(res._logSendData).forEach(function(key) {
-                log.data(key,res._logSendData[key]);
+        if (res._logSendData) {
+            Object.keys(res._logSendData).forEach(function (key) {
+                log.data(key, res._logSendData[key]);
             });
         }
 
@@ -45,10 +37,10 @@ module.exports = {
         // Trap case where res.json is called, which will result in res.send being called again
         if (typeof body === 'object' && body !== null && !Buffer.isBuffer(body)) {
             // settings
-            var app = req.app;
-            var replacer = app && app.get('json replacer') || null;
-            var spaces = app && app.get('json spaces') || '  ';
-            var s = JSON.stringify(body, replacer, spaces);
+            let app = req.app;
+            let replacer = (app && app.get('json replacer')) || null;
+            let spaces = (app && app.get('json spaces')) || '  ';
+            let s = JSON.stringify(body, replacer, spaces);
 
             // content-type
             if (!res.get('Content-Type')) {
@@ -73,7 +65,7 @@ module.exports = {
      * @returns this
      */
     end: function (body) {
-        var res = this;
+        let res = this;
         if (!res._origSendCalled) {
             this.log.data({ status: this.statusCode }).hrElapsed('responseTime');
             if (res._delayTime) {

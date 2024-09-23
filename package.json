@@ -15,26 +15,44 @@
     "url": "git://github.com/jpravetz/epdoc-logger.git"
   },
   "scripts": {
-    "docs": "gulp doc",
-    "test": "NODE_ENV=test mocha"
+    "clean": "rimraf dist coverage",
+    "version": "node scripts/version-inc.js",
+    "build": "npm run clean & npm run version & tsc",
+    "clear-warning": "watchman watch-del-all > /dev/null",
+    "test": "npm run clear-warning; jest --runInBand",
+    "format": "prettier --write 'src/**/*.ts'",
+    "launch": "node launchgen.js",
+    "publish": "npm publish --access public",
+    "start": "node dist/src/index.js"
   },
   "dependencies": {
+    "@epdoc/timeutil": "^2.6.0",
+    "@epdoc/typeutil": "^2.3.0",
     "colors": "^1.1.2",
     "moment": "^2.14.1",
     "request": "^2.74.0",
     "underscore": "^1.8.3"
   },
   "devDependencies": {
+    "@types/jest": "^29.5.13",
+    "@types/koa": "^2.15.0",
+    "@types/node": "^22.5.5",
+    "@types/express": "^4.17.21",
     "del": "^2.2.0",
+    "eslint": "^9.10.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prefer-arrow": "^1.2.3",
+    "eslint-plugin-unicorn": "^55.0.0",
     "express": "^4.14.0",
     "gulp": "^3.9.1",
     "gulp-jsdoc3": "^0.2.1",
     "gulp-util": "^3.0.7",
     "gutil": "^1.6.4",
-    "jsdoc": "^3.4.0",
-    "mocha": "^3.0.0",
-    "should": "^8.4.0",
-    "supertest": "^1.2.0",
-    "watchify": "^3.7.0"
+    "jest": "^29.7.0",
+    "koa": "^2.15.3",
+    "prettier": "^3.3.3",
+    "rimraf": "^6.0.1",
+    "ts-jest": "^29.2.5",
+    "typescript": "^5.6.2"
   }
 }

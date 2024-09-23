@@ -4,17 +4,19 @@
  *****************************************************************************/
 'use strict';
 
-var util = require('util');
-var format = require('./format');
-var moment = require('moment');
-var _ = require('underscore');
+import { isNonEmptyString } from '@epdoc/typeutil';
+import { LogManager } from './log-mgr';
 
+let util = require('util');
+let format = require('./format');
+let moment = require('moment');
+let _ = require('underscore');
 
 /**
  * <p>Create a new log object with methods to log to the transport that is attached to
  * <code>logMgr</code>. This log object can be attached to another object, for example an
  * [Express]{@link http://expressjs.com/} request object, in order to pass the log object down
- * through a calling stack. If a context is passed in, various properties may be harvested off of
+ * through a calling stack. If a context is passed in, letious properties may be harvested off of
  * the req property. These include: req._reqId (populates reqId column), req.sid (uses
  * req.session.id or req.sessionId and populates sid column), req._startTime and req._hrStartTime
  * (either can be used to determine the response time for a request).
@@ -33,15 +35,15 @@ var _ = require('underscore');
  *
  * @example
  * // Create a new Logger object step by step
- * var EpdocLogger = require('epdoc-logger');
- * var LogManager = EpdocLogger.LogManager;
- * var Logger = EpdocLogger.Logger;
- * var logMgr = new LogManager();
- * var log = new Logger(gLogMgr,'logtest');
+ * let EpdocLogger = require('epdoc-logger');
+ * let LogManager = EpdocLogger.LogManager;
+ * let Logger = EpdocLogger.Logger;
+ * let logMgr = new LogManager();
+ * let log = new Logger(gLogMgr,'logtest');
  *
  * @example
  * // Create a new Logger object the easy way using global LogManager.
- * var log = require('epdoc-logger').get('logtest');
+ * let log = require('epdoc-logger').get('logtest');
  *
  *
  * @param  {LogManager} logMgr - The parent LogManager object that specifies the transport and
@@ -54,18 +56,43 @@ var _ = require('underscore');
  *   properties.
  * @constructor
  */
-var Logger = function (logMgr, emitter, context) {
 
+export class LoggerNew {
+    protected logMgr: LogManager;
+    protected name: string;
+    protected emitter: string | string[];
+    protected context: object;
+    protected logLevel: string;
+    protected bErrorStack: boolean;
+    protected logData: object;
+    protected logAction: string;
+    protected stack: string[] = [];
+
+    constructor(logMgr: LogManager, emitter: string | string[], context: object) {
+        this.logMgr = logMgr;
+        this.stack = [];
+        if (isNonEmptyString(emitter)) {
+            this.name = 'Logger#' + emitter;
+            this.stack = [emitter];
+        }
+        this.logLevel = logMgr.levelThreshold ? logMgr.levelThreshold : logMgr.LEVEL_DEFAULT;
+        this.bErrorStack = logMgr.errorStackThreshold ? logMgr.errorStackThreshold : false;
+        this.logData;
+        this.logAction;
+    }
+}
+
+let Logger = function (logMgr, emitter, context) {
     // The common Logger object thru which output will be written
     this.logMgr = logMgr;
 
     // emitter column
     this.stack = [];
     if (_.isString(emitter)) {
-        this.name = "Logger#" + emitter;
+        this.name = 'Logger#' + emitter;
         this.stack = [emitter];
     } else if (_.isArray(emitter)) {
-        this.name = "Logger#" + emitter.join('.');
+        this.name = 'Logger#' + emitter.join('.');
         this.stack = emitter;
     }
 
@@ -86,9 +113,9 @@ var Logger = function (logMgr, emitter, context) {
 
     // Add log methods for every level supported. The log levels can be customized
     // by setting LogManager.LEVEL_ORDER.
-    var self = this;
+    let self = this;
 
-    var addLevelMethod = function (level) {
+    let addLevelMethod = function (level) {
         /**
          * Log a message at one of the log levels. The message can contain arguments (e.g 'Hello
          * %s',
@@ -96,9 +123,9 @@ var Logger = function (logMgr, emitter, context) {
          */
         return function (err) {
             if (err instanceof Error) {
-                var msgs = format.errorToStringArray(err);
+                let msgs = format.errorToStringArray(err);
                 if (self.bErrorStack && err.stack) {
-                    var items = err.stack.split(/\n\s*/);
+                    let items = err.stack.split(/\n\s*/);
                     self.data({ error: { code: err.code, stack: items } });
                 } else if (!_.isUndefined(err.code)) {
                     self.data({ error: { code: err.code } });
@@ -110,8 +137,8 @@ var Logger = function (logMgr, emitter, context) {
         };
     };
 
-    for (var idx = 0; idx < logMgr.LEVEL_ORDER.length; idx++) {
-        var level = logMgr.LEVEL_ORDER[idx];
+    for (let idx = 0; idx < logMgr.LEVEL_ORDER.length; idx++) {
+        let level = logMgr.LEVEL_ORDER[idx];
         self[level] = addLevelMethod(level);
     }
 
@@ -120,7 +147,6 @@ var Logger = function (logMgr, emitter, context) {
 };
 
 Logger.prototype = {
-
     constructor: Logger,
 
     setContext: function (ctx) {
@@ -135,7 +161,7 @@ Logger.prototype = {
      * @returns {Logger}
      */
     errorStack: function (bShow) {
-        this.bErrorStack = (bShow === false) ? false : true;
+        this.bErrorStack = bShow === false ? false : true;
         return this;
     },
 
@@ -145,7 +171,9 @@ Logger.prototype = {
      */
     separator: function (options) {
         if (this.isAboveLevel(this.logMgr.LEVEL_INFO)) {
-            var sep = this.logMgr.sep || "######################################################################";
+            let sep =
+                this.logMgr.sep ||
+                '######################################################################';
             this._writeMessage(this.logMgr.LEVEL_INFO, sep);
         }
         return this;
@@ -247,8 +275,8 @@ Logger.prototype = {
      *
      * <p>This method is usually called at the entry point of a function. Can also be
      * called by submodules, in which case the submodules should call [popName]{@link
-        * Logger#popName} when returning. Note that it is not necessary to call [popName]{@link
-        * Logger#popName} when used in the context of an Express context and terminating a request
+     * Logger#popName} when returning. Note that it is not necessary to call [popName]{@link
+     * Logger#popName} when used in the context of an Express context and terminating a request
      * with a response.
      *
      * @param name (required) String in the form 'api.org.create' (route.method or
@@ -318,7 +346,7 @@ Logger.prototype = {
         name || (name = 'elapsed');
         this.timer || (this.timer = {});
         if (this.timer[name]) {
-            return ((new Date()).getTime() - this.timer[name]);
+            return new Date().getTime() - this.timer[name];
         }
         return 0;
     },
@@ -332,7 +360,7 @@ Logger.prototype = {
     resetElapsed: function (name) {
         name || (name = 'elapsed');
         this.timer || (this.timer = {});
-        this.timer[name] = (new Date()).getTime();
+        this.timer[name] = new Date().getTime();
         return this;
     },
 
@@ -353,7 +381,7 @@ Logger.prototype = {
      */
     getHrElapsed: function () {
         if (this.ctx) {
-            var val;
+            let val;
             if (this.ctx._hrStartTime) {
                 val = this.ctx._hrStartTime;
             } else if (this.ctx && this.ctx.state && this.ctx.state.hrStartTime) {
@@ -362,8 +390,8 @@ Logger.prototype = {
                 val = this.ctx.req._hrStartTime;
             }
             if (val) {
-                var parts = process.hrtime(val);
-                return ( parts[0] * 100000 + Math.round(parts[1] / 10000) ) / 100;
+                let parts = process.hrtime(val);
+                return (parts[0] * 100000 + Math.round(parts[1] / 10000)) / 100;
             }
         }
         return 0;
@@ -371,7 +399,7 @@ Logger.prototype = {
 
     date: function (d, s) {
         if (this.isAboveLevel(this.logMgr.LEVEL_INFO)) {
-            d || ( d = new Date() );
+            d || (d = new Date());
             this.logAction = s || 'currentTime';
             this.data({
                 localtime: moment(d).format('YYYY-MM-DDTHH:mm:ss.SSSZ'),
@@ -387,7 +415,7 @@ Logger.prototype = {
     logArgs: function (level, args) {
         if (!args.length) {
             args.unshift('');
-        } else if (args.length && ( args[0] === undefined || args[0] === null )) {
+        } else if (args.length && (args[0] === undefined || args[0] === null)) {
             args.shift();
         }
         args.unshift(level);
@@ -408,7 +436,7 @@ Logger.prototype = {
      *   util.format.
      */
     log: function (level, msg) {
-        var args = Array.prototype.slice.call(arguments);
+        let args = Array.prototype.slice.call(arguments);
         if (args.length) {
             if (args.length === 1) {
                 args.unshift(this.logMgr.LEVEL_INFO);
@@ -419,7 +447,6 @@ Logger.prototype = {
         }
         return this;
     },
-
 
     /**
      * Calls the logMgr interface to output the log message.
@@ -432,9 +459,9 @@ Logger.prototype = {
      * @private
      */
     _writeMessage: function (level, msg) {
-        var args = Array.prototype.slice.call(arguments);
+        let args = Array.prototype.slice.call(arguments);
         if (args.length > 1) {
-            var params = {
+            let params = {
                 level: args.shift(),
                 emitter: this.stack.join('.')
             };
@@ -453,16 +480,21 @@ Logger.prototype = {
                 params.length = this.truncateLength;
                 delete this.truncateLength;
             }
-            if (args.length === 1 && (args[0] instanceof Array)) {
+            if (args.length === 1 && args[0] instanceof Array) {
                 params.message = [];
-                for (var idx = 0; idx < args[0].length; ++idx) {
-                    params.message.push(util.format.apply(this, (args[0][idx] instanceof Array) ? args[0][idx] : [args[0][idx]]));
+                for (let idx = 0; idx < args[0].length; ++idx) {
+                    params.message.push(
+                        util.format.apply(
+                            this,
+                            args[0][idx] instanceof Array ? args[0][idx] : [args[0][idx]]
+                        )
+                    );
                 }
             } else if (args && args.length) {
                 if (typeof args[0] === 'string') {
                     params.message = util.format.apply(this, args);
                 } else {
-                    var arr = [];
+                    let arr = [];
                     args.forEach(function (arg) {
                         arr.push(JSON.stringify(arg));
                     });
@@ -489,8 +521,7 @@ Logger.prototype = {
      * @return {*}
      */
     logParams: function (params) {
-
-        function setParams (ctx) {
+        function setParams(ctx) {
             if (ctx._reqId) {
                 params.reqId = ctx._reqId;
             } else if (ctx.reqId) {
@@ -552,13 +583,12 @@ Logger.prototype = {
      *   reference is null.
      */
     isAboveLevel: function (level) {
-        var reference = this.logLevel || this.logMgr.logLevel;
+        let reference = this.logLevel || this.logMgr.logLevel;
         if (this.logMgr.LEVEL_ORDER.indexOf(level) >= this.logMgr.LEVEL_ORDER.indexOf(reference)) {
             return true;
         }
         return false;
     }
 };
-
 
 module.exports = Logger;

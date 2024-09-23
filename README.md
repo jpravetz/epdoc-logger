@@ -457,6 +457,22 @@ Adds an information line to the log file for each new route.
 
 The included koa2 middleware are instantiated as follows:
 
+```typescript
+import { Koa2Middleware } from '@epdoc/logger';
+let middleware = new Koa2Middleware({});
+
+import * as Koa from "koa";
+const app = new Koa()
+
+let app = new Koa();
+app.use(middleware.requestId());
+app.use(app.router);
+app.all('*', middleware.requestLogger());
+app.all('*', middleware.routeSeparator());
+app.all('*', middleware.routeInfo());
+```
+
+
 ```javascript
 var middleware = require('epdoc-logger').koa();
 

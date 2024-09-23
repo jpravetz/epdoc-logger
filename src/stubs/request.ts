@@ -1,10 +1,5 @@
-/*****************************************************************************
- * stubs/request.js
- * Copyright 2012-2016 Jim Pravetz. May be freely distributed under the MIT license.
- *****************************************************************************/
-'use strict';
-
-var Logger = require('../logger');
+import { Dict, isObject } from '@epdoc/typeutil';
+import { LoggerNew } from '../logger';
 
 /**
  * Stub for express.request object, used when passing request object around when simulating req/res/next flow.
@@ -13,14 +8,18 @@ var Logger = require('../logger');
  * @return A request object
  */
 
-var Request = function(options) {
-    var startTime = (new Date()).getTime();
-    if( options instanceof Object ) {
-        for( var propName in options ) {
-            this[propName] = options[propName];
+export function expressRequestStub(options: Dict) {
+    return new ExpressRequestStub(options);
+}
+
+export class ExpressRequestStub {
+    log: LoggerNew = new LoggerNew('express.stub');
+    constructor(options: Dict) {
+        let startTime = new Date().getTime();
+        if (isObject(options)) {
+            for (let propName in options) {
+                this[propName] = options[propName];
+            }
         }
     }
-    this.log = new Logger()
-};
-
-module.exports = Request;
+}

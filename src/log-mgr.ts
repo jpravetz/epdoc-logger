@@ -1,16 +1,12 @@
-/*****************************************************************************
- * log_mgr.js
- * Copyright 2012-2016 Jim Pravetz. May be freely distributed under the MIT license.
- *****************************************************************************/
-'use strict';
+import { defaultLogLevelDef, LogLevel, LogLevelValue } from './level';
+import { Style } from './styles';
+import { LogTransport } from './transports/base';
+import { LoggerShowOpts, LogMgrDefaults, LogMgrOpts, SeparatorOpts } from './types';
 
+let Path = require('node:path');
+let Logger = require('./logger');
 
-var _ = require('underscore');
-var util = require('util');
-var Path = require('path');
-var Logger = require('./logger');
-
-var mgrIdx = 0;
+let mgrIdx = 0;
 
 /**
  * Create a new LogManager object with no transports. Logged messages will not begin
@@ -33,20 +29,42 @@ var mgrIdx = 0;
  *   various options.
  * @constructor
  */
-var LogManager = function (options) {
 
-    options || ( options = {} );
-    this.name = 'LogManager#' + (++mgrIdx);
-    this.t0 = options.t0 ? options.t0.getTime() : (new Date()).getTime();
-    // Count of how many errors, warnings, etc
-    this.logCount = {};
+export class LogManager {
+    name: string;
+    t0: number;
+    protected _defaults: LogMgrDefaults;
+    protected _logLevels: LogLevel;
+    transports: LogTransport[] = [];
+    consoleOptions: any;
+    running: boolean;
+    allTransportsReady: boolean;
 
-    this.setOptions(options);
-};
+    separator: SeparatorOpts;
+    _style: Style;
 
-LogManager.prototype = {
+    queue: any[];
+    levelThreshold: LogLevelValue;
+    errorStackThreshold: LogLevelValue;
+    show: LoggerShowOpts;
 
-    constructor: LogManager,
+    constructor(options: LogMgrOpts) {
+        this.name = 'LogManager#' + ++mgrIdx;
+        this.t0 = options.t0 ? options.t0.getTime() : new Date().getTime();
+        // Count of how many errors, warnings, etc
+        this._logLevels = new LogLevel(options.logLevels ?? defaultLogLevelDef);
+        if (options.defaults) {
+            this.separator = options.defaults.separatorOpts ?? { char: '#', length: 70 };
+            this.show = options.defaults.show ?? {};
+            this._style = options.defaults.style ?? {};
+            this.levelThreshold =
+                options.defaults.levelThreshold ?? this._logLevels.asValue('info');
+            this.errorStackThreshold =
+                options.defaults.errorStackThreshold ?? this._logLevels.asValue('debug');
+        }
+
+        this.setOptions(options);
+    }
 
     /**
      * Setup LogManager and transports based on config.
@@ -75,9 +93,8 @@ LogManager.prototype = {
      *   flushing will occur, which may result in transports that are not ready missing some
      *   messages.
      */
-    setOptions: function (options) {
-        this.sid = ( options.sid === true ) ? true : false;
-        this.static = ( options.static === true ) ? true : false;
+    setOptions(options) {
+        this.show = options.show;
         // Default threshold level for outputting logs
         this.LEVEL_DEFAULT = options.levelDefault || 'debug';
         // If changing LEVEL_ORDER, what level should internally generated info messages be output
@@ -86,27 +103,20 @@ LogManager.prototype = {
         // If changing LEVEL_ORDER, what level should internally generated warn messages be output
         // at?
         this.LEVEL_WARN = options.levelWarn || 'warn';
-        this.LEVEL_ORDER = options.levelOrder || ['verbose', 'debug', 'info', 'warn', 'error', 'fatal'];
-        this.logLevel = options.level ? options.level : this.LEVEL_DEFAULT;
         // A stack of tranports, with the console transport always installed by default as a
         // fallback A queue of messages that may build up while we are switching streams
-        this.sepLen = options.sepLen || 70;
-        this.sepChar = options.sepChar || '#';
-        this.sep = Array(this.sepLen).join(this.sepChar);
-        this.queue = [];
-        this.bErrorStack = (options.errorStack === true) ? true : false;
         // Indicates whether we have started logging or not
         this.running = false;
         this.allTransportsReady = options.allTransportsReady === false ? false : true;
         this.transports = [];
-        var tarray = [];
+        let tarray = [];
         if (_.isArray(options.transports)) {
             tarray = options.transports;
         } else if (options.transports) {
             tarray.push(options.transports);
         }
         if (tarray.length) {
-            for (var tdx = 0; tdx < tarray.length; tdx++) {
+            for (let tdx = 0; tdx < tarray.length; tdx++) {
                 this.addTransport(tarray[tdx], options[tarray[tdx]]);
             }
         } else {
@@ -115,7 +125,7 @@ LogManager.prototype = {
         if (options.autoRun === true) {
             this.start();
         }
-    },
+    }
 
     /**
      * Starts all transports, if not already started. This enables logs to be written to the
@@ -127,83 +137,80 @@ LogManager.prototype = {
      *   not normally necessary to wait for this callback.
      * @return {LogManager}
      */
-    start: function (callback) {
-        var self = this;
-        if (!self.running) {
-            var jobs = [];
-            if (!self.transports.length) {
-                self.addTransport('console', this.consoleOptions);
+    start(): Promise<any> {
+        if (!this.running) {
+            let jobs = [];
+            if (!this.transports.length) {
+                this.addTransport('console', this.consoleOptions);
             }
-            if (self.transports.length) {
-                for (var idx = 0; idx < self.transports.length; idx++) {
-                    var transport = self.transports[idx];
-                    jobs.push(self._startingTransport(transport));
-                }
-            }
-            Promise.all(jobs).then(function () {
-                self.running = true;
-                self.flushQueue();
-                callback && callback();
-            }, function (err) {
-                // The transport will have removed itself and stopped the queue, so try starting
-                // again with the remaining transports
-                self.start(callback);
+            this.transports.forEach((transport) => {
+                let job = this._startingTransport(transport);
+                jobs.push(job);
             });
+            return Promise.all(jobs)
+                .then(() => {
+                    this.running = true;
+                    return this.flushQueue();
+                })
+                .catch((err) => {
+                    // The transport will have removed itself and stopped the queue, so try starting
+                    // again with the remaining transports
+                    return this.start();
+                });
         } else {
-            callback && callback();
+            return Promise.resolve();
         }
-        return self;
-    },
+    }
 
     /**
      * Wraps {LogManager#start} into a Promise.
      * @return {Promise} Resolves to this.
      */
-    starting: function () {
-        var self = this;
-        return new Promise(function (resolve, reject) {
-            self.start(function (err) {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(self);
-                }
-            });
-        });
-    },
+    starting(): Promise<any> {
+        return this.start();
+    }
 
-    _startingTransport: function (transport) {
-        var self = this;
+    _startingTransport(transport) {
+        let self = this;
         return new Promise(function (resolve, reject) {
-            var name = transport.toString();
-            var bResolved = false;
+            let name = transport.toString();
+            let bResolved = false;
             transport.open(onSuccess, onError, onClose);
 
-            function onSuccess () {
+            function onSuccess() {
                 transport.clear();
-                self.logMessage(self.LEVEL_INFO, "logger.start.success", "Started transport '" + name + "'", { transport: name });
+                this.logMessage(
+                    this.LEVEL_INFO,
+                    'logger.start.success',
+                    "Started transport '" + name + "'",
+                    { transport: name }
+                );
                 if (!bResolved) {
                     bResolved = true;
                     resolve();
                 }
-                // self.flushQueue();
+                // this.flushQueue();
             }
 
-            function onError (err) {
-                self.logMessage(self.LEVEL_WARN, "logger.warn", "Tried but failed to start transport '" + name + "'. " + err);
-                self.removeTransport(transport);
+            function onError(err) {
+                this.logMessage(
+                    this.LEVEL_WARN,
+                    'logger.warn',
+                    "Tried but failed to start transport '" + name + "'. " + err
+                );
+                this.removeTransport(transport);
                 if (!bResolved) {
                     bResolved = true;
                     resolve();
                 }
             }
 
-            function onClose () {
-                self.logMessage(self.LEVEL_INFO, "logger.close", "Closed transport '" + name + "'");
-                self.removeTransport(transport);
+            function onClose() {
+                this.logMessage(this.LEVEL_INFO, 'logger.close', "Closed transport '" + name + "'");
+                this.removeTransport(transport);
             }
         });
-    },
+    }
 
     /**
      * Add a log transport. Multiple transports can be in operation at the same time, allowing log
@@ -228,22 +235,25 @@ LogManager.prototype = {
      * @param [options.level=debug] {string} - Log level for this transport.
      * @return {LogManager}
      */
-    addTransport: function (type, options) {
-        var newTransport = this._getNewTransport(type, options);
+    addTransport(type, options) {
+        let newTransport = this._getNewTransport(type, options);
         if (newTransport) {
             this.running = false;
             this.transports.unshift(newTransport);
-            var name = newTransport.toString();
-            var topts = newTransport.getOptions();
-            var sOptions = topts ? ' (' + JSON.stringify(topts) + ')' : '';
-            this.logMessage(this.LEVEL_INFO, "logger.transport.add", "Added transport '" + name + "'" + sOptions,
-                { transport: name, options: topts });
+            let name = newTransport.toString();
+            let topts = newTransport.getOptions();
+            let sOptions = topts ? ' (' + JSON.stringify(topts) + ')' : '';
+            this.logMessage(
+                this.LEVEL_INFO,
+                'logger.transport.add',
+                "Added transport '" + name + "'" + sOptions,
+                { transport: name, options: topts }
+            );
         }
         return this;
-    },
+    }
 
-    _getNewTransport: function (type, options) {
-
+    _getNewTransport(type, options) {
         if (!_.isString(type)) {
             if (_.isObject(type) && type.hasOwnProperty('type')) {
                 options = type;
@@ -253,7 +263,7 @@ LogManager.prototype = {
                 type = undefined;
             }
         }
-        options || ( options = {} );
+        options || (options = {});
 
         if (_.isUndefined(options.sid)) {
             options.sid = this.sid;
@@ -262,41 +272,45 @@ LogManager.prototype = {
             options.static = this.static;
         }
         if (_.isUndefined(options.level)) {
-            options.level = this.logLevel;
+            options.level = this.levelThreshold;
         }
 
-        var Transport;
-        var name = '';
+        let Transport;
+        let name = '';
 
         if (type) {
-            var p = Path.resolve(__dirname, 'transports', type);
+            let p = Path.resolve(__dirname, 'transports', type);
             Transport = require(p);
             name = type;
         } else if (options) {
             Transport = type;
         } else {
-            var p = Path.resolve(__dirname, 'transports/console');
+            let p = Path.resolve(__dirname, 'transports/console');
             Transport = require(p);
             name = 'console';
         }
 
         if (Transport) {
-            var newTransport = new Transport(options);
-            var err = newTransport.validateOptions();
+            let newTransport = new Transport(options);
+            let err = newTransport.validateOptions();
             if (!err) {
                 return newTransport;
             } else {
-                this.logMessage(this.LEVEL_WARN, "logger.transport.add.warn",
-                    ("Could not add transport '" + name + "'. " + err.message ), { options: options });
+                this.logMessage(
+                    this.LEVEL_WARN,
+                    'logger.transport.add.warn',
+                    "Could not add transport '" + name + "'. " + err.message,
+                    { options: options }
+                );
                 return;
             }
         }
         return this;
-    },
+    }
 
     /**
      * Remove a particular transport. Pauses log output. The caller should call [start()]{@link
-        * LogManager#start} to restart logging.
+     * LogManager#start} to restart logging.
      * @param transport {string|object} If a string then all transports of this type will be
      *   removed. If an object then all transports that match the object specification will be
      *   removed. Refer to the individual classes' <code>match</code> method.
@@ -304,15 +318,15 @@ LogManager.prototype = {
      *   but this is not necessary for normal use.
      * @return {Promise}
      */
-    removeTransport: function (transport, callback) {
-        var self = this;
+    removeTransport(transport, callback) {
+        let self = this;
         this.running = false;
-        var remainingTransports = [];
-        var jobs = [];
-        for (var idx = 0; idx < this.transports.length; idx++) {
-            var t = this.transports[idx];
+        let remainingTransports = [];
+        let jobs = [];
+        for (let idx = 0; idx < this.transports.length; idx++) {
+            let t = this.transports[idx];
             if (t.match(transport)) {
-                var job = new Promise(function (resolve, reject) {
+                let job = new Promise(function (resolve, reject) {
                     t.stop(function (err) {
                         if (err) {
                             reject(err);
@@ -322,30 +336,38 @@ LogManager.prototype = {
                     });
                 });
                 jobs.push(job);
-                self.logMessage(self.LEVEL_INFO, "logger.transport.remove", "Removed transport '" + t.toString() + "'", { transport: t.toString() });
+                this.logMessage(
+                    this.LEVEL_INFO,
+                    'logger.transport.remove',
+                    "Removed transport '" + t.toString() + "'",
+                    { transport: t.toString() }
+                );
             } else {
-                remainingTransports.push(this.transports[idx])
+                remainingTransports.push(this.transports[idx]);
             }
         }
         this.transports = remainingTransports;
-        return Promise.all(jobs).then(function () {
-            callback && callback();
-        }, function (err) {
-            callback && callback(err);
-        });
-    },
+        return Promise.all(jobs).then(
+            function () {
+                callback && callback();
+            },
+            function (err) {
+                callback && callback(err);
+            }
+        );
+    }
 
     /**
      * Test if this is a known transport
      * @param s {string} Name of the transport
      * @returns {boolean}
      */
-    isValidTransport: function (s) {
+    isValidTransport(s) {
         if (_.isString(s) && ['console', 'file', 'callback', 'loggly', 'sos'].indexOf(s) >= 0) {
             return true;
         }
         return false;
-    },
+    }
 
     /**
      * Return one of the predefined transport classes by name. If you want to define your own class,
@@ -353,20 +375,20 @@ LogManager.prototype = {
      * @returns {*} LogManager Class for which you should call new with options, or if creating
      *   your own transport you may subclass this object.
      */
-    getTransportByName: function (type) {
+    getTransportByName(type) {
         if (_.isString(type)) {
             return require('./transports/' + type);
         }
-    },
+    }
 
     /**
      * Get the list of currently set transports.
      * @returns {*} The current array of transports. Call type() on the return value to determine
      *   it's type.
      */
-    getTransports: function () {
+    getTransports() {
         return this.transports;
-    },
+    }
 
     /**
      * Log messages are first written to a buffer, then flushed. Calling this function will force
@@ -375,43 +397,43 @@ LogManager.prototype = {
      * @returns {LogManager}
      * @private
      */
-    flushQueue: function () {
+    flushQueue(): Promise<any> {
         if (this.running && this.queue.length) {
             if (this.transports.length) {
                 if (!this.allTransportsReady || this._allTransportsReady()) {
-                    var nextMsg = this.queue.shift();
+                    let nextMsg = this.queue.shift();
                     if (nextMsg) {
-                        for (var idx = 0; idx < this.transports.length; idx++) {
-                            var transport = this.transports[idx];
-                            var logLevel = transport.level || nextMsg._logLevel || this.logLevel;
+                        this.transports.forEach((transport) => {
+                            let logLevel =
+                                transport.level || nextMsg._logLevel || this.levelThreshold;
                             if (this.isAboveLevel(nextMsg.level, logLevel)) {
                                 nextMsg._logLevel = undefined;
                                 transport.write(nextMsg);
                             }
-                        }
+                        });
                         this.flushQueue();
                     }
                 }
             }
         }
-        return this;
-    },
+        return Promise.resolve();
+    }
 
     /**
      * Test if all transports are ready to receive messages.
      * @returns {boolean}
      * @private
      */
-    _allTransportsReady: function () {
-        var result = true;
-        for (var idx = 0; idx < this.transports.length; idx++) {
-            var transport = this.transports[idx];
+    _allTransportsReady() {
+        let result = true;
+        for (let idx = 0; idx < this.transports.length; idx++) {
+            let transport = this.transports[idx];
             if (!transport.ready()) {
                 result = false;
             }
         }
         return result;
-    },
+    }
 
     /**
      * Set automatically when the epdoc-logger module is initialized, but can be set manually to
@@ -419,18 +441,18 @@ LogManager.prototype = {
      * @param d {Date} The application start time
      * @return {LogManager}
      */
-    setStartTime: function (d) {
-        this.t0 = (new Date(d)).getTime();
+    setStartTime(d) {
+        this.t0 = new Date(d).getTime();
         return this;
-    },
+    }
 
     /**
      * Get the time at which the app or this module was initialized
      * @return {Number} Start time in milliseconds
      */
-    getStartTime: function () {
+    getStartTime() {
         return this.t0;
-    },
+    }
 
     /**
      * Return a new {@link Logger} object with the specified emitter name.
@@ -443,16 +465,16 @@ LogManager.prototype = {
      *   columns are left blank on output.
      * @return A new {logger} object.
      */
-    getLogger: function (emitter, context) {
+    getLogger(emitter, context) {
         return new Logger(this, emitter, context);
-    },
+    }
 
     /**
      * @deprecated
      */
-    get: function (moduleName, context) {
-        return this.getLogger(moduleName, context);
-    },
+    // get: function (moduleName, context) {
+    //     return this.getLogger(moduleName, context);
+    // },
 
     /**
      * A wrapper for logParams with a more limited set of properties.
@@ -463,19 +485,24 @@ LogManager.prototype = {
      * @return {LogManager}
      * @see {LogManager#logParams}
      */
-    logMessage: function (level, action, message, data) {
-        var params = { emitter: 'logger', level: level, action: action, message: message };
+    logMessage(level, action, message, data) {
+        let params = {
+            emitter: 'logger',
+            level: level,
+            action: action,
+            message: message
+        };
         if (data) {
             params.data = data;
         }
         return this.logParams(params);
-    },
+    }
 
     /**
      * Write a raw message to the transport. The LogManager will buffer messages to handle the
      * situation where we are switching transports and the new transport is not yet ready. It is
      * possible to log directly to a transport using this method and never need to create a {@link
-        * Logger} object.
+     * Logger} object.
      *
      * @param {Object} msgParams - The message to be written
      * @param {string} [msgParams.level=info] - Must be one of LEVEL_ORDER values, all lower case
@@ -485,7 +512,7 @@ LogManager.prototype = {
      * @param {string} [msgParams.time=now] - A date object with the current time
      * @param {string} [msgParams.timeDiff=calculated] - The difference in milliseconds between
      *   'time' and when the application was started, based on reading {@link
-        *   LogManager#getStartTime}
+     *   LogManager#getStartTime}
      * @param {string|string[]} msgParams.message - A string or an array of strings. If an array
      *   the string will be printed on multiple lines where supported (e.g. SOS). The string must
      *   already formatted (e.g.. no '%s')
@@ -494,13 +521,13 @@ LogManager.prototype = {
      *   setting set for the transport.
      * @return {LogManager}
      */
-    logParams: function (msgParams, logLevel) {
+    logParams(msgParams, logLevel) {
         if (msgParams) {
             if (!msgParams.level) {
                 msgParams.level = this.LEVEL_INFO;
             }
             // Set for later comparison
-            msgParams._logLevel = logLevel || this.logLevel;
+            msgParams._logLevel = logLevel || this.levelThreshold;
             if (!msgParams.time) {
                 msgParams.time = new Date();
             }
@@ -508,13 +535,17 @@ LogManager.prototype = {
                 msgParams.timeDiff = msgParams.time.getTime() - this.t0;
             }
             this.queue.push(msgParams);
-            if (msgParams.length && msgParams.message && msgParams.message.length > msgParams.length) {
-                msgParams.message = msgParams.message.substr(0, msgParams.length) + "...";
+            if (
+                msgParams.length &&
+                msgParams.message &&
+                msgParams.message.length > msgParams.length
+            ) {
+                msgParams.message = msgParams.message.substr(0, msgParams.length) + '...';
             }
             this.logCount[msgParams.level] = 1 + (this.logCount[msgParams.level] || 0);
         }
         return this.flushQueue();
-    },
+    }
 
     /**
      * Set the {@link LogManager} objects's minimum log level.
@@ -523,34 +554,33 @@ LogManager.prototype = {
      * @param [options.transports=false] {Boolean} Set the level for all transports as well.
      * @return {LogManager}
      */
-    setLevel: function (level, options) {
-        this.logLevel = level;
+    setLevel(level, options) {
+        this.levelThreshold = level;
         if (this.transports) {
-            for (var tdx = 0; tdx < this.transports.length; tdx++) {
-                var transport = this.transports[tdx];
+            for (let tdx = 0; tdx < this.transports.length; tdx++) {
+                let transport = this.transports[tdx];
                 transport.setLevel(level);
             }
         }
         return this;
-    },
+    }
 
     /**
-     * Return true if the level is equal to or greater then the {@link LogManager#logLevel}
+     * Return true if the level is equal to or greater then the {@link LogManager#levelThreshold}
      * property.
      * @param level {string} Level that is to be tested
      * @param [thresholdLevel] {string} Threshold level against which <code>level</code> is to be
      *   tested. If this is not supplied then the level will be tested against {@link
-        *   LogManager#logLevel}.
+     *   LogManager#logLevel}.
      * @return {boolean}
      */
-    isAboveLevel: function (level, thresholdLevel) {
-        var threshold = thresholdLevel || this.logLevel;
+    isAboveLevel(level, thresholdLevel) {
+        let threshold = thresholdLevel || this.levelThreshold;
         if (this.LEVEL_ORDER.indexOf(level) >= this.LEVEL_ORDER.indexOf(threshold)) {
             return true;
         }
         return false;
-    },
-
+    }
 
     /**
      * Write a log line to the transport with a count of how many of each level of message has been
@@ -558,28 +588,28 @@ LogManager.prototype = {
      * @param {string} [message]
      * @return {LogManager}
      */
-    writeCount: function (message) {
+    writeCount(message) {
         return this.logParams({
             emitter: 'logger',
             action: 'counts',
             data: this.logCount,
             message: message
         });
-    },
+    }
 
     /**
      * Set whether to show an error stack as data when an Error is encountered.
      * This option can also be set in the {@link LogManager} constructor. The property is
      * referenced by {@link Logger} objects when they are created, and is used by the {@link
-        * Logger} to determine whether to output an error stack trace in the data column when an
+     * Logger} to determine whether to output an error stack trace in the data column when an
      * Error is logged.
      * @param {boolean} [bShow=true] Set whether to log the call stack for logged errors.
      * @returns {LogManager}
      */
-    errorStack: function (bShow) {
-        this.bErrorStack = (bShow === false) ? false : true;
+    errorStack(bShow) {
+        this.errorStackThreshold = bShow === false ? false : true;
         return this;
-    },
+    }
 
     /**
      * Return a count object containing a count of the number of log messages produced at the
@@ -587,28 +617,31 @@ LogManager.prototype = {
      * @returns {Object} with properties for 'warn', 'info', etc. where the value of each property
      *   is a number.
      */
-    getCount: function () {
+    getCount() {
         return this.logCount;
-    },
+    }
 
     /**
      * Stops and removes all transports. Should be called before a shutdown.
      * @param {function} [callback] - Called with err when complete.
      * @returns {Promise}
      */
-    destroying: function (callback) {
-        var self = this;
+    destroying(callback) {
+        let self = this;
         return new Promise(function (resolve, reject) {
-            self.stopping().then(function () {
-                self.transports = [];
-                callback && callback();
-                resolve();
-            }, function (err) {
-                callback && callback(err);
-                reject(err);
-            });
+            this.stopping().then(
+                function () {
+                    this.transports = [];
+                    callback && callback();
+                    resolve();
+                },
+                function (err) {
+                    callback && callback(err);
+                    reject(err);
+                }
+            );
         });
-    },
+    }
 
     /**
      * Flushes all transport queues, disconnects all logging transports, but leaves the list of
@@ -616,61 +649,27 @@ LogManager.prototype = {
      * @param {function} [callback] - Called with err when complete.
      * @returns {Promise}
      */
-    stopping: function (callback) {
+    stopping(): Promise<any> {
         this.running = false;
-        var jobs = [];
-        for (var tdx = 0; tdx < this.transports.length; tdx++) {
-            var transport = this.transports[tdx];
-            if (transport) {
-                var job = new Promise(function (resolve, reject) {
-                    transport.stop(function (err) {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            resolve();
-                        }
-                    });
-                });
-                jobs.push(job);
-            }
-        }
-        return Promise.all(jobs).then(function () {
-            callback && callback();
-            return Promise.resolve();
-        }, function (err) {
-            callback && callback(err);
-            return Promise.reject(err);
+        let jobs = [];
+        this.transports.forEach((transport) => {
+            let job = transport.stop();
+            jobs.push(job);
         });
-    },
+        return Promise.all(jobs);
+    }
 
     /**
      * Flush the buffers for all transports.
      * @param {function} [callback] - Called with err when complete.
      * @returns {Promise}
      */
-    flushing: function (callback) {
-        var jobs = [];
-        _.each(this.transports, function (transport) {
-            var job = new Promise(function (resolve, reject) {
-                transport.flush(function (err) {
-                    if (err) {
-                        reject(err);
-                    } else {
-                        resolve();
-                    }
-                });
-            });
+    flushing(): Promise<any> {
+        let jobs = [];
+        this.transports.forEach((transport) => {
+            let job = transport.flush();
             jobs.push(job);
         });
-        return Promise.all(jobs).then(function () {
-            callback && callback();
-            return Promise.resolve();
-        }, function (err) {
-            callback && callback(err);
-            return Promise.reject(err);
-        });
+        return Promise.all(jobs);
     }
-
-};
-
-module.exports = LogManager;
+}
