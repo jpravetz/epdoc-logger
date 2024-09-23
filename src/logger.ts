@@ -88,7 +88,7 @@ let Logger = function (logMgr, emitter, context) {
 
   // emitter column
   this.stack = [];
-  if (_.isString(emitter)) {
+  if (isString(emitter)) {
     this.name = 'Logger#' + emitter;
     this.stack = [emitter];
   } else if (_.isArray(emitter)) {

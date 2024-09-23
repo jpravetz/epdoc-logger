@@ -1,6 +1,13 @@
-import { Integer } from '@epdoc/typeutil';
+import { Integer, isString } from '@epdoc/typeutil';
+import { LogMessage } from '../types';
 
 let transportIdx: Integer = 0;
+
+export type TransportFunctions = {
+  onSuccess: (val: boolean) => void;
+  onError: (err: Error) => void;
+  onClose: () => void;
+};
 
 /*****************************************************************************
  * Create a new Console transport to output log messages to the console.
@@ -43,25 +50,46 @@ export class LogTransport {
     this.level = this.options.level;
   }
 
+  /**
+   * Validate the options for the transport.
+   * @param previous {LogTransport} Optional previous transport for comparison.
+   * @returns {Error | undefined} An error if validation fails, otherwise undefined.
+   */
   validateOptions(previous?: LogTransport): Error | undefined {
     return null;
   }
 
-  open(onError: (err: Error) => void, onClose: () => void): Promise<any> {
-    this.bReady = true;
-    return Promise.resolve(true);
-  }
-
+  /**
+   * Get the name of the transport.
+   * @returns {string} The name of the transport.
+   */
   get name(): string {
     return `transport.${this.type}.${this.id}`;
   }
 
+  /**
+   * Get the type of the transport.
+   * @returns {string} The type of the transport.
+   */
   get type(): string {
     return 'invalid';
   }
 
+  /**
+   * Check if the transport is writable. Even though a transport exists, and has
+   * been opened, it may not be ready to be writable.
+   * @returns {boolean} True if the transport is writable, otherwise false.
+   */
   get writable(): boolean {
     return false;
+  }
+
+  /**
+   * Set the log level for the transport.
+   * @param level {string} The log level to set.
+   */
+  public setLevel(level) {
+    this.level = level;
   }
 
   /**
@@ -70,11 +98,11 @@ export class LogTransport {
    *   then matches if transport.type equals 'console'.
    * @returns {boolean} True if the transport matches the argument
    */
-  match(transport) {
-    if (_.isString(transport) && transport === this.sType) {
+  match(transport: string | LogTransport) {
+    if (isString(transport) && transport === this.type) {
       return true;
     }
-    if (_.isObject(transport) && transport.type === this.sType) {
+    if (transport instanceof LogTransport && transport.type === this.type) {
       return true;
     }
     return false;
@@ -83,64 +111,86 @@ export class LogTransport {
   /**
    * Return true if this logger is ready to accept write operations.
    * Otherwise the caller should buffer writes and call write when ready is true.
-   * @returns {boolean}
+   * @returns {boolean} True if ready, otherwise false.
    */
-  ready() {
+  public ready() {
     return this.bReady;
+  }
+
+  /**
+   * Open the transport for writing.
+   * @param cb {TransportFunctions} Callback functions for success, error, and close events.
+   */
+  open(cb: TransportFunctions): void {
+    this.bReady = true;
+    cb.onError(new Error('Base transport cannot be opened'));
   }
 
   /**
    * Used to clear the logger display. This is applicable only to certain transports, such
    * as socket transports that direct logs to a UI.
    */
-  clear() {}
+  public clear() {}
 
-  flush(): Promise<void> {
+  /**
+   * Flush any buffered log messages.
+   * @returns {Promise<void>} A promise that resolves when the flush is complete.
+   */
+  public flush(): Promise<void> {
     return Promise.resolve();
   }
 
   /**
-   * Write a log line
-   * @param params {Object} Parameters to be logged:
-   * @param {Date} params.time - Date object
-   * @param {string} params.level - log level (INFO, WARN, ERROR, or any string)
-   * @param {string} params.reqId - express request ID, if provided (output if options.sid is
-   *   true)
-   * @param {string} params.sid - express session ID, if provided (output if options.sid is true)
-   * @param {string} params.emitter - name of file or module or emitter (noun)
-   * @param {string} params.action - method or operation being performed (verb)
-   * @param {string} params.message - text string to output
-   * @param {Object} params.static - Arbitrary data to be logged in a 'static' column if enabled
-   *   via the LogManager.
-   * @param {Object} params.data - Arbitrary data to be logged in the 'data' column
+   * Write a log message.
+   * @param msg {LogMessage} The log message to write.
+   * @returns {this} The current instance for chaining.
    */
-  write(params) {
-    let msg = this._formatLogMessage(params);
-    console.log(msg);
+  protected write(msg: LogMessage): this {
+    let str = this.formatLogMessage(msg);
+    return this._write(str);
   }
 
-  end(): Promise<void> {
+  /**
+   * Internal method to perform the actual write operation.
+   * @param msg {string} The message to write.
+   * @returns {this} The current instance for chaining.
+   */
+  protected _write(msg: string): this {
+    console.log(msg);
+    return this;
+  }
+
+  /**
+   * Stop the logging process.
+   * @returns {Promise<void>} A promise that resolves when the logging is stopped.
+   */
+  public stop(): Promise<void> {
+    return this.end();
+  }
+
+  /**
+   * End the logging process.
+   * @returns {Promise<void>} A promise that resolves when the logging is ended.
+   */
+  public end(): Promise<void> {
     this.bReady = false;
     return Promise.resolve();
   }
 
-  stop(): Promise<void> {
-    return this.end();
-  }
-
-  setLevel(level) {
-    this.level = level;
-  }
-
-  toString() {
+  public toString() {
     return 'Console';
   }
 
-  getOptions() {
+  public getOptions() {
     return undefined;
   }
 
-  _formatLogMessage(params) {
+  /**
+   * Format the log message based on the provided parameters.
+   * @param params {LogMessage} The log message parameters.
+   * @returns {string} The formatted log message.
+   */
+  protected formatLogMessage(params: LogMessage) {
     let opts = {
       timestamp: this.timestampFormat,
       sid: this.bIncludeSid,

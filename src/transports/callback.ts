@@ -56,7 +56,7 @@ CallbackTransport.prototype = {
    * @returns {boolean} True if the transport matches the argument
    */
   match: function (transport) {
-    if (_.isString(transport) && transport === this.sType) {
+    if (isString(transport) && transport === this.sType) {
       return true;
     }
     if (_.isObject(transport) && transport.type === this.sType) {

@@ -1,10 +1,11 @@
-import { isArray, isObject } from '@epdoc/typeutil';
+import { isArray, isString } from '@epdoc/typeutil';
 import { defaultLogLevelDef, LogLevel, LogLevelValue } from './level';
-import { Style } from './styles';
-import { LogTransport } from './transports/base';
+import { ColorStyle, Style } from './styles';
+import { LogTransport, TransportFunctions } from './transports/base';
 import { TransportFactory } from './transports/factory';
 import {
   consoleTransportDefaults,
+  isTransportOptions,
   LoggerRunOpts,
   LoggerShowOpts,
   LogMessage,
@@ -71,7 +72,7 @@ export class LogManager {
     if (options.defaults) {
       this.separator = options.defaults.separatorOpts ?? { char: '#', length: 70 };
       this.show = options.defaults.show ?? {};
-      this._style = options.defaults.style ?? {};
+      this._style = options.defaults.style ?? new ColorStyle();
       this.levelThreshold = options.defaults.levelThreshold ?? this._logLevels.asValue('info');
       this.errorStackThreshold =
         options.defaults.errorStackThreshold ?? this._logLevels.asValue('debug');
@@ -83,12 +84,12 @@ export class LogManager {
     }
   }
 
-  addTransports(transports: TransportOptions | TransportOptions[]) {
+  public addTransports(transports: TransportOptions | TransportOptions[]) {
     if (isArray(transports)) {
       transports.forEach((transport) => {
         this.addTransport(transport);
       });
-    } else if (isObject(transports)) {
+    } else if (isTransportOptions(transports)) {
       this.addTransport(transports);
     } else {
       this.addTransport(consoleTransportDefaults);
@@ -104,11 +105,11 @@ export class LogManager {
    *   not normally necessary to wait for this callback.
    * @return {LogManager}
    */
-  start(): Promise<any> {
+  public async start(): Promise<any> {
     if (!this.running) {
       let jobs = [];
       this.transports.forEach((transport) => {
-        let job = this._startingTransport(transport);
+        let job = this.startingTransport(transport);
         jobs.push(job);
       });
       return Promise.all(jobs)
@@ -134,45 +135,45 @@ export class LogManager {
     return this.start();
   }
 
-  _startingTransport(transport) {
+  private startingTransport(transport): Promise<any> {
     let self = this;
     return new Promise(function (resolve, reject) {
       let name = transport.name;
       let bResolved = false;
-      transport.open(onSuccess, onError, onClose);
 
-      function onSuccess() {
-        transport.clear();
-        this.logMessage(
-          this.LEVEL_INFO,
-          'logger.start.success',
-          "Started transport '" + name + "'",
-          { transport: name }
-        );
-        if (!bResolved) {
-          bResolved = true;
-          resolve();
+      const cb: TransportFunctions = {
+        onSuccess: () => {
+          transport.clear();
+          this.logMessage(
+            this.LEVEL_INFO,
+            'logger.start.success',
+            "Started transport '" + name + "'",
+            { transport: name }
+          );
+          if (!bResolved) {
+            bResolved = true;
+            resolve(true);
+          }
+        },
+        onError: (err) => {
+          this.logMessage(
+            this.LEVEL_WARN,
+            'logger.warn',
+            "Tried but failed to start transport '" + name + "'. " + err
+          );
+          this.removeTransport(transport);
+          if (!bResolved) {
+            bResolved = true;
+            resolve(true);
+          }
+        },
+        onClose: () => {
+          this.logMessage(this.LEVEL_INFO, 'logger.close', "Closed transport '" + name + "'");
+          this.removeTransport(transport);
         }
-        // this.flushQueue();
-      }
+      };
 
-      function onError(err) {
-        this.logMessage(
-          this.LEVEL_WARN,
-          'logger.warn',
-          "Tried but failed to start transport '" + name + "'. " + err
-        );
-        this.removeTransport(transport);
-        if (!bResolved) {
-          bResolved = true;
-          resolve();
-        }
-      }
-
-      function onClose() {
-        this.logMessage(this.LEVEL_INFO, 'logger.close', "Closed transport '" + name + "'");
-        this.removeTransport(transport);
-      }
+      transport.open(cb);
     });
   }
 
@@ -207,12 +208,11 @@ export class LogManager {
       let name = newTransport.name;
       let topts = newTransport.getOptions();
       let sOptions = topts ? ' (' + JSON.stringify(topts) + ')' : '';
-      this.logMessage(
-        this.LEVEL_INFO,
-        'logger.transport.add',
-        "Added transport '" + name + "'" + sOptions,
-        { transport: name, options: topts }
-      );
+      this.logMessage({
+        action: 'logger.transport.add',
+        message: "Added transport '" + name + "'" + sOptions,
+        data: { transport: newTransport.name }
+      });
     }
     return this;
   }
@@ -220,7 +220,7 @@ export class LogManager {
   _getNewTransport(options: TransportOptions) {
     const type = options.name;
 
-    if (!_.isString(type)) {
+    if (!isString(type)) {
       if (_.isObject(type) && type.hasOwnProperty('type')) {
         options = type;
         type = type.type;
@@ -329,7 +329,7 @@ export class LogManager {
    * @returns {boolean}
    */
   isValidTransport(s) {
-    if (_.isString(s) && ['console', 'file', 'callback', 'loggly', 'sos'].indexOf(s) >= 0) {
+    if (isString(s) && ['console', 'file', 'callback', 'loggly', 'sos'].indexOf(s) >= 0) {
       return true;
     }
     return false;
@@ -341,11 +341,11 @@ export class LogManager {
    * @returns {*} LogManager Class for which you should call new with options, or if creating
    *   your own transport you may subclass this object.
    */
-  getTransportByName(type) {
-    if (_.isString(type)) {
-      return require('./transports/' + type);
-    }
-  }
+  // getTransportByName(type) {
+  //   if (isString(type)) {
+  //     return require('./transports/' + type);
+  //   }
+  // }
 
   /**
    * Get the list of currently set transports.

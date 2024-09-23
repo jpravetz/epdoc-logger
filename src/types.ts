@@ -1,5 +1,5 @@
 import { Milliseconds } from '@epdoc/timeutil';
-import { Dict, Integer } from '@epdoc/typeutil';
+import { Dict, Integer, isDict, isString } from '@epdoc/typeutil';
 import { LogLevelDef, LogLevelValue } from './level';
 import { Style } from './styles';
 
@@ -90,6 +90,10 @@ export type TransportOptions = Partial<{
   levelThreshold: LogLevelValue;
   format: LoggerLineFormatOpts;
 }>;
+
+export function isTransportOptions(val: any): val is TransportOptions {
+  return isDict(val) && isString(val.name);
+}
 
 export type LogMgrOpts = Partial<{
   timer: any;

@@ -44,7 +44,7 @@ var LogglyTransport = function (options) {
   this.aTags = ['epdoc'];
   if (_.isArray(options.tags) && options.tags.length) {
     this.aTags = this.aTags.concat(options.tags);
-  } else if (_.isString(options.tags)) {
+  } else if (isString(options.tags)) {
     this.aTags.push(options.tags);
   }
   this.tags = '/tag/' + this.aTags.join(',') + '/';
@@ -66,7 +66,7 @@ LogglyTransport.prototype = {
   constructor: LogglyTransport,
 
   validateOptions: function () {
-    if (!_.isString(this.options.token)) {
+    if (!isString(this.options.token)) {
       return new Error('Token not specified or invalid');
     }
     return null;
@@ -95,7 +95,7 @@ LogglyTransport.prototype = {
    * @returns {boolean} True if the transport matches the argument
    */
   match: function (transport) {
-    if (_.isString(transport) && transport === this.sType) {
+    if (isString(transport) && transport === this.sType) {
       return true;
     }
     if (_.isObject(transport) && transport.type === this.sType && transport.token === this.token) {
