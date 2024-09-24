@@ -1,21 +1,21 @@
-/*
- * config.js: Default settings for all levels that winston knows about
- *
- * (C) 2010 Charlie Robbins
- * MIT LICENCE
- *
- */
-
-let colors = require('colors/safe');
+import { Color } from 'colors';
 
 // Fix colors not appearing in non-tty environments
-colors.enabled = true;
+// colors.enabled = true;
 
 let config = { allColors: {} };
+
+class MyColors implements Color {
+  constructor() {}
+}
+
+const x = (colors = new MyColors());
 
 config.addColors = function (colors) {
   mixin(config.allColors, colors);
 };
+
+const color: Color;
 
 config.colorize = function (level, message) {
   message || (message = level);

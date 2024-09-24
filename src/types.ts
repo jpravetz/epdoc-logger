@@ -1,6 +1,6 @@
 import { Milliseconds } from '@epdoc/timeutil';
 import { Dict, Integer, isDict, isString } from '@epdoc/typeutil';
-import { LogLevelDef, LogLevelValue } from './level';
+import { LogLevel, LogLevelDef, LogLevelValue } from './level';
 import { Style } from './styles';
 
 export type TimePrefix = 'local' | 'utc' | 'elapsed' | false;
@@ -13,6 +13,15 @@ export function isValidTimePrefix(val: any): val is TimePrefix {
 export type LoggerLineFormatOpts = Partial<{
   tabSize: Integer;
   stylize: boolean;
+  style: Style;
+}>;
+
+/** LoggerLine options that are constant across all lines of a logger instance. */
+export type LoggerLineOpts = Partial<{
+  reqId: string;
+  sid: string;
+  logLevels: LogLevel;
+  separatorOpts: SeparatorOpts;
   style: Style;
 }>;
 

@@ -1,6 +1,6 @@
 import { asInt, Integer, isDefined, isInteger, isString } from '@epdoc/typeutil';
 
-export type LogLevelDef = Record<LogLevelName, LogLevelValue>;
+export type LogLevelDef = Record<string, LogLevelValue>;
 export const defaultLogLevelDef: LogLevelDef = {
   error: 0,
   warn: 1,
@@ -12,7 +12,7 @@ export const defaultLogLevelDef: LogLevelDef = {
   skip: 9
 } as const;
 
-export type LogLevelName = string;
+export type LogLevelName = keyof typeof defaultLogLevelDef;
 export type LogLevelValue = Integer;
 
 export class LogLevel {
@@ -50,6 +50,14 @@ export class LogLevel {
 
   get counter() {
     return this._counter;
+  }
+
+  get levels() {
+    return Object.keys(this._levelDef);
+  }
+
+  get levelDefs() {
+    return this._levelDef;
   }
 
   meetsThreshold(level: LogLevelValue, threshold?: LogLevelValue): boolean {

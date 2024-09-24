@@ -5,8 +5,11 @@
 'use strict';
 
 import { isArray, isNonEmptyString } from '@epdoc/typeutil';
-import { LogManager } from './log-mgr';
-import { LogMessageConsts, SeparatorOpts } from './types';
+import { LogLevel, LogLevelName, LogLevelValue } from './level';
+import { LoggerLine, LoggerLineInstance } from './line';
+import { LogManager } from './log-manager';
+import { Style } from './style';
+import { LoggerLineOpts, LogMessageConsts, SeparatorOpts } from './types';
 
 let util = require('util');
 let format = require('./format');
@@ -60,17 +63,32 @@ let _ = require('underscore');
 
 export class Logger {
   protected _logMgr: LogManager;
+  protected _logLevels: LogLevel;
+  protected _separatorOpts: SeparatorOpts;
   protected _name: string;
+  protected _reqId: string;
+  protected _sid: string;
   protected _emitter: string[];
   protected _ctx: object;
+  protected _style: Style;
   // protected _logLevel: string;
   // protected bErrorStack: boolean;
   protected _logData: object;
   protected _logAction: string;
   protected _stack: string[] = [];
+  protected _initialized: boolean = false;
+  protected _line: LoggerLineInstance;
 
-  constructor(logMgr: LogManager, msgConsts: LogMessageConsts, context: object) {
+  constructor(
+    logMgr: LogManager,
+    msgConsts: LogMessageConsts,
+    logLevels: LogLevel,
+    separatorOpts: SeparatorOpts,
+    context: object
+  ) {
     this._logMgr = logMgr;
+    this._logLevels = Object.assign({}, logLevels);
+    this._separatorOpts = Object.assign({}, separatorOpts);
     if (isNonEmptyString(msgConsts.emitter)) {
       this._emitter = [msgConsts.emitter];
     } else if (isArray(msgConsts.emitter)) {
@@ -91,6 +109,16 @@ export class Logger {
     // If ctx.req.sessionId, ctx.req.sid or ctx.req.session.id are set, these are used for sid
     // column. If ctx.req._reqId, this is used as reqId column
     this._ctx = context;
+    this.addLevelMethods();
+    this._line = new LoggerLine({
+      logLevels: this._logLevels,
+      separatorOpts: this._separatorOpts,
+      style: this._style
+    }) as LoggerLineInstance;
+  }
+
+  get name() {
+    return this._name;
   }
 
   setContext(ctx: object): this {
@@ -98,37 +126,74 @@ export class Logger {
     return this;
   }
 
-  addLevelMethod(level) {
-    /**
-     * Log a message at one of the log levels. The message can contain arguments (e.g 'Hello
-     * %s',
-     * 'world') or an Error object.
-     */
-    return function (err) {
-      if (err instanceof Error) {
-        let msgs = format.errorToStringArray(err);
-        if (this.bErrorStack && err.stack) {
-          let items = err.stack.split(/\n\s*/);
-          this.data({ error: { code: err.code, stack: items } });
-        } else if (!_.isUndefined(err.code)) {
-          this.data({ error: { code: err.code } });
-        }
-        return this.logArgs(level, msgs);
-      } else {
-        return this.logArgs(level, Array.prototype.slice.call(arguments));
+  // trace(...args: any[]): LoggerLineInstance {
+  //   return this.initLine(logLevel.trace, ...args);
+  // }
+
+  private addLevelMethods(): this {
+    const methodNames = Object.getOwnPropertyNames(Object.getPrototypeOf(this));
+
+    const levelDefs = this._logLevels.levelDefs;
+    Object.keys(levelDefs).forEach((name) => {
+      if (methodNames.includes(name)) {
+        throw new Error(`Cannot declare level with reserved name ${name}`);
       }
-    };
+      (this as any)[name] = (...args: any[]): LoggerLineInstance => {
+        // @ts-ignore
+        return this.initLine(levelDefs[name], ...args);
+      };
+    });
+    return this;
   }
 
-  misc() {
-    for (let idx = 0; idx < this._logMgr.LEVEL_ORDER.length; idx++) {
-      let level = this._logMgr.LEVEL_ORDER[idx];
-      self[level] = addLevelMethod(level);
+  private initLine(level: LogLevelValue, ...args: any[]): LoggerLineInstance {
+    if (this._initialized) {
+      const unemitted = this._line.partsAsString();
+      throw new Error(`Emit the previous log message before logging a new one: ${unemitted}`);
     }
-
-    // Set so these can be used internally
-    this._info = this[this._logMgr.LEVEL_INFO];
+    const opts: LoggerLineOpts = {
+      reqId: this._reqId,
+      sid: this._sid,
+      logLevels: this._logLevels,
+      separatorOpts: this._separatorOpts
+    };
+    return this._line
+      .clear()
+      .setLevel(level)
+      .setInitialString(...args);
   }
+
+  // addLevelMethod(level) {
+  //   /**
+  //    * Log a message at one of the log levels. The message can contain arguments (e.g 'Hello
+  //    * %s',
+  //    * 'world') or an Error object.
+  //    */
+  //   return function (err) {
+  //     if (err instanceof Error) {
+  //       let msgs = format.errorToStringArray(err);
+  //       if (this.bErrorStack && err.stack) {
+  //         let items = err.stack.split(/\n\s*/);
+  //         this.data({ error: { code: err.code, stack: items } });
+  //       } else if (!_.isUndefined(err.code)) {
+  //         this.data({ error: { code: err.code } });
+  //       }
+  //       return this.logArgs(level, msgs);
+  //     } else {
+  //       return this.logArgs(level, Array.prototype.slice.call(arguments));
+  //     }
+  //   };
+  // }
+
+  // misc() {
+  //   for (let idx = 0; idx < this._logMgr.LEVEL_ORDER.length; idx++) {
+  //     let level = this._logMgr.LEVEL_ORDER[idx];
+  //     self[level] = addLevelMethod(level);
+  //   }
+
+  //   // Set so these can be used internally
+  //   this._info = this[this._logMgr.LEVEL_INFO];
+  // }
 
   /**
    * Set whether to log a stack for Error objects. If not set in the constructor, then inherits
@@ -136,10 +201,10 @@ export class Logger {
    * @param [bShow=true] {boolean}
    * @returns {Logger}
    */
-  errorStack(bShow: boolean) {
-    this.bErrorStack = bShow === false ? false : true;
-    return this;
-  }
+  // errorStack(threshold: LogLevelValue) {
+  //   this._logLevels.errorStackThreshold = threshold;
+  //   return this;
+  // }
 
   /**
    * Log a separator line that contains a message with '#' characters.
@@ -147,32 +212,9 @@ export class Logger {
    */
   separator(options: SeparatorOpts) {
     if (this.isAboveLevel(this._logMgr.LEVEL_INFO)) {
-      let sep =
-        this._logMgr.sep ||
-        '######################################################################';
-      this._writeMessage(this._logMgr.LEVEL_INFO, sep);
-    }
-    return this;
-  }
-
-  /**
-   * Set the value of the action column. Action is a unique column in the log output and is a
-   * machine-searchable verb that uniquely describes the type of log event.
-   *
-   * @example
-   *      log.action('message.sent').info("Message has been sent");
-   *
-   * @param {...string} arguments - Single string or multiple strings that are then joined with a
-   *   '.'.
-   * @return {Logger} The Logger object
-   */
-  action(args: string[]) {
-    if (arguments[0] instanceof Array) {
-      this.logAction = arguments[0].join('.');
-    } else if (arguments.length > 1) {
-      this.logAction = Array.prototype.join.call(arguments, '.');
-    } else {
-      this.logAction = arguments[0];
+      const opts = this._separatorOpts;
+      let sep = opts.char.repeat(Math.floor(opts.length / opts.char.length));
+      this._writeMessage(this._logLevels.asValue('info'), sep);
     }
     return this;
   }
@@ -564,4 +606,6 @@ export class Logger {
   }
 }
 
-module.exports = Logger;
+export type LoggerInstance = Logger & {
+  [key in LogLevelName]: (...args: any[]) => LoggerLineInstance; // Ensure dynamic methods return LoggerInstance
+};
