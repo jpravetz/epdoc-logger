@@ -1,4 +1,4 @@
-import { asInt, Integer, isInteger, isString } from '@epdoc/typeutil';
+import { asInt, Integer, isDefined, isInteger, isString } from '@epdoc/typeutil';
 
 export type LogLevelDef = Record<LogLevelName, LogLevelValue>;
 export const defaultLogLevelDef: LogLevelDef = {
@@ -19,6 +19,8 @@ export class LogLevel {
   protected _levelDef: LogLevelDef;
   protected _levelValues: Integer[] = [];
   protected _counter: Record<LogLevelName, Integer>;
+  protected _levelThreshold: LogLevelValue;
+  protected _errorStackThreshold: LogLevelValue;
 
   constructor(levelDef: LogLevelDef) {
     this._levelDef = levelDef;
@@ -26,10 +28,39 @@ export class LogLevel {
     this._levelValues.forEach((level) => {
       this._counter[level] = 0;
     });
+    this._levelThreshold = this.asValue('info');
+    this._errorStackThreshold = this.asValue('debug');
+  }
+
+  get levelThreshold(): LogLevelValue {
+    return this._levelThreshold;
+  }
+
+  get errorStackThreshold(): LogLevelValue {
+    return this._errorStackThreshold;
+  }
+
+  set levelThreshold(level: LogLevelName | LogLevelValue) {
+    this._levelThreshold = this.asValue(level);
+  }
+
+  set errorStackThreshold(level: LogLevelName | LogLevelValue) {
+    this._errorStackThreshold = this.asValue(level);
   }
 
   get counter() {
     return this._counter;
+  }
+
+  meetsThreshold(level: LogLevelValue, threshold?: LogLevelValue): boolean {
+    if (isDefined(threshold)) {
+      return level <= threshold;
+    }
+    return level <= this._levelThreshold;
+  }
+
+  meetsErrorStackThreshold(level: LogLevelValue): boolean {
+    return level <= this._errorStackThreshold;
   }
 
   asValue(level: LogLevelName | LogLevelValue): LogLevelValue {
@@ -51,6 +82,21 @@ export class LogLevel {
     return this._levelValues.includes(val);
   }
 
+  isLogLevelName(val: any): val is LogLevelName {
+    return isString(val) && isDefined(this._levelDef[val]);
+  }
+
+  isLogLevel(val: any): boolean {
+    return this.isLogLevelValue(val) || this.isLogLevelName(val);
+  }
+
+  /**
+   * Checks if the given level meets the threshold.
+   * @param level - The level to check.
+   * @param threshold - The threshold to compare against.
+   * @returns {boolean} True if the level meets the threshold, false otherwise.
+   * @deprecated
+   */
   static meetsLogThreshold(level: LogLevelValue, threshold: LogLevelValue): boolean {
     return level <= threshold;
   }

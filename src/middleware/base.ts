@@ -65,7 +65,7 @@ export class LoggerMiddleware {
   }
 
   protected routeSeparatorForLog(log: LoggerNew, data: MiddlewareRouteInfo) {
-    let sep = log.logMgr?.sep ?? { str: '#', len: 80 };
+    let sep = log._logMgr?.sep ?? { str: '#', len: 80 };
     sep.str = isNonEmptyString(sep.str) ? sep.str : '#';
     const sepLen = ((sep.len - data.path.length - 2) / 2) * sep.str.length;
     const sepLenLeft = Math.ceil((sep.len - data.path.length) / 2);

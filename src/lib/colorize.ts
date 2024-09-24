@@ -6,13 +6,12 @@
  *
  */
 
-var colors = require('colors/safe');
+let colors = require('colors/safe');
 
 // Fix colors not appearing in non-tty environments
 colors.enabled = true;
 
-var config = {};
-config.allColors = {};
+let config = { allColors: {} };
 
 config.addColors = function (colors) {
   mixin(config.allColors, colors);
@@ -21,14 +20,14 @@ config.addColors = function (colors) {
 config.colorize = function (level, message) {
   message || (message = level);
 
-  var colorized = message;
+  let colorized = message;
   if (config.allColors[level] instanceof Array) {
-    for (var idx = 0, l = config.allColors[level].length; idx < l; ++idx) {
+    for (let idx = 0, l = config.allColors[level].length; idx < l; ++idx) {
       colorized = colors[config.allColors[level][idx]](colorized);
     }
   } else if (config.allColors[level].match(/\s/)) {
-    var colorArr = config.allColors[level].split(/\s+/);
-    for (var idx = 0; idx < colorArr.length; ++idx) {
+    let colorArr = config.allColors[level].split(/\s+/);
+    for (let idx = 0; idx < colorArr.length; ++idx) {
       colorized = colors[colorArr[idx]](colorized);
     }
     config.allColors[level] = colorArr;
@@ -54,11 +53,11 @@ config.addColors(config.npm.colors);
 config.addColors(config.syslog.colors);
 
 function mixin(target) {
-  var args = Array.prototype.slice.call(arguments, 1);
+  let args = Array.prototype.slice.call(arguments, 1);
 
   args.forEach(function (a) {
-    var keys = Object.keys(a);
-    for (var i = 0; i < keys.length; i++) {
+    let keys = Object.keys(a);
+    for (let i = 0; i < keys.length; i++) {
       target[keys[i]] = a[keys[i]];
     }
   });

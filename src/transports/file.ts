@@ -2,7 +2,7 @@ import { isFunction, isString } from '@epdoc/typeutil';
 import fs from 'node:fs';
 import path from 'node:path';
 import { LogMessage, TransportOptions } from '../types';
-import { LogTransport, TransportFunctions } from './base';
+import { LogTransport, LogTransportOpenCallbacks } from './base';
 
 export type FileTransportOptions = TransportOptions & {
   path: string;
@@ -40,7 +40,7 @@ export class FileTransport extends LogTransport {
     return transport instanceof FileTransport && transport._path == this._path;
   }
 
-  open(cb: TransportFunctions): void {
+  open(cb: LogTransportOpenCallbacks): void {
     try {
       let folder = path.dirname(this._path);
       if (!fs.existsSync(folder)) {

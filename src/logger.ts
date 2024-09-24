@@ -4,8 +4,9 @@
  *****************************************************************************/
 'use strict';
 
-import { isNonEmptyString } from '@epdoc/typeutil';
+import { isArray, isNonEmptyString } from '@epdoc/typeutil';
 import { LogManager } from './log-mgr';
+import { LogMessageConsts, SeparatorOpts } from './types';
 
 let util = require('util');
 let format = require('./format');
@@ -57,65 +58,47 @@ let _ = require('underscore');
  * @constructor
  */
 
-export class LoggerNew {
-  protected logMgr: LogManager;
-  protected name: string;
-  protected emitter: string | string[];
-  protected context: object;
-  protected logLevel: string;
-  protected bErrorStack: boolean;
-  protected logData: object;
-  protected logAction: string;
-  protected stack: string[] = [];
+export class Logger {
+  protected _logMgr: LogManager;
+  protected _name: string;
+  protected _emitter: string[];
+  protected _ctx: object;
+  // protected _logLevel: string;
+  // protected bErrorStack: boolean;
+  protected _logData: object;
+  protected _logAction: string;
+  protected _stack: string[] = [];
 
-  constructor(logMgr: LogManager, emitter: string | string[], context: object) {
-    this.logMgr = logMgr;
-    this.stack = [];
-    if (isNonEmptyString(emitter)) {
-      this.name = 'Logger#' + emitter;
-      this.stack = [emitter];
+  constructor(logMgr: LogManager, msgConsts: LogMessageConsts, context: object) {
+    this._logMgr = logMgr;
+    if (isNonEmptyString(msgConsts.emitter)) {
+      this._emitter = [msgConsts.emitter];
+    } else if (isArray(msgConsts.emitter)) {
+      this._emitter = msgConsts.emitter;
+      this._name = 'Logger#' + msgConsts.emitter.join('.');
+      this._stack = msgConsts.emitter;
+    } else {
+      this._name = 'Logger#' + this._emitter.join('.');
+      this._stack = this._emitter;
     }
-    this.logLevel = logMgr.levelThreshold ? logMgr.levelThreshold : logMgr.LEVEL_DEFAULT;
-    this.bErrorStack = logMgr.errorStackThreshold ? logMgr.errorStackThreshold : false;
-    this.logData;
-    this.logAction;
-  }
-}
+    // this.logLevel = logMgr.levelThreshold ? logMgr.levelThreshold : logMgr.LEVEL_DEFAULT;
+    // this.bErrorStack = logMgr.errorStackThreshold ? logMgr.errorStackThreshold : false;
+    this._logData;
+    // Action column
+    this._logAction;
 
-let Logger = function (logMgr, emitter, context) {
-  // The common Logger object thru which output will be written
-  this.logMgr = logMgr;
-
-  // emitter column
-  this.stack = [];
-  if (isString(emitter)) {
-    this.name = 'Logger#' + emitter;
-    this.stack = [emitter];
-  } else if (_.isArray(emitter)) {
-    this.name = 'Logger#' + emitter.join('.');
-    this.stack = emitter;
+    // Contains Express and koa req and res properties
+    // If ctx.req.sessionId, ctx.req.sid or ctx.req.session.id are set, these are used for sid
+    // column. If ctx.req._reqId, this is used as reqId column
+    this._ctx = context;
   }
 
-  // Contains Express and koa req and res properties
-  // If ctx.req.sessionId, ctx.req.sid or ctx.req.session.id are set, these are used for sid
-  // column. If ctx.req._reqId, this is used as reqId column
-  this.ctx = context;
+  setContext(ctx: object): this {
+    this._ctx = ctx;
+    return this;
+  }
 
-  // Min log level required to create output, overrides logMgr.logLevel if set
-  this.logLevel = logMgr.logLevel ? logMgr.logLevel : logMgr.LEVEL_DEFAULT;
-
-  this.bErrorStack = logMgr.bErrorStack ? logMgr.bErrorStack : false;
-
-  this.logData;
-
-  // action column
-  this.logAction;
-
-  // Add log methods for every level supported. The log levels can be customized
-  // by setting LogManager.LEVEL_ORDER.
-  let self = this;
-
-  let addLevelMethod = function (level) {
+  addLevelMethod(level) {
     /**
      * Log a message at one of the log levels. The message can contain arguments (e.g 'Hello
      * %s',
@@ -124,35 +107,28 @@ let Logger = function (logMgr, emitter, context) {
     return function (err) {
       if (err instanceof Error) {
         let msgs = format.errorToStringArray(err);
-        if (self.bErrorStack && err.stack) {
+        if (this.bErrorStack && err.stack) {
           let items = err.stack.split(/\n\s*/);
-          self.data({ error: { code: err.code, stack: items } });
+          this.data({ error: { code: err.code, stack: items } });
         } else if (!_.isUndefined(err.code)) {
-          self.data({ error: { code: err.code } });
+          this.data({ error: { code: err.code } });
         }
-        return self.logArgs(level, msgs);
+        return this.logArgs(level, msgs);
       } else {
-        return self.logArgs(level, Array.prototype.slice.call(arguments));
+        return this.logArgs(level, Array.prototype.slice.call(arguments));
       }
     };
-  };
-
-  for (let idx = 0; idx < logMgr.LEVEL_ORDER.length; idx++) {
-    let level = logMgr.LEVEL_ORDER[idx];
-    self[level] = addLevelMethod(level);
   }
 
-  // Set so these can be used internally
-  this._info = this[this.logMgr.LEVEL_INFO];
-};
+  misc() {
+    for (let idx = 0; idx < this._logMgr.LEVEL_ORDER.length; idx++) {
+      let level = this._logMgr.LEVEL_ORDER[idx];
+      self[level] = addLevelMethod(level);
+    }
 
-Logger.prototype = {
-  constructor: Logger,
-
-  setContext: function (ctx) {
-    this.ctx = ctx;
-    return this;
-  },
+    // Set so these can be used internally
+    this._info = this[this._logMgr.LEVEL_INFO];
+  }
 
   /**
    * Set whether to log a stack for Error objects. If not set in the constructor, then inherits
@@ -160,23 +136,24 @@ Logger.prototype = {
    * @param [bShow=true] {boolean}
    * @returns {Logger}
    */
-  errorStack: function (bShow) {
+  errorStack(bShow: boolean) {
     this.bErrorStack = bShow === false ? false : true;
     return this;
-  },
+  }
 
   /**
    * Log a separator line that contains a message with '#' characters.
    * @return {Logger}
    */
-  separator: function (options) {
-    if (this.isAboveLevel(this.logMgr.LEVEL_INFO)) {
+  separator(options: SeparatorOpts) {
+    if (this.isAboveLevel(this._logMgr.LEVEL_INFO)) {
       let sep =
-        this.logMgr.sep || '######################################################################';
-      this._writeMessage(this.logMgr.LEVEL_INFO, sep);
+        this._logMgr.sep ||
+        '######################################################################';
+      this._writeMessage(this._logMgr.LEVEL_INFO, sep);
     }
     return this;
-  },
+  }
 
   /**
    * Set the value of the action column. Action is a unique column in the log output and is a
@@ -189,7 +166,7 @@ Logger.prototype = {
    *   '.'.
    * @return {Logger} The Logger object
    */
-  action: function () {
+  action(args: string[]) {
     if (arguments[0] instanceof Array) {
       this.logAction = arguments[0].join('.');
     } else if (arguments.length > 1) {
@@ -198,7 +175,7 @@ Logger.prototype = {
       this.logAction = arguments[0];
     }
     return this;
-  },
+  }
 
   /**
    * Log a key,value or an object. If an object the any previous logged objects
@@ -211,9 +188,9 @@ Logger.prototype = {
    * @param [value] If key is a string or number then data.key is set to value
    * @return {Logger}
    */
-  logObj: function (key, value) {
+  logObj(key: string, value: any) {
     return this._setData('data', key, value);
-  },
+  }
 
   /**
    * Set <i>static data</i> that is output in a separate column called <code>static</code>`.
@@ -227,9 +204,9 @@ Logger.prototype = {
    * @param value {*} (Optional) Set key to this value
    * @return {Logger}
    */
-  set: function (key, value) {
+  set(key: string, value: any) {
     return this._setData('staticData', key, value);
-  },
+  }
 
   /**
    * Set a property or multiple properties in the <code>data</code> column.
@@ -243,9 +220,9 @@ Logger.prototype = {
    * @param [value] {string} If key is a string then sets <code>data[key]</code> to this value.
    * @return {Logger}
    */
-  data: function (key, value) {
+  data(key: string, value: any) {
     return this._setData('logData', key, value);
-  },
+  }
 
   /**
    * Common method used by the {@link Logger#data} method.
@@ -255,7 +232,7 @@ Logger.prototype = {
    * @returns {Logger}
    * @private
    */
-  _setData: function (field, key, value) {
+  _setData(field: string, key: string, value: any) {
     if (!this[field]) {
       this[field] = {};
     }
@@ -265,7 +242,7 @@ Logger.prototype = {
       this[field] = _.extend(this[field], key);
     }
     return this;
-  },
+  }
 
   /**
    * A method to add context to the method stack that has gotten us to this point in code.
@@ -283,10 +260,10 @@ Logger.prototype = {
    * @return Response object
    * @see Logger#popName
    */
-  pushName: function (name) {
+  pushName(name: string) {
     this.stack.push(name);
     return this;
-  },
+  }
 
   /**
    * See pushRouteInfo. Should be called if returning back up a function chain. Does not need to
@@ -296,18 +273,18 @@ Logger.prototype = {
    * @return Response object
    * @see Logger#pushName
    */
-  popName: function (options) {
+  popName(options: any) {
     if (options && options.all === true) {
       this.stack = [];
     } else {
       this.stack.pop();
     }
     return this;
-  },
+  }
 
-  getStack: function () {
+  getStack() {
     return this.stack;
-  },
+  }
 
   /**
    * Tell logger whether we want to log the json response that we may be sending via express.
@@ -327,12 +304,12 @@ Logger.prototype = {
    * @param {string} [key='elapsed'] The name of the attribute to add to the data column.
    * @return {Object} this
    */
-  elapsed: function (name, key) {
+  elapsed(name: string, key: string) {
     name || (name = 'elapsed');
     key || (key = 'elapsed');
     this.timer || (this.timer = {});
     return this._setData('logData', key, this.getElapsed(name));
-  },
+  }
 
   /**
    * Get the number of milliseconds since resetElapsed() has been called. This can be used to
@@ -341,14 +318,14 @@ Logger.prototype = {
    * @param {string} [name='elapsed'] Allows multiple timers to be run at the same time, or just
    *   use the default timer.
    */
-  getElapsed: function (name) {
+  getElapsed(name: string) {
     name || (name = 'elapsed');
     this.timer || (this.timer = {});
     if (this.timer[name]) {
       return new Date().getTime() - this.timer[name];
     }
     return 0;
-  },
+  }
 
   /**
    * Reset the elapsed time timer.
@@ -356,12 +333,12 @@ Logger.prototype = {
    *   use the default timer.
    * @return {Logger} Self
    */
-  resetElapsed: function (name) {
+  resetElapsed(name: string) {
     name || (name = 'elapsed');
     this.timer || (this.timer = {});
     this.timer[name] = new Date().getTime();
     return this;
-  },
+  }
 
   /**
    * Adds the High Resolution response time to the data column. This value is measured from when
@@ -369,16 +346,16 @@ Logger.prototype = {
    * @param {string} [key=elapsed] Name of property in the data column.
    * @return {Logger} Self.
    */
-  hrElapsed: function (key) {
+  hrElapsed(key: string) {
     return this._setData('logData', key || 'elapsed', this.getHrElapsed());
-  },
+  }
 
   /**
    * High resolution response time. This value is measured from when the request is received.
    * Returns the response time in milliseconds with two digits after the decimal.
    * @return {number} Response time in milliseconds
    */
-  getHrElapsed: function () {
+  getHrElapsed() {
     if (this.ctx) {
       let val;
       if (this.ctx._hrStartTime) {
@@ -394,24 +371,24 @@ Logger.prototype = {
       }
     }
     return 0;
-  },
+  }
 
-  date: function (d, s) {
-    if (this.isAboveLevel(this.logMgr.LEVEL_INFO)) {
+  date(d: Date, s: string) {
+    if (this.isAboveLevel(this._logMgr.LEVEL_INFO)) {
       d || (d = new Date());
       this.logAction = s || 'currentTime';
       this.data({
         localtime: moment(d).format('YYYY-MM-DDTHH:mm:ss.SSSZ'),
         utctime: d.toISOString(),
-        uptime: format.formatMS(d - this.logMgr.getStartTime())
+        uptime: format.formatMS(d - this._logMgr.getStartTime())
       });
-      this.logArgs(this.logMgr.LEVEL_INFO, []);
+      this.logArgs(this._logMgr.LEVEL_INFO, []);
     }
     return this;
-  },
+  }
 
   // Helper, level must be set, args must be an array, but can be empty
-  logArgs: function (level, args) {
+  logArgs(level: string, args: any[]) {
     if (!args.length) {
       args.unshift('');
     } else if (args.length && (args[0] === undefined || args[0] === null)) {
@@ -419,7 +396,7 @@ Logger.prototype = {
     }
     args.unshift(level);
     return this.log.apply(this, args);
-  },
+  }
 
   /**
    * Output a log message, specifying the log level as the first parameter, and a string
@@ -434,18 +411,18 @@ Logger.prototype = {
    * @param {string} msg - The message String, or an array of strings, to be formatted with
    *   util.format.
    */
-  log: function (level, msg) {
+  log(level: string, msg: string) {
     let args = Array.prototype.slice.call(arguments);
     if (args.length) {
       if (args.length === 1) {
-        args.unshift(this.logMgr.LEVEL_INFO);
+        args.unshift(this._logMgr.LEVEL_INFO);
       }
       if (this.isAboveLevel(args[0])) {
         this._writeMessage.apply(this, args);
       }
     }
     return this;
-  },
+  }
 
   /**
    * Calls the logMgr interface to output the log message.
@@ -457,7 +434,7 @@ Logger.prototype = {
    * This later situation is useful for logMgrs that support multi-line formatting.
    * @private
    */
-  _writeMessage: function (level, msg) {
+  _writeMessage(level: string, msg: string) {
     let args = Array.prototype.slice.call(arguments);
     if (args.length > 1) {
       let params = {
@@ -501,11 +478,11 @@ Logger.prototype = {
         this.logParams(params);
       } else {
         if (this.silent !== true) {
-          this.logMgr.logParams(params, this.logLevel);
+          this._logMgr.logParams(params, this.logLevel);
         }
       }
     }
-  },
+  }
 
   /**
    * Log a raw message in the spirit of Logger.logMessage, adding sid and reqId columns from
@@ -516,8 +493,8 @@ Logger.prototype = {
    * @param params
    * @return {*}
    */
-  logParams: function (params) {
-    function setParams(ctx) {
+  logParams(params: any) {
+    function setParams(ctx: any) {
       if (ctx._reqId) {
         params.reqId = ctx._reqId;
       } else if (ctx.reqId) {
@@ -544,33 +521,33 @@ Logger.prototype = {
       }
     }
     if (this.silent !== true) {
-      this.logMgr.logParams(params, this.logLevel);
+      this._logMgr.logParams(params, this.logLevel);
     }
     return this;
-  },
+  }
 
-  setTruncate: function (len) {
+  setTruncate(len: number) {
     this.truncateLength = len;
     return this;
-  },
+  }
 
   /**
    * Set the log level for this object. This overrides the global log level for this object.
    * @param {string} level - Must be one of LogManager.LEVEL_ORDER.
    * @return {Logger} Self
    */
-  setLevel: function (level) {
+  setLevel(level: string) {
     this.logLevel = level;
     return this;
-  },
+  }
 
   /**
    * Get the log level for this object
    * @returns {string} The currently set log level for this Logger object.
    */
-  getLevel: function () {
+  getLevel() {
     return this.logLevel;
-  },
+  }
 
   /**
    * Test if the given level is above the log level set for this Logger object.
@@ -578,13 +555,13 @@ Logger.prototype = {
    * @return {boolean} True if the level is equal to or greater then the reference, or if
    *   reference is null.
    */
-  isAboveLevel: function (level) {
-    let reference = this.logLevel || this.logMgr.logLevel;
-    if (this.logMgr.LEVEL_ORDER.indexOf(level) >= this.logMgr.LEVEL_ORDER.indexOf(reference)) {
+  isAboveLevel(level: string) {
+    let reference = this.logLevel || this._logMgr.logLevel;
+    if (this._logMgr.LEVEL_ORDER.indexOf(level) >= this._logMgr.LEVEL_ORDER.indexOf(reference)) {
       return true;
     }
     return false;
   }
-};
+}
 
 module.exports = Logger;

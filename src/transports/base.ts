@@ -1,34 +1,15 @@
 import { Integer, isString } from '@epdoc/typeutil';
+import { LogLevelValue } from '../level';
 import { LogMessage } from '../types';
 
 let transportIdx: Integer = 0;
 
-export type TransportFunctions = {
+export type LogTransportType = 'console' | 'file' | 'callback' | 'loggly' | 'sos' | string;
+export type LogTransportOpenCallbacks = {
   onSuccess: (val: boolean) => void;
   onError: (err: Error) => void;
   onClose: () => void;
 };
-
-/*****************************************************************************
- * Create a new Console transport to output log messages to the console.
- *
- * @param options {Object} Output options include:
- * @param [options.sid] {Boolean} - If true then output express request and session IDs, otherwise
- *   do not output these values
- * @param [options.colorize=true] {Boolean} - Set to true to enable colorize formatted output.
- * @param [options.template] {String} - Provide a template string to use for output when
- *   options.format is 'string', substitutes ${ts} %{level} ${emitter} type strings, where '%'
- *   indicates string should be colorized.
- * @param [options.timestamp=ms] {String} - Set the format for timestamp output, must be one of
- *   'ms' or 'iso'.
- * @param [options.format=jsonArray] {String|function} - Set the format for the output line. Must
- *   be one of 'json', 'jsonArray', 'template', or a function that takes params and options as
- *   parameters.
- * @param [options.static=true] {Boolean} - Set whether to output a 'static' column.
- * @param [options.level] {String} - Log level above which to output log messages, overriding
- *   setting for LogManager.
- * @constructor
- */
 
 export class LogTransport {
   options: any;
@@ -37,7 +18,7 @@ export class LogTransport {
   bIncludeStatic: boolean;
   colorize: boolean;
   timestampFormat: string;
-  level: string;
+  protected _levelThreshold: LogLevelValue;
   bReady: boolean;
 
   constructor(options) {
@@ -47,7 +28,7 @@ export class LogTransport {
     this.bIncludeStatic = this.options.static === false ? false : true;
     this.colorize = this.options.colorize !== false;
     this.timestampFormat = this.options.timestamp || 'ms';
-    this.level = this.options.level;
+    this._levelThreshold = this.options.level;
   }
 
   /**
@@ -88,8 +69,12 @@ export class LogTransport {
    * Set the log level for the transport.
    * @param level {string} The log level to set.
    */
-  public setLevel(level) {
-    this.level = level;
+  set levelThreshold(level: LogLevelValue) {
+    this._levelThreshold = level;
+  }
+
+  get levelThreshold(): LogLevelValue {
+    return this._levelThreshold;
   }
 
   /**
@@ -98,7 +83,7 @@ export class LogTransport {
    *   then matches if transport.type equals 'console'.
    * @returns {boolean} True if the transport matches the argument
    */
-  match(transport: string | LogTransport) {
+  match(transport: LogTransportType | LogTransport) {
     if (isString(transport) && transport === this.type) {
       return true;
     }
@@ -119,9 +104,9 @@ export class LogTransport {
 
   /**
    * Open the transport for writing.
-   * @param cb {TransportFunctions} Callback functions for success, error, and close events.
+   * @param cb {LogTransportOpenCallbacks} Callback functions for success, error, and close events.
    */
-  open(cb: TransportFunctions): void {
+  open(cb: LogTransportOpenCallbacks): void {
     this.bReady = true;
     cb.onError(new Error('Base transport cannot be opened'));
   }
@@ -145,7 +130,7 @@ export class LogTransport {
    * @param msg {LogMessage} The log message to write.
    * @returns {this} The current instance for chaining.
    */
-  protected write(msg: LogMessage): this {
+  public write(msg: LogMessage): this {
     let str = this.formatLogMessage(msg);
     return this._write(str);
   }

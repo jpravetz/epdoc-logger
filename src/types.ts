@@ -13,7 +13,7 @@ export function isValidTimePrefix(val: any): val is TimePrefix {
 export type LoggerLineFormatOpts = Partial<{
   tabSize: Integer;
   stylize: boolean;
-  style: any;
+  style: Style;
 }>;
 
 export type LoggerShowOpts = Partial<{
@@ -41,7 +41,7 @@ export type LoggerRunOpts = Partial<{
    * If false, messages can be written as soon as any transport is ready.
    * @type {boolean}
    */
-  allTransportsReady: boolean;
+  requireAllTransportsReady: boolean;
 }>;
 
 export type SeparatorOpts = Partial<{
@@ -55,19 +55,32 @@ export type LogMgrDefaults = Partial<{
   separatorOpts: SeparatorOpts;
   levelThreshold: LogLevelValue;
   errorStackThreshold: LogLevelValue;
+  msgConsts: LogMessageConsts;
 }>;
 
-export type LogMessage = {
-  time?: Date;
-  timeDiff?: Milliseconds;
-  emitter?: string;
-  action?: string;
-  level?: LogLevelValue;
-  reqId?: string;
-  static?: string;
-  message?: string;
-  data?: Dict;
-};
+/**
+ * Properties of a LogMessage that are likely to be constant across a number of
+ * log messages.
+ */
+export type LogMessageConsts = Partial<{
+  emitter: string | string[];
+  action: string;
+  reqId: string;
+  sid: string;
+  static: string;
+}>;
+
+/**
+ * Properties of a log message. Only the 'message' property is the descriptive string.
+ */
+export type LogMessage = LogMessageConsts &
+  Partial<{
+    time: Date;
+    timeDiff: Milliseconds;
+    level: LogLevelValue;
+    message: string;
+    data: Dict;
+  }>;
 
 export const consoleTransportDefaults: TransportOptions = {
   name: 'console',
@@ -86,7 +99,7 @@ export const consoleTransportDefaults: TransportOptions = {
 export type TransportOptions = Partial<{
   name: TransportType; // not required internally
   show: LoggerShowOpts;
-  time: TimePrefix;
+  consts: LogMessageConsts;
   levelThreshold: LogLevelValue;
   format: LoggerLineFormatOpts;
 }>;
