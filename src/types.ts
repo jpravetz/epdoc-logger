@@ -18,8 +18,7 @@ export type LoggerLineFormatOpts = Partial<{
 
 /** LoggerLine options that are constant across all lines of a logger instance. */
 export type LoggerLineOpts = Partial<{
-  reqId: string;
-  sid: string;
+  msg: LogMessage;
   logLevels: LogLevel;
   separatorOpts: SeparatorOpts;
   style: Style;
@@ -53,6 +52,9 @@ export type LoggerRunOpts = Partial<{
   requireAllTransportsReady: boolean;
 }>;
 
+export type StyleFormatterFn = (text: unknown[]) => string;
+export type LineFormatterFn = (opts: LogMessage) => string;
+
 export type SeparatorOpts = Partial<{
   char: string;
   length: number;
@@ -66,6 +68,11 @@ export type LogMgrDefaults = Partial<{
   errorStackThreshold: LogLevelValue;
   msgConsts: LogMessageConsts;
 }>;
+
+export type LogMsgPart = {
+  str: string;
+  style?: StyleFormatterFn;
+};
 
 /**
  * Properties of a LogMessage that are likely to be constant across a number of
@@ -87,8 +94,10 @@ export type LogMessage = LogMessageConsts &
     time: Date;
     timeDiff: Milliseconds;
     level: LogLevelValue;
-    message: string;
+    message: any;
     data: Dict;
+    parts: LogMsgPart[];
+    partsFormatter: LineFormatterFn;
   }>;
 
 export const consoleTransportDefaults: TransportOptions = {

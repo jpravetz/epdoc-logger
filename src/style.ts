@@ -1,7 +1,7 @@
 import { dateUtil } from '@epdoc/timeutil';
 import { isArray, isDate, isDict, isNonEmptyString } from '@epdoc/typeutil';
+import { StyleFormatterFn } from './types';
 
-export type StyleFormatterFn = (text: unknown[]) => string;
 export type StyleFormatters = Record<string, StyleFormatterFn>;
 
 export const defaultStyles: StyleFormatters = {} as const;

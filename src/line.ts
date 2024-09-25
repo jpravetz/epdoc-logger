@@ -1,35 +1,22 @@
 import { dateUtil } from '@epdoc/timeutil';
 import {
   Integer,
+  isDefined,
   isInteger,
   isNonEmptyArray,
   isNonEmptyString,
   isNumber,
-  isString
+  isString,
+  pick
 } from '@epdoc/typeutil';
-import { MethodName } from './../dist/src/style.d';
-import { AppTimer } from './apptimer';
-import { LogLevel } from './level';
-import { LogLevelValue } from './levels';
+import { LogLevel, LogLevelValue } from './level';
+import { AppTimer } from './lib/apptimer';
+import { countTabsAtBeginningOfString } from './lib/util';
 import { Logger } from './logger';
 import { Style } from './style';
-import { defaultStyles, StyleName } from './styles/base';
-import { TransportType } from './transports';
-import { LoggerLineFormatOpts, LoggerLineOpts, LoggerShowOpts, SeparatorOpts } from './types';
-import { countTabsAtBeginningOfString } from './util';
+import { LoggerLineOpts, LoggerShowOpts, LogMessage, LogMsgPart, SeparatorOpts } from './types';
 
 const DEFAULT_TAB_SIZE = 2;
-
-const rightPadAndTruncate = (str: string, length: Integer, char = ' ') => {
-  return str.length > length ? str.slice(0, length - 1) : str + char.repeat(length - str.length);
-};
-
-export type LoggerLineTransportFormatOpts = Record<TransportType, LoggerLineFormatOpts>;
-
-type MsgPart = {
-  str: string;
-  style?: StyleName;
-};
 
 /**
  * A LoggerLine is a line of output from a Logger. It is used to build up a log
@@ -47,19 +34,23 @@ export class LoggerLine {
   protected _level: LogLevelValue;
   protected _enabled: boolean = false;
   protected _msgIndent: string = '';
-  protected _msgParts: MsgPart[] = [];
+  protected _msgParts: LogMsgPart[] = [];
   protected _suffix: string[] = [];
   protected _timer: AppTimer;
   // protected _level: LogLevelValue = logLevel.info;
   protected _showElapsed: boolean = false;
-  protected _reqId: string;
-  protected _sid: string;
-  protected _emitter: string;
-  protected _action: string;
+  protected _msg: LogMessage = {
+    parts: []
+  };
+  // protected _reqId: string;
+  // protected _sid: string;
+  // protected _emitter: string;
+  // protected _action: string;
   protected _data: Record<string, any> = {};
 
   constructor(opts: LoggerLineOpts) {
     this._opts = opts;
+    this._msg = Object.assign(this._msg, opts.msg);
     // this._logLevels = opts.logLevels;
     // this._separatorOpts = opts.separatorOpts;
     this.addStyleMethods();
@@ -97,7 +88,7 @@ export class LoggerLine {
   }
 
   get level(): LogLevelValue {
-    return this._level;
+    return this._msg.level;
   }
 
   get logLevel(): LogLevel {
@@ -135,7 +126,7 @@ export class LoggerLine {
    * @returns {this} The LoggerLine instance.
    */
   reqId(id: string): this {
-    this._reqId = id;
+    this._msg.reqId = id;
     return this;
   }
 
@@ -145,7 +136,7 @@ export class LoggerLine {
    * @returns {this} The LoggerLine instance.
    */
   sid(id: string): this {
-    this._sid = id;
+    this._msg.sid = id;
     return this;
   }
 
@@ -156,7 +147,7 @@ export class LoggerLine {
    * @returns {this} The LoggerLine instance.
    */
   emitter(name: string): this {
-    this._emitter = name;
+    this._msg.emitter = name;
     return this;
   }
 
@@ -167,7 +158,7 @@ export class LoggerLine {
    * @returns {this} The LoggerLine instance.
    */
   action(...args: string[]) {
-    this._action = args.join('.');
+    this._msg.action = args.join('.');
     return this;
   }
 
@@ -192,8 +183,8 @@ export class LoggerLine {
    * @param [value] {string} If key is a string then sets <code>data[key]</code> to this value.
    * @return {Logger}
    */
-  data(key: string, value: any) {
-    return this._setData('logData', key, value);
+  data(key: string | any, value: any): this {
+    return this._setData(key, value);
   }
 
   /**
@@ -204,14 +195,14 @@ export class LoggerLine {
    * @returns {Logger}
    * @private
    */
-  _setData(field: string, key: string, value: any) {
-    if (!this._data[field]) {
-      this._data[field] = {};
-    }
-    if (isString(key) || isNumber(key)) {
-      this[field][key] = value;
+  _setData(key: string | any, value: any): this {
+    if ((isString(key) || isNumber(key)) && isDefined(value)) {
+      if (!this._msg.data) {
+        this._msg.data = {};
+      }
+      this._msg.data[key] = value;
     } else {
-      this._data[field] = _.extend(this._data[field], key);
+      this._msg.data = Object.assign(this._msg.data, key);
     }
     return this;
   }
@@ -222,7 +213,8 @@ export class LoggerLine {
    * @returns {this} The LoggerLine instance.
    */
   clear(): this {
-    this._action = undefined;
+    this._msg = pick(this._msg, 'reqId', 'sid');
+    this._msg.parts = [];
     return this;
   }
 
@@ -257,18 +249,6 @@ export class LoggerLine {
     if (this._enabled) {
       this._msgIndent = ' '.repeat(n * this.tabSize - 1);
     }
-    return this;
-  }
-
-  /**
-   * Adds stringified data to the log message. This text will be formatted with
-   * the text style.
-   * @param {any} arg - The data to stringify and add.
-   * @returns {this} The Logger instance.
-   */
-  data(arg: any): this {
-    const str = JSON.stringify(arg, null, DEFAULT_TAB_SIZE);
-    this._transportLines.forEach((transportLine) => transportLine.addMsgPart(str));
     return this;
   }
 
