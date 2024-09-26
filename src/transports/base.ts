@@ -1,7 +1,7 @@
 import { dateUtil, durationUtil } from '@epdoc/timeutil';
 import { Integer, isDate, isFunction, isString, isValidDate } from '@epdoc/typeutil';
 import { LogLevel, LogLevelValue } from '../level';
-import { AppTimer } from '../lib/apptimer';
+import { AppTimer } from '../lib/app-timer';
 import { LoggerShowOpts, LogMessage, LogMsgPart, TimePrefix } from '../types';
 import { TransportStringFormatter } from './formatters/string';
 

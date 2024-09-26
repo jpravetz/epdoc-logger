@@ -1,5 +1,3 @@
-import { dateUtil } from '@epdoc/timeutil';
-import { isArray, isDate, isDict, isNonEmptyString } from '@epdoc/typeutil';
 import { StyleFormatterFn } from './types';
 
 export type StyleFormatters = Record<string, StyleFormatterFn>;
@@ -33,23 +31,23 @@ export class Style {
     return this._styles[name];
   }
 
-  format(val: any, style: StyleName): string {
-    const s = this.formatToString(val);
-    let styleDef: StyleFormatterFn = isNonEmptyString(style) ? this._styles[style] : undefined;
-    if (!styleDef) {
-      return s;
-    }
-    return styleDef(s);
-  }
+  // format(val: any, style: StyleName): string {
+  //   const s = this.formatToString(val);
+  //   let styleDef: StyleFormatterFn = isNonEmptyString(style) ? this._styles[style] : undefined;
+  //   if (!styleDef) {
+  //     return s;
+  //   }
+  //   return styleDef(s);
+  // }
 
-  protected formatToString(val: any): string {
-    if (isDict(val) || isArray(val)) {
-      return JSON.stringify(val);
-    } else if (isDate(val)) {
-      return dateUtil(val).format(this._dateFormat);
-    }
-    return String(val);
-  }
+  // protected formatToString(val: any): string {
+  //   if (isDict(val) || isArray(val)) {
+  //     return JSON.stringify(val);
+  //   } else if (isDate(val)) {
+  //     return dateUtil(val).format(this._dateFormat);
+  //   }
+  //   return String(val);
+  // }
 }
 
 // // Add this type declaration

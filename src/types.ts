@@ -1,7 +1,7 @@
 import { Dict, Integer, isDict, isString } from '@epdoc/typeutil';
 import { LogLevel, LogLevelDef, LogLevelValue } from './level';
-import { AppTimer } from './lib/apptimer';
-import { Style } from './styles';
+import { AppTimer } from './lib/app-timer';
+import { Style } from './style';
 
 export type TimePrefix = 'local' | 'utc' | 'elapsed' | false;
 export type TransportType = string;
@@ -44,22 +44,23 @@ export type LoggerShowOpts = Partial<{
   elapsed: boolean; // not sure if we will show this
 }>;
 
-export type LoggerRunOpts = Partial<{
-  /**
-   * If true, logging will be enabled immediately without needing to call start().
-   * If no transports are provided, a default console transport will be added.
-   * @type {boolean}
-   */
-  autoRun: boolean;
+// export type LoggerRunOpts = Partial<{
+//   /**
+//    * If true, logging will be enabled immediately without needing to call start().
+//    * If no transports are provided, a default console transport will be added.
+//    * @type {boolean}
+//    */
+//   autoRun: boolean;
 
-  /**
-   * If true, all transports must be ready before messages are written.
-   * If false, messages can be written as soon as any transport is ready.
-   * @type {boolean}
-   */
-  requireAllTransportsReady: boolean;
-}>;
+//   /**
+//    * If true, all transports must be ready before messages are written.
+//    * If false, messages can be written as soon as any transport is ready.
+//    * @type {boolean}
+//    */
+//   requireAllTransportsReady: boolean;
+// }>;
 
+export type LogMessageFn = (msg: LogMessage) => void;
 export type StyleFormatterFn = (text: unknown[]) => string;
 export type LineFormatterFn = (opts: LogMessage) => string;
 
@@ -135,11 +136,10 @@ export function isTransportOptions(val: any): val is TransportOptions {
 }
 
 export type LogMgrOpts = Partial<{
-  timer: any;
-  t0: Date;
+  timer: AppTimer;
   defaults: LogMgrDefaults;
   logLevels: LogLevelDef;
-  run: LoggerRunOpts;
+  // run: LoggerRunOpts;
   /**
    * Array of transport options for logging.
    * Each transport must include a 'name' property.

@@ -6,8 +6,8 @@
 
 import { isArray, isNonEmptyString } from '@epdoc/typeutil';
 import { LogLevel, LogLevelName, LogLevelValue } from './level';
-import { LoggerLine, LoggerLineInstance } from './line';
 import { LogManager } from './log-manager';
+import { LoggerMessageBuilder, LogMsgBuilder } from './msg-builder';
 import { Style } from './style';
 import { LoggerLineOpts, LogMessageConsts, SeparatorOpts } from './types';
 
@@ -77,7 +77,7 @@ export class Logger {
   protected _logAction: string;
   protected _stack: string[] = [];
   protected _initialized: boolean = false;
-  protected _line: LoggerLineInstance;
+  protected _line: LogMsgBuilder;
 
   constructor(
     logMgr: LogManager,
@@ -110,11 +110,11 @@ export class Logger {
     // column. If ctx.req._reqId, this is used as reqId column
     this._ctx = context;
     this.addLevelMethods();
-    this._line = new LoggerLine({
+    this._line = new LoggerMessageBuilder({
       logLevels: this._logLevels,
       separatorOpts: this._separatorOpts,
       style: this._style
-    }) as LoggerLineInstance;
+    }) as LogMsgBuilder;
   }
 
   get name() {
@@ -138,7 +138,7 @@ export class Logger {
       if (methodNames.includes(name)) {
         throw new Error(`Cannot declare level with reserved name ${name}`);
       }
-      (this as any)[name] = (...args: any[]): LoggerLineInstance => {
+      (this as any)[name] = (...args: any[]): LogMsgBuilder => {
         // @ts-ignore
         return this.initLine(levelDefs[name], ...args);
       };
@@ -146,7 +146,7 @@ export class Logger {
     return this;
   }
 
-  private initLine(level: LogLevelValue, ...args: any[]): LoggerLineInstance {
+  private initLine(level: LogLevelValue, ...args: any[]): LogMsgBuilder {
     if (this._initialized) {
       const unemitted = this._line.partsAsString();
       throw new Error(`Emit the previous log message before logging a new one: ${unemitted}`);
@@ -607,5 +607,5 @@ export class Logger {
 }
 
 export type LoggerInstance = Logger & {
-  [key in LogLevelName]: (...args: any[]) => LoggerLineInstance; // Ensure dynamic methods return LoggerInstance
+  [key in LogLevelName]: (...args: any[]) => LogMsgBuilder; // Ensure dynamic methods return LoggerInstance
 };

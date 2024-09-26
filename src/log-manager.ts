@@ -1,20 +1,16 @@
-import { isArray } from '@epdoc/typeutil';
 import { defaultLogLevelDef, LogLevel, LogLevelName, LogLevelValue } from './level';
+import { AppTimer } from './lib/app-timer';
 import { Logger } from './logger';
-import { ColorStyle, Style } from './styles';
-import { LogTransport, LogTransportOpenCallbacks, LogTransportType } from './transports/base';
+import { TransportManager } from './transport-manager';
+import { LogTransport } from './transports/base';
 import { TransportFactory } from './transports/factory';
 import {
-  consoleTransportDefaults,
-  isTransportOptions,
-  LoggerRunOpts,
   LoggerShowOpts,
   LogMessage,
   LogMessageConsts,
   LogMgrDefaults,
   LogMgrOpts,
-  SeparatorOpts,
-  TransportOptions
+  SeparatorOpts
 } from './types';
 
 let mgrIdx = 0;
@@ -43,9 +39,9 @@ let mgrIdx = 0;
 
 export class LogManager {
   protected name: string;
-  protected t0: number;
+  protected _timer: AppTimer;
   protected _show: LoggerShowOpts;
-  protected _runOpts: LoggerRunOpts;
+  protected _requireAllTransportsReady = false;
   protected _separatorOpts: SeparatorOpts;
   protected _msgConsts: LogMessageConsts;
   protected transportFactory: TransportFactory = new TransportFactory();
@@ -54,26 +50,29 @@ export class LogManager {
   protected transports: LogTransport[] = [];
   protected consoleOptions: any;
   protected _running: boolean;
+  protected _transportMgr: TransportManager;
   protected allTransportsReady: boolean;
+  protected _context: any;
 
-  protected _style: Style;
+  // protected _style: Style;
 
   protected _msgQueue: any[];
   protected levelThreshold: LogLevelValue;
   protected errorStackThreshold: LogLevelValue;
 
   constructor(options: LogMgrOpts) {
-    this.t0 = options.t0 ? options.t0.getTime() : new Date().getTime();
+    this._timer = options.timer ?? new AppTimer();
     this.name = 'LogManager#' + ++mgrIdx;
     this._running = false;
-    this._runOpts = options.run ?? { autoRun: true, requireAllTransportsReady: false };
+
     // Count of how many errors, warnings, etc
     this._logLevels = new LogLevel(options.logLevels ?? defaultLogLevelDef);
+
     if (options.defaults) {
       const defaults: LogMgrDefaults = options.defaults;
       this._separatorOpts = defaults.separatorOpts ?? { char: '#', length: 70 };
       this._show = defaults.show ?? {};
-      this._style = defaults.style ?? new ColorStyle();
+      // this._style = defaults.style ?? new ColorStyle();
       if (this._logLevels.isLogLevel(defaults.levelThreshold)) {
         this._logLevels.levelThreshold = defaults.levelThreshold;
       }
@@ -82,24 +81,22 @@ export class LogManager {
       }
       this._msgConsts = defaults.msgConsts ?? {};
     }
-    this.addTransports(options.transports);
+    this._transportMgr = new TransportManager(this.logLoggerMessage);
+    this._transportMgr.addTransports(options.transports);
 
-    if (this._runOpts.autoRun) {
-      this.start();
-    }
+    // if (this._runOpts.autoRun) {
+    //   this.start();
+    // }
   }
 
-  public addTransports(transports: TransportOptions | TransportOptions[]) {
-    if (isArray(transports)) {
-      transports.forEach((transport) => {
-        this.addTransport(transport);
-      });
-    } else if (isTransportOptions(transports)) {
-      this.addTransport(transports);
-    } else {
-      this.addTransport(consoleTransportDefaults);
-    }
+  set context(ctx: any) {
+    this._context = ctx;
   }
+
+  get context(): any {
+    return this._context;
+  }
+
   /**
    * Starts all transports, if not already started. This enables logs to be written to the
    * transports. It is necessary to manually start the transports if not using the default
@@ -112,12 +109,8 @@ export class LogManager {
    */
   public async start(): Promise<any> {
     if (!this._running) {
-      let jobs = [];
-      this.transports.forEach((transport) => {
-        let job = this.startingTransport(transport);
-        jobs.push(job);
-      });
-      return Promise.all(jobs)
+      return this._transportMgr
+        .start()
         .then(() => {
           this._running = true;
           return this.flushQueue();
@@ -133,184 +126,6 @@ export class LogManager {
   }
 
   /**
-   * Wraps {LogManager#start} into a Promise.
-   * @return {Promise} Resolves to this.
-   */
-  starting(): Promise<any> {
-    return this.start();
-  }
-
-  private startingTransport(transport): Promise<any> {
-    let self = this;
-    return new Promise(function (resolve, reject) {
-      let name = transport.name;
-      let bResolved = false;
-
-      const cb: LogTransportOpenCallbacks = {
-        onSuccess: () => {
-          transport.clear();
-          this.logMessage(
-            this.LEVEL_INFO,
-            'logger.start.success',
-            "Started transport '" + name + "'",
-            { transport: name }
-          );
-          if (!bResolved) {
-            bResolved = true;
-            resolve(true);
-          }
-        },
-        onError: (err) => {
-          this.logMessage(
-            this.LEVEL_WARN,
-            'logger.warn',
-            "Tried but failed to start transport '" + name + "'. " + err
-          );
-          this.removeTransport(transport);
-          if (!bResolved) {
-            bResolved = true;
-            resolve(true);
-          }
-        },
-        onClose: () => {
-          this.logMessage(this.LEVEL_INFO, 'logger.close', "Closed transport '" + name + "'");
-          this.removeTransport(transport);
-        }
-      };
-
-      transport.open(cb);
-    });
-  }
-
-  /**
-   * Add a log transport. Multiple transports can be in operation at the same time, allowing log
-   * messages to be sent to more than one destination.
-   * If you are adding a transport while logging is on, you should first call logMgr.stopping,
-   * add the transport, then call logMgr.start.
-   *
-   * @param {string|Object} [type] - For the provided loggers, one of 'sos', 'file', 'callback',
-   *   'console' or 'loggly'. For a custom transport this should be a transport class object that
-   *   can be instantiated with 'new'. To create your own transport class, consider using
-   *   getLoggerClass('console') and then subclassing this class. If the params option contains a
-   *   'type' property, this field is optional.
-   * @param options {Object} These are directly passed to the transport when constructing the new
-   *   transport object. Please refer to the individual transport for properties. Some common
-   *   properties are listed here.
-   * @param [options.sid] {boolean} - If true then output express request and session IDs,
-   *   otherwise do not output these values. Default is to use LogManager's sid setting.
-   * @param [options.timestamp=ms] {string} - Set the format for timestamp output, must be one of
-   *   'ms' or 'iso'.
-   * @param [options.static=true] {boolean} - Set whether to output a 'static' column. By default
-   *   this inherits the value from the LogManager.
-   * @param [options.level=debug] {string} - Log level for this transport.
-   * @return {LogManager}
-   */
-  addTransport(options: TransportOptions) {
-    let newTransport = this.transportFactory.getTransport(options);
-    if (newTransport) {
-      this._running = false;
-      this.transports.unshift(newTransport);
-      let name = newTransport.name;
-      let topts = newTransport.getOptions();
-      let sOptions = topts ? ' (' + JSON.stringify(topts) + ')' : '';
-      this.logLoggerMessage({
-        action: 'logger.transport.add',
-        message: "Added transport '" + name + "'" + sOptions,
-        data: { transport: newTransport.name }
-      });
-    }
-    return this;
-  }
-
-  _getNewTransport(options: TransportOptions): LogTransport {
-    if (isTransportOptions(options)) {
-      const defaultOpts: LogMessageConsts = {
-        sid: this._msgConsts.sid,
-        static: this._msgConsts.static
-      };
-      const opts: TransportOptions = Object.assign(defaultOpts, options);
-      const transport: LogTransport = this.transportFactory.getTransport(opts);
-      if (transport) {
-        const err = transport.validateOptions();
-        if (!err) {
-          return transport;
-        } else {
-          this.logLoggerMessage({
-            action: 'logger.transport.add.warn',
-            message: `Could not add transport ${opts.name}: ${err.message}`,
-            data: { options: options }
-          });
-        }
-      }
-    }
-  }
-
-  /**
-   * Remove a particular transport. Pauses log output. The caller should call [start()]{@link
-   * LogManager#start} to restart logging.
-   * @param transport {string|object} If a string then all transports of this type will be
-   *   removed. If an object then all transports that match the object specification will be
-   *   removed. Refer to the individual classes' <code>match</code> method.
-   * @param {function} [callback] The caller can wait for transports to be flushed and destroyed,
-   *   but this is not necessary for normal use.
-   * @return {Promise}
-   */
-  removeTransport(transport: LogTransportType | LogTransport): Promise<any> {
-    this._running = false;
-    let remainingTransports = [];
-    let jobs = [];
-    this.transports.forEach((t) => {
-      if (t.match(transport)) {
-        let job = t.stop();
-        jobs.push(job);
-        const msg: LogMessage = {
-          action: 'logger.transport.remove',
-          message: `Removed transport '${t.toString()}'`,
-          data: { transport: t.toString() }
-        };
-        this.logLoggerMessage(msg);
-      } else {
-        remainingTransports.push(t);
-      }
-    });
-    this.transports = remainingTransports;
-    return Promise.all(jobs);
-  }
-
-  // /**
-  //  * Test if this is a known transport
-  //  * @param s {string} Name of the transport
-  //  * @returns {boolean}
-  //  */
-  // isValidTransport(s) {
-  //   if (isString(s) && ['console', 'file', 'callback', 'loggly', 'sos'].indexOf(s) >= 0) {
-  //     return true;
-  //   }
-  //   return false;
-  // }
-
-  /**
-   * Return one of the predefined transport classes by name. If you want to define your own class,
-   * it is suggested you subclass or copy one of the existing transports.
-   * @returns {*} LogManager Class for which you should call new with options, or if creating
-   *   your own transport you may subclass this object.
-   */
-  // getTransportByName(type) {
-  //   if (isString(type)) {
-  //     return require('./transports/' + type);
-  //   }
-  // }
-
-  /**
-   * Get the list of currently set transports.
-   * @returns {*} The current array of transports. Call type() on the return value to determine
-   *   it's type.
-   */
-  getTransports(): LogTransport[] {
-    return this.transports;
-  }
-
-  /**
    * Log messages are first written to a buffer, then flushed. Calling this function will force
    * the queue to be flushed. Normally this function should not need to be called. Will only
    * flush the queue if all transports are ready to receive messages.
@@ -321,16 +136,11 @@ export class LogManager {
     if (this._running && this._msgQueue.length) {
       if (
         this.transports.length &&
-        (!this._runOpts.requireAllTransportsReady || this.areAllTransportsReady())
+        (!this._requireAllTransportsReady || this._transportMgr.allReady())
       ) {
         let nextMsg: LogMessage = this._msgQueue.shift();
         if (nextMsg) {
-          this.transports.forEach((transport) => {
-            if (this._logLevels.meetsThreshold(nextMsg.level, transport.levelThreshold)) {
-              // nextMsg.level = undefined;
-              transport.write(nextMsg);
-            }
-          });
+          this._transportMgr.writeMessage(nextMsg);
           this.flushQueue();
         }
       }
@@ -338,26 +148,13 @@ export class LogManager {
   }
 
   /**
-   * Test if there is at least one transport, and all transports are ready to receive messages.
-   * @returns {boolean}
-   * @private
-   */
-  protected areAllTransportsReady(): boolean {
-    if (!this.transports.length) {
-      return false;
-    }
-    const transport = this.transports.find((t) => !t.ready());
-    return transport instanceof LogTransport ? false : true;
-  }
-
-  /**
-   * Set automatically when the epdoc-logger module is initialized, but can be set manually to
+   * Set automatically when the LogManager module is initialized, but can be set manually to
    * the earliest known time that the application was started.
    * @param d {Date} The application start time
    * @return {LogManager}
    */
-  setStartTime(d) {
-    this.t0 = new Date(d).getTime();
+  setStartTime(timer: AppTimer) {
+    this._timer = timer;
     return this;
   }
 
@@ -366,7 +163,7 @@ export class LogManager {
    * @return {Number} Start time in milliseconds
    */
   getStartTime() {
-    return this.t0;
+    return this._timer;
   }
 
   /**
@@ -407,15 +204,12 @@ export class LogManager {
    * @returns {void}
    */
   logMessage(options: LogMessage): void {
-    const now = new Date();
-    const defaultOptions: LogMessage = {
-      level: this._logLevels.asValue('info'),
-      time: now,
-      timeDiff: now.getTime() - this.t0
-    };
-    const opts = Object.assign(defaultOptions, options);
-    this._msgQueue.push(opts);
-    this._logLevels.incCounter(opts.level);
+    if (!options.time) {
+      options.time = new Date();
+    }
+    options.level = options.level ?? this._logLevels.asValue('info');
+    this._msgQueue.push(options);
+    this._logLevels.incCounter(options.level);
     return this.flushQueue();
   }
 
@@ -487,7 +281,7 @@ export class LogManager {
    */
   destroying(): Promise<any> {
     return this.stopping().then(() => {
-      this.transports = [];
+      this._transportMgr.destroy();
       return Promise.resolve();
     });
   }
@@ -500,12 +294,7 @@ export class LogManager {
    */
   stopping(): Promise<any> {
     this._running = false;
-    let jobs = [];
-    this.transports.forEach((transport) => {
-      let job = transport.stop();
-      jobs.push(job);
-    });
-    return Promise.all(jobs);
+    return this._transportMgr.stop();
   }
 
   /**
@@ -514,11 +303,6 @@ export class LogManager {
    * @returns {Promise}
    */
   flushing(): Promise<any> {
-    let jobs = [];
-    this.transports.forEach((transport) => {
-      let job = transport.flush();
-      jobs.push(job);
-    });
-    return Promise.all(jobs);
+    return this._transportMgr.flush();
   }
 }

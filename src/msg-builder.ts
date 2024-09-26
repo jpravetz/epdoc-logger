@@ -9,11 +9,18 @@ import {
   pick
 } from '@epdoc/typeutil';
 import { LogLevel, LogLevelValue } from './level';
-import { AppTimer } from './lib/apptimer';
-import { countTabsAtBeginningOfString } from './lib/util';
+import { AppTimer } from './lib/app-timer';
+import { util } from './lib/util';
 import { Logger } from './logger';
 import { Style } from './style';
-import { LoggerLineOpts, LoggerShowOpts, LogMessage, LogMsgPart, SeparatorOpts } from './types';
+import {
+  LoggerLineOpts,
+  LoggerShowOpts,
+  LogMessage,
+  LogMsgPart,
+  SeparatorOpts,
+  StyleFormatterFn
+} from './types';
 
 const DEFAULT_TAB_SIZE = 2;
 
@@ -21,7 +28,7 @@ const DEFAULT_TAB_SIZE = 2;
  * A LoggerLine is a line of output from a Logger. It is used to build up a log
  * line, add styling, and emit the log line.
  */
-export class LoggerLine {
+export class LoggerMessageBuilder {
   protected _logger: Logger;
   protected _opts: LoggerLineOpts = {};
   protected _showOpts: LoggerShowOpts;
@@ -217,9 +224,9 @@ export class LoggerLine {
     return this;
   }
 
-  setInitialString(...args: any[]): LoggerLineInstance {
+  setInitialString(...args: any[]): LogMsgBuilder {
     if (args.length) {
-      const count = countTabsAtBeginningOfString(args[0]);
+      const count = util.countTabsAtBeginningOfString(args[0]);
       if (count) {
         this.tab(count);
         args[0] = args[0].slice(count);
@@ -261,7 +268,7 @@ export class LoggerLine {
     return this;
   }
 
-  protected addMsgPart(str: string, style?: StyleName): this {
+  protected addMsgPart(str: string, style?: StyleFormatterFn): this {
     // const _style = this.stylizeEnabled ? style : undefined;
     this._msgParts.push({ str: str, style: style });
     return this;
@@ -279,24 +286,24 @@ export class LoggerLine {
     return this;
   }
 
-  /**
-   * Adds styled text to the log line.
-   * @param {any} val - The value to stylize.
-   * @param {StyleName | StyleDef} style - The style to use.
-   * @returns {this} The Logger instance.
-   */
-  stylizeOld(style: StyleName, ...args): LoggerLineInstance {
-    if (args.length) {
-      this._transportLines.forEach((transportLine) => transportLine.stylize(style, ...args));
-    }
-    return this as unknown as LoggerLineInstance;
-  }
+  // /**
+  //  * Adds styled text to the log line.
+  //  * @param {any} val - The value to stylize.
+  //  * @param {StyleName | StyleDef} style - The style to use.
+  //  * @returns {this} The Logger instance.
+  //  */
+  // stylizeOld(style: StyleName, ...args): LoggerLineInstance {
+  //   if (args.length) {
+  //     this._transportLines.forEach((transportLine) => transportLine.stylize(style, ...args));
+  //   }
+  //   return this as unknown as LoggerLineInstance;
+  // }
 
-  stylize(style: StyleName, ...args): LoggerLineInstance {
+  stylize(style: StyleFormatterFn, ...args): LogMsgBuilder {
     if (this._enabled) {
       this.addMsgPart(args.join(' '), style);
     }
-    return this as unknown as LoggerLineInstance;
+    return this as unknown as LogMsgBuilder;
   }
 
   /**
@@ -366,10 +373,10 @@ export class LoggerLine {
         if (methodNames.includes(name)) {
           throw new Error(`Cannot declare style with reserved name ${name}`);
         }
-        (this as any)[name] = (...args: any[]): LoggerLineInstance => {
+        (this as any)[name] = (...args: any[]): LogMsgBuilder => {
           // @ts-ignore
           this.stylize(name as StyleName, ...args);
-          return this as unknown as LoggerLineInstance;
+          return this as unknown as LogMsgBuilder;
         };
       }
     }
@@ -377,6 +384,6 @@ export class LoggerLine {
   }
 }
 
-export type LoggerLineInstance = LoggerLine & {
-  [key in MethodName]: (...args: any[]) => LoggerLineInstance; // Ensure dynamic methods return LoggerLineInstance
+export type LogMsgBuilder = LoggerMessageBuilder & {
+  [key in MethodName]: (...args: any[]) => LogMsgBuilder; // Ensure dynamic methods return LoggerLineInstance
 };

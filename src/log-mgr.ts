@@ -1,10 +1,13 @@
 import chalk from 'chalk';
 import { LogLevel, LogLevelDef } from './level';
-import { LoggerLine } from './line';
+import { AppTimer } from './lib/app-timer';
 import { LogManager } from './log-manager';
 import { Logger } from './logger';
-import { StyleDef, StyleDefs } from './styles';
+import { LoggerMessageBuilder } from './msg-builder';
+import { StyleFormatters } from './style';
 import { LogMessageConsts, LogMgrOpts } from './types';
+
+const appTimer = new AppTimer();
 
 const defaultLogLevelDef: LogLevelDef = {
   error: 0,
@@ -17,7 +20,7 @@ const defaultLogLevelDef: LogLevelDef = {
   skip: 9
 } as const;
 
-const defaultStyleDefs: StyleDefs = {
+const defaultStyleFormatters: StyleFormatters = {
   text: chalk.whiteBright,
   h1: chalk.bold.magenta,
   h2: chalk.magenta,
@@ -48,9 +51,9 @@ const defaultStyleDefs: StyleDefs = {
   _timePrefix: chalk.gray
 } as const;
 
-export type ColorStyleName = keyof typeof defaultStyleDefs;
+export type ColorStyleName = keyof typeof defaultStyleFormatters;
 export type LogLevelName = keyof typeof defaultLogLevelDef;
-export type LoggerLineInstance = LoggerLine & {
+export type LoggerLineInstance = LoggerMessageBuilder & {
   [key in LogLevelName]: (...args: any[]) => LoggerLineInstance; // Ensure dynamic methods return LoggerLineInstance
 };
 export type LoggerInstance = Logger & {
@@ -59,13 +62,23 @@ export type LoggerInstance = Logger & {
 
 export class LogMgr extends LogManager {
   protected _levelDefs: LogLevelDef;
-  protected _styleDefs: StyleDef;
+  protected _styleDefs: StyleFormatters;
 
-  constructor(options: LogMgrOpts, levelDefs: LogLevelDef, styleDefs: StyleDefs) {
+  constructor(
+    options: LogMgrOpts,
+    levelDefs: LogLevelDef,
+    styleDefs: StyleFormatters,
+    timer?: AppTimer
+  ) {
     super(options);
     this._logLevels = new LogLevel(levelDefs);
     this._levelDefs = levelDefs;
     this._styleDefs = styleDefs;
+    if (timer) {
+      this._timer = timer;
+    }
+    this._requireAllTransportsReady = false;
+    this.start();
   }
 
   getLogger(emitter: string, context: object): LoggerInstance {
@@ -81,5 +94,5 @@ export class LogMgr extends LogManager {
 }
 
 export function createLogMgr(options: LogMgrOpts): LogMgr {
-  return new LogMgr(options, defaultLogLevelDef, defaultStyleDefs);
+  return new LogMgr(options, defaultLogLevelDef, defaultStyleFormatters);
 }
