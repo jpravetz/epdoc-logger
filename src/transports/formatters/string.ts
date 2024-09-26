@@ -1,3 +1,4 @@
+import { StringEx } from '../../lib/util';
 import { LogMessage, LogMsgPart, StyleFormatterFn } from '../../types';
 import { TransportFormatter } from './base';
 
@@ -39,7 +40,7 @@ export class TransportStringFormatter extends TransportFormatter {
       // const formattedLevel = styleName;
       const str = `[${levelAsString.toUpperCase()}]`;
       // this.addMsgPart(util.rightPadAndTruncate(str, 9), styleName);
-      this.addMsgPart(util.rightPadAndTruncate(str, 9));
+      this.addMsgPart(StringEx(str).rightPadAndTruncate(9));
     }
     return this;
   }
@@ -56,8 +57,10 @@ export class TransportStringFormatter extends TransportFormatter {
 
   protected addElapsed(): this {
     if (this._showOpts.elapsed && this._msg.timer) {
-      const et = this._msg.timer.measureFormatted();
-      this.addMsgPart(`${et.total} (${et.interval})`, this._formatOpts.elapsed);
+      this.addMsgPart(
+        `${this._msg.timer.getTimeForPrefix('elapsed')} (${this._msg.timer.getTimeForPrefix('interval')})`,
+        this._formatOpts.elapsed
+      );
       // this.stylize('_elapsed', `${et.total} (${et.interval})`);
     }
     return this;

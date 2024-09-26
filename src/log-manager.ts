@@ -13,6 +13,8 @@ import {
   SeparatorOpts
 } from './types';
 
+export namespace logger {
+
 let mgrIdx = 0;
 
 /**
@@ -81,7 +83,7 @@ export class LogManager {
       }
       this._msgConsts = defaults.msgConsts ?? {};
     }
-    this._transportMgr = new TransportManager(this.logLoggerMessage);
+    this._transportMgr = new TransportManager(logMsgFn:this.log);
     this._transportMgr.addTransports(options.transports);
 
     // if (this._runOpts.autoRun) {
@@ -153,7 +155,7 @@ export class LogManager {
    * @param d {Date} The application start time
    * @return {LogManager}
    */
-  setStartTime(timer: AppTimer) {
+  timer(timer: AppTimer):this {
     this._timer = timer;
     return this;
   }
@@ -162,7 +164,7 @@ export class LogManager {
    * Get the time at which the app or this module was initialized
    * @return {Number} Start time in milliseconds
    */
-  getStartTime() {
+  get appTimer() {
     return this._timer;
   }
 
@@ -223,7 +225,7 @@ export class LogManager {
    * transports as well.
    * @return {LogManager}
    */
-  setLevelThreshold(level: LogLevelName | LogLevelValue): this {
+  level(level: LogLevelName | LogLevelValue): this {
     this._logLevels.levelThreshold = level;
     this.transports.forEach((transport) => {
       transport.levelThreshold = this._logLevels.levelThreshold;
@@ -241,7 +243,7 @@ export class LogManager {
    * transports as well.
    * @return {LogManager}
    */
-  setErrorStackThreshold(level: LogLevelName | LogLevelValue): this {
+  errorLevel(level: LogLevelName | LogLevelValue): this {
     this._logLevels.errorStackThreshold = level;
     return this;
   }
@@ -305,4 +307,5 @@ export class LogManager {
   flushing(): Promise<any> {
     return this._transportMgr.flush();
   }
+}
 }

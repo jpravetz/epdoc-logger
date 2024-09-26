@@ -1,3 +1,4 @@
+import chalk from 'chalk';
 import { StyleFormatterFn } from './types';
 
 export type StyleFormatters = Record<string, StyleFormatterFn>;

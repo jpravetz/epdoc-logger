@@ -1,5 +1,4 @@
-import { dateUtil, durationUtil } from '@epdoc/timeutil';
-import { Integer, isDate, isFunction, isString, isValidDate } from '@epdoc/typeutil';
+import { Integer, isFunction, isString } from '@epdoc/typeutil';
 import { LogLevel, LogLevelValue } from '../level';
 import { AppTimer } from '../lib/app-timer';
 import { LoggerShowOpts, LogMessage, LogMsgPart, TimePrefix } from '../types';
@@ -18,7 +17,6 @@ export class LogTransport {
   protected _showOpts: LoggerShowOpts;
   protected _logLevels: LogLevel;
   protected _timer: AppTimer;
-  protected _startTime: Date;
   id: Integer = transportIdx++;
   // bIncludeSid: boolean;
   // bIncludeStatic: boolean;
@@ -174,20 +172,7 @@ export class LogTransport {
   }
 
   formatTimestamp(msg: LogMessage, format: TimePrefix) {
-    if (format === 'elapsed') {
-      if (msg.timeDiff) {
-        return durationUtil(msg.timeDiff).toString();
-      } else if (isDate(msg.time)) {
-        return durationUtil(msg.time.getTime() - this._startTime.getTime()).toString();
-      }
-    } else if (isValidDate(msg.time)) {
-      if (format === 'utc') {
-        return msg.time.toISOString();
-      } else if (format === 'local') {
-        return dateUtil(msg.time).toLocaleString();
-      }
-    }
-    return '0';
+    return this._timer.getTimeForPrefix(format);
   }
 
   /**

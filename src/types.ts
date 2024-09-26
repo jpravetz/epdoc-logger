@@ -3,7 +3,7 @@ import { LogLevel, LogLevelDef, LogLevelValue } from './level';
 import { AppTimer } from './lib/app-timer';
 import { Style } from './style';
 
-export type TimePrefix = 'local' | 'utc' | 'elapsed' | false;
+export type TimePrefix = 'local' | 'utc' | 'elapsed' | 'interval' | false;
 export type TransportType = string;
 
 export function isValidTimePrefix(val: any): val is TimePrefix {

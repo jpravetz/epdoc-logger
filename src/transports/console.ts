@@ -1,5 +1,19 @@
-import { LogMessage } from '../types';
+import { LogMessage, TransportOptions } from '../types';
 import { LogTransport } from './base';
+
+export const defaultConsoleTransportOpts: TransportOptions = {
+  name: 'console',
+  show: {
+    timestamp: 'elapsed',
+    level: true,
+    reqId: false,
+    sid: false,
+    static: false,
+    emitter: false,
+    action: false,
+    data: false
+  }
+};
 
 export function getNewConsoleTransport(options: TransportOptions) {
   return new ConsoleTransport(options);

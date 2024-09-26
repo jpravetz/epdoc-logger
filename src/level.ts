@@ -12,7 +12,7 @@ export const defaultLogLevelDef: LogLevelDef = {
   skip: 9
 } as const;
 
-export type LogLevelName = keyof typeof defaultLogLevelDef;
+export type LogLevelName = string;
 export type LogLevelValue = Integer;
 
 export class LogLevel {

@@ -10,7 +10,7 @@ import {
 } from '@epdoc/typeutil';
 import { LogLevel, LogLevelValue } from './level';
 import { AppTimer } from './lib/app-timer';
-import { util } from './lib/util';
+import { StringEx } from './lib/util';
 import { Logger } from './logger';
 import { Style } from './style';
 import {
@@ -32,6 +32,7 @@ export class LoggerMessageBuilder {
   protected _logger: Logger;
   protected _opts: LoggerLineOpts = {};
   protected _showOpts: LoggerShowOpts;
+  protected _tabSize: Integer = DEFAULT_TAB_SIZE;
   // protected _lineFormat: LoggerLineFormatOpts;
   // protected _style: StyleInstance;
   protected _separatorOpts: SeparatorOpts;
@@ -226,13 +227,13 @@ export class LoggerMessageBuilder {
 
   setInitialString(...args: any[]): LogMsgBuilder {
     if (args.length) {
-      const count = util.countTabsAtBeginningOfString(args[0]);
+      const count = StringEx(args[0]).countTabsAtBeginningOfString();
       if (count) {
         this.tab(count);
         args[0] = args[0].slice(count);
       }
     }
-    return this.stylize('text', ...args);
+    return this.stylize(null, ...args);
   }
 
   indent(n: Integer | string = DEFAULT_TAB_SIZE): this {
@@ -253,7 +254,7 @@ export class LoggerMessageBuilder {
    */
   tab(n: Integer = 1): this {
     if (this._enabled) {
-      this._msgIndent = ' '.repeat(n * this.tabSize - 1);
+      this._msgIndent = ' '.repeat(n * this._tabSize - 1);
     }
     return this;
   }

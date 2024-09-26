@@ -1,4 +1,3 @@
-import { dateUtil } from '@epdoc/timeutil';
 import { LogLevel } from '../../level';
 import { LoggerLineFormatOpts, LoggerShowOpts, LogMessage } from '../../types';
 import { TransportFormatterOpts } from './factory';
@@ -27,13 +26,6 @@ export class TransportFormatter {
   }
 
   getTimeString(): string {
-    const timePrefix = this._showOpts.timestamp;
-    if (timePrefix === 'elapsed') {
-      return this._msg.timer.measureFormatted().total;
-    } else if (timePrefix === 'local') {
-      return dateUtil(this._msg.time).format('HH:mm:ss');
-    } else if (timePrefix === 'utc') {
-      return dateUtil(this._msg.time).tz('Z').format('HH:mm:ss');
-    }
+    return this._msg.timer.getTimeForPrefix(this._showOpts.timestamp);
   }
 }

@@ -1,4 +1,5 @@
 import { dateUtil, Milliseconds } from '@epdoc/timeutil';
+import { TimePrefix } from '../types';
 
 export type HrMilliseconds = number;
 export type HrSeconds = number;
@@ -121,25 +122,46 @@ export class AppTimer {
     return this._freeze;
   }
 
+  get intervalElapsedAsString(): string {
+    return formatTime(this.intervalElapsed);
+  }
+
+  get totalElapsedAsString(): string {
+    return formatTime(this.totalElapsed);
+  }
+
+  getTimeForPrefix(timePrefix: TimePrefix): string {
+    if (timePrefix === 'elapsed') {
+      return this.totalElapsedAsString;
+    } else if (timePrefix === 'interval') {
+      return this.intervalElapsedAsString;
+    } else if (timePrefix === 'utc') {
+      return this._freeze.now.toISOString();
+    } else if (timePrefix === 'local') {
+      return dateUtil(this._freeze.now).toISOLocaleString();
+    }
+    return '0';
+  }
+
   /**
    * Measures the elapsed time and returns it as formatted strings.
    * @returns {AppTimerStrings} An object containing formatted total and interval elapsed times.
    */
-  measureFormatted(): AppTimerStrings {
-    if (!this._freeze) {
-      throw new Error('AppTimer.measureFormatted called before measure()');
-    }
-    return AppTimer.formatTimerValues(this._freeze);
-  }
+  // measureFormatted(): AppTimerStrings {
+  //   if (!this._freeze) {
+  //     throw new Error('AppTimer.measureFormatted called before measure()');
+  //   }
+  //   return AppTimer.formatTimerValues(this._freeze);
+  // }
 
-  static formatTimerValues(values: AppTimerValues): AppTimerStrings {
-    return {
-      utc: values.now.toISOString(),
-      local: dateUtil(values.now).toISOLocaleString(),
-      total: formatTime(values.total),
-      interval: formatTime(values.interval)
-    };
-  }
+  // static formatTimerValues(values: AppTimerValues): AppTimerStrings {
+  //   return {
+  //     utc: values.now.toISOString(),
+  //     local: dateUtil(values.now).toISOLocaleString(),
+  //     total: formatTime(values.total),
+  //     interval: formatTime(values.interval)
+  //   };
+  // }
 }
 
 /**

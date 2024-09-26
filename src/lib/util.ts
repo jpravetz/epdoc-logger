@@ -1,6 +1,14 @@
 import { Integer } from '@epdoc/typeutil';
 
-export const util = {
+export function StringEx(str: string) {
+  return new StringUtil(str);
+}
+
+export class StringUtil {
+  private _str: string;
+  constructor(str: string) {
+    this._str = str;
+  }
   /**
    * Returns the plural form of a word based on the given count.
    * @param {string} singular - The singular form of the word.
@@ -8,27 +16,29 @@ export const util = {
    * @param {string} [plural] - The plural form of the word (optional).
    * @returns {string} The plural form of the word.
    */
-  plural: (singular: string, n: Integer, plural?: string) => {
+  plural(n: Integer, plural?: string) {
     if (n === 1) {
-      return singular;
+      return this._str;
     }
-    return plural ? plural : singular + 's';
-  },
+    return plural ? plural : this._str + 's';
+  }
 
   /** LLM generated function to count and remove tabs at the beginning of a string */
-  countTabsAtBeginningOfString: (str: string): Integer => {
+  countTabsAtBeginningOfString(): Integer {
     let count = 0;
-    for (let i = 0; i < str.length; i++) {
-      if (str[i] === '\t') {
+    for (let i = 0; i < this._str.length; i++) {
+      if (this._str[i] === '\t') {
         count++;
       } else {
         break;
       }
     }
     return count;
-  },
-
-  rightPadAndTruncate: (str: string, length: Integer, char = ' ') => {
-    return str.length > length ? str.slice(0, length - 1) : str + char.repeat(length - str.length);
   }
-};
+
+  rightPadAndTruncate(length: Integer, char = ' ') {
+    return this._str.length > length
+      ? this._str.slice(0, length - 1)
+      : this._str + char.repeat(length - this._str.length);
+  }
+}
