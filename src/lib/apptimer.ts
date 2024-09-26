@@ -1,6 +1,6 @@
 import { Milliseconds } from '@epdoc/timeutil';
 
-export type Microseconds = number;
+export type HrMilliseconds = number;
 
 /**
  * Represents the elapsed time since the start of the program with total and
@@ -25,23 +25,29 @@ function formatTime(time: Milliseconds): string {
  * microseconds.
  */
 export class AppTimer {
-  protected _startTime: Microseconds;
-  protected _lastMeasurement: Microseconds;
+  protected _startTime: HrMilliseconds;
+  protected _startDate: Date;
+  protected _lastMeasurement: HrMilliseconds;
 
-  constructor(startTime: Microseconds = performance.now()) {
+  constructor(startDate: Date = new Date(), startTime: HrMilliseconds = performance.now()) {
+    this._startDate = startDate;
     this._startTime = startTime;
     this._lastMeasurement = this._startTime;
   }
 
-  protected now(): Microseconds {
+  protected now(): HrMilliseconds {
     return performance.now();
   }
 
-  get startTime(): Microseconds {
+  get startTime(): HrMilliseconds {
     return this._startTime;
   }
 
-  set startTime(value: Microseconds | Date | undefined) {
+  get startDate(): Date {
+    return this._startDate;
+  }
+
+  set startTime(value: HrMilliseconds | Date | undefined) {
     if (typeof value === 'number') {
       this._startTime = value;
     } else if (value instanceof Date) {
@@ -56,6 +62,7 @@ export class AppTimer {
    * @returns {this} The current instance for method chaining.
    */
   resetAll(): this {
+    this._startDate = new Date();
     this._startTime = this.now();
     this._lastMeasurement = this._startTime;
     return this;
@@ -75,7 +82,7 @@ export class AppTimer {
    * @returns {AppTimerValues} An object containing total and interval elapsed times in milliseconds.
    */
   measure(): AppTimerValues {
-    const now: Microseconds = this.now();
+    const now: HrMilliseconds = this.now();
     const result = {
       total: (now - this._startTime) / 1000,
       interval: (now - this._lastMeasurement) / 1000

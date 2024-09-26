@@ -1,6 +1,9 @@
-import { Integer, isString } from '@epdoc/typeutil';
-import { LogLevelValue } from '../level';
-import { LogMessage } from '../types';
+import { dateUtil, durationUtil } from '@epdoc/timeutil';
+import { Integer, isDate, isFunction, isString, isValidDate } from '@epdoc/typeutil';
+import { LogLevel, LogLevelValue } from '../level';
+import { AppTimer } from '../lib/apptimer';
+import { LoggerShowOpts, LogMessage, LogMsgPart, TimePrefix } from '../types';
+import { TransportStringFormatter } from './formatters/string';
 
 let transportIdx: Integer = 0;
 
@@ -12,23 +15,23 @@ export type LogTransportOpenCallbacks = {
 };
 
 export class LogTransport {
-  options: any;
+  protected _showOpts: LoggerShowOpts;
+  protected _logLevels: LogLevel;
+  protected _timer: AppTimer;
+  protected _startTime: Date;
   id: Integer = transportIdx++;
-  bIncludeSid: boolean;
-  bIncludeStatic: boolean;
-  colorize: boolean;
-  timestampFormat: string;
+  // bIncludeSid: boolean;
+  // bIncludeStatic: boolean;
+  // colorize: boolean;
+  // timestampFormat: string;
   protected _levelThreshold: LogLevelValue;
   bReady: boolean;
+  protected _msgParts: LogMsgPart[];
 
-  constructor(options) {
-    this.options = options || {};
-    this.bIncludeSid =
-      this.options.sid === false || this.options.bIncludeSid === false ? false : true;
-    this.bIncludeStatic = this.options.static === false ? false : true;
-    this.colorize = this.options.colorize !== false;
-    this.timestampFormat = this.options.timestamp || 'ms';
-    this._levelThreshold = this.options.level;
+  constructor(opts: LoggerShowOpts, logLevels: LogLevel, timer: AppTimer) {
+    this._showOpts = opts || {};
+    this._logLevels = logLevels;
+    this._timer = timer;
   }
 
   /**
@@ -141,7 +144,7 @@ export class LogTransport {
    * @returns {this} The current instance for chaining.
    */
   protected _write(msg: string): this {
-    console.log(msg);
+    throw new Error('Base transport cannot be written to');
     return this;
   }
 
@@ -170,20 +173,41 @@ export class LogTransport {
     return undefined;
   }
 
+  formatTimestamp(msg: LogMessage, format: TimePrefix) {
+    if (format === 'elapsed') {
+      if (msg.timeDiff) {
+        return durationUtil(msg.timeDiff).toString();
+      } else if (isDate(msg.time)) {
+        return durationUtil(msg.time.getTime() - this._startTime.getTime()).toString();
+      }
+    } else if (isValidDate(msg.time)) {
+      if (format === 'utc') {
+        return msg.time.toISOString();
+      } else if (format === 'local') {
+        return dateUtil(msg.time).toLocaleString();
+      }
+    }
+    return '0';
+  }
+
   /**
    * Format the log message based on the provided parameters.
    * @param params {LogMessage} The log message parameters.
    * @returns {string} The formatted log message.
    */
-  protected formatLogMessage(params: LogMessage) {
-    let opts = {
-      timestamp: this.timestampFormat,
-      sid: this.bIncludeSid,
-      static: this.bIncludeStatic,
-      colorize: this.colorize,
-      template: this.options.template
-    };
-    if (_.isFunction(this.options.format)) {
+  protected formatLogMessage(params: LogMessage): string {
+    const formatter = new TransportStringFormatter(
+      params,
+      this._showOpts,
+      this._formatOpts,
+      this._logLevels
+    );
+    return formatter.format();
+
+    // const line = this._msgParts.join(' ');
+    // this._state.transport.write(this);
+    this.clear();
+    if (isFunction(this.options.format)) {
       return this.options.format(params, opts);
     } else if (this.options.format === 'template') {
       return format.paramsToString(params, opts);

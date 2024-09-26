@@ -382,7 +382,7 @@ export class LogManager {
    */
   getLogger(emitter: string, context: object): Logger {
     const msgConsts: LogMessageConsts = Object.assign({}, this._msgConsts, { emitter });
-    return new Logger(this, msgConsts, this._logLevels, this._separatorOpts, context);
+    return new Logger(this, msgConsts, this._logLevels, this._separatorOpts, this._context);
   }
 
   /**
