@@ -126,6 +126,8 @@ export const consoleTransportDefaults: TransportOptions = {
 export type TransportOptions = Partial<{
   name: TransportType; // not required internally
   show: LoggerShowOpts;
+  logLevel: LogLevel;
+  timer: AppTimer;
   consts: LogMessageConsts;
   levelThreshold: LogLevelValue;
   format: LoggerLineFormatOpts;

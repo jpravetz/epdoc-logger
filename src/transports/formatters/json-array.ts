@@ -2,13 +2,13 @@ import { isArray } from '@epdoc/typeutil';
 import { LogMessage } from '../../types';
 import { TransportFormatter } from './base';
 
-export function getNewJsonFormatter(): TransportFormatter {
-  return new TransportJsonFormatter();
+export function getNewFormatter(): TransportFormatter {
+  return new TransportJsonArrayFormatter();
 }
 
-export class TransportJsonFormatter extends TransportFormatter {
+export class TransportJsonArrayFormatter extends TransportFormatter {
   get name(): string {
-    return 'string';
+    return 'json-arry';
   }
 
   format(msg: LogMessage): any {

@@ -13,7 +13,6 @@ import {
   SeparatorOpts
 } from './types';
 
-export namespace logger {
 
 let mgrIdx = 0;
 
@@ -308,4 +307,4 @@ export class LogManager {
     return this._transportMgr.flush();
   }
 }
-}
+

@@ -2,7 +2,7 @@ import { Dict } from '@epdoc/typeutil';
 import { LogMessage } from '../../types';
 import { TransportFormatter } from './base';
 
-export function getNewJsonFormatter(): TransportFormatter {
+export function getNewFormatter(): TransportFormatter {
   return new TransportJsonFormatter();
 }
 

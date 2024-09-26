@@ -3,6 +3,8 @@ import * as Koa from 'koa';
 import { dateUtil, Milliseconds } from '@epdoc/timeutil';
 import { LoggerMiddleware, MiddlewareRouteInfo } from './base';
 
+let reqId = 0;
+
 export interface Koa2MiddlewareContext extends Koa.Context {
   _reqId: number;
   state: Koa2MiddlewareState;

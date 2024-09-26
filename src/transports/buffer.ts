@@ -1,8 +1,8 @@
 import { TransportOptions } from '../types';
 import { LogTransport } from './base';
 
-export const defaultConsoleTransportOpts: TransportOptions = {
-  name: 'console',
+export const defaultBufferTransportOpts: TransportOptions = {
+  name: 'buffer',
   show: {
     timestamp: 'elapsed',
     level: true,
@@ -16,13 +16,15 @@ export const defaultConsoleTransportOpts: TransportOptions = {
 };
 
 export function getNewTransport(options: TransportOptions) {
-  return new ConsoleTransport(options);
+  return new BufferTransport(options);
 }
 
-export class ConsoleTransport extends LogTransport {
+export class BufferTransport extends LogTransport {
+  protected _buffer: string[] = [];
+
   constructor(options: TransportOptions) {
     super(options);
-    this._showOpts = this._showOpts ?? defaultConsoleTransportOpts.show;
+    this._showOpts = this._showOpts ?? defaultBufferTransportOpts.show;
   }
 
   validateOptions(previous?: LogTransport) {
@@ -35,7 +37,7 @@ export class ConsoleTransport extends LogTransport {
   }
 
   get type(): string {
-    return 'console';
+    return 'buffer';
   }
 
   get writable(): boolean {
@@ -47,12 +49,12 @@ export class ConsoleTransport extends LogTransport {
   }
 
   protected _write(msg: string): this {
-    console.log(msg);
+    this._buffer.push(msg);
     return this;
   }
 
   toString() {
-    return 'Console';
+    return 'Buffer';
   }
 
   getOptions() {

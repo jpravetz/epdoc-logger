@@ -2,11 +2,11 @@ import { StringEx } from '../../lib/util';
 import { LogMessage, LogMsgPart, StyleFormatterFn } from '../../types';
 import { TransportFormatter } from './base';
 
-export function getNewStringFormatter(): TransportFormatter {
+export function getNewFormatter(): TransportFormatter {
   return new TransportStringFormatter();
 }
 
-export class TransportStringFormatter extends TransportFormatter {
+class TransportStringFormatter extends TransportFormatter {
   get name(): string {
     return 'string';
   }

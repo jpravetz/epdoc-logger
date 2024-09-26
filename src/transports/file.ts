@@ -1,12 +1,31 @@
-import { isFunction, isString } from '@epdoc/typeutil';
+import { isString } from '@epdoc/typeutil';
 import fs from 'node:fs';
 import path from 'node:path';
-import { LogMessage, TransportOptions } from '../types';
+import { TransportOptions } from '../types';
 import { LogTransport, LogTransportOpenCallbacks } from './base';
+
+export const defaultFileTransportOpts: FileTransportOptions = {
+  name: 'file',
+  path: 'logs/app.log',
+  show: {
+    timestamp: 'elapsed',
+    level: true,
+    reqId: false,
+    sid: false,
+    static: false,
+    emitter: false,
+    action: false,
+    data: false
+  }
+};
 
 export type FileTransportOptions = TransportOptions & {
   path: string;
 };
+
+export function getNewTransport(options: FileTransportOptions) {
+  return new FileTransport(options);
+}
 
 export class FileTransport extends LogTransport {
   protected _path: string;
@@ -14,6 +33,7 @@ export class FileTransport extends LogTransport {
   protected _writable = false;
   protected _buffer = []; // Used in case of stream backups
   protected _drainRegistered = false;
+
   constructor(options: FileTransportOptions) {
     super(options);
     this._path = options.path;
@@ -123,26 +143,5 @@ export class FileTransport extends LogTransport {
 
   getOptions() {
     return { path: this._path };
-  }
-
-  protected formatLogMessage(params: LogMessage) {
-    let opts = {
-      timestamp: this.timestampFormat,
-      sid: this.bIncludeSid,
-      static: this.bIncludeStatic,
-      colorize: false,
-      template: this.options.template
-    };
-    if (isFunction(this.options.format)) {
-      return this.options.format(params, opts);
-    } else if (this.options.format === 'template') {
-      return format.paramsToString(params, opts);
-    } else if (this.options.format === 'json') {
-      let json = format.paramsToJson(params, opts);
-      return JSON.stringify(json);
-    } else {
-      let json = format.paramsToJsonArray(params, opts);
-      return JSON.stringify(json);
-    }
   }
 }

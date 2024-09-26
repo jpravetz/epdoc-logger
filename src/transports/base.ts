@@ -1,8 +1,15 @@
-import { Integer, isFunction, isString } from '@epdoc/typeutil';
+import { Integer, isString } from '@epdoc/typeutil';
 import { LogLevel, LogLevelValue } from '../level';
 import { AppTimer } from '../lib/app-timer';
-import { LoggerShowOpts, LogMessage, LogMsgPart, TimePrefix } from '../types';
-import { TransportStringFormatter } from './formatters/string';
+import {
+  LoggerLineFormatOpts,
+  LoggerShowOpts,
+  LogMessage,
+  LogMsgPart,
+  TimePrefix,
+  TransportOptions
+} from '../types';
+import { FormatterType, TransportFormatterFactory } from './formatters/factory';
 
 let transportIdx: Integer = 0;
 
@@ -14,8 +21,10 @@ export type LogTransportOpenCallbacks = {
 };
 
 export class LogTransport {
+  protected _formatterFactory: TransportFormatterFactory;
   protected _showOpts: LoggerShowOpts;
   protected _logLevels: LogLevel;
+  protected _formatOpts: LoggerLineFormatOpts;
   protected _timer: AppTimer;
   id: Integer = transportIdx++;
   // bIncludeSid: boolean;
@@ -26,10 +35,20 @@ export class LogTransport {
   bReady: boolean;
   protected _msgParts: LogMsgPart[];
 
-  constructor(opts: LoggerShowOpts, logLevels: LogLevel, timer: AppTimer) {
-    this._showOpts = opts || {};
-    this._logLevels = logLevels;
-    this._timer = timer;
+  constructor(opts: TransportOptions) {
+    this._showOpts = opts.show;
+    this._logLevels = opts.logLevel;
+    this._timer = opts.timer;
+    const missing: string[] = [];
+    if (!opts.logLevel) {
+      missing.push('logLevel');
+    }
+    if (!opts.timer) {
+      missing.push('timer');
+    }
+    if (missing.length > 0) {
+      throw new Error(`LogTransport missing required options: ${missing.join(', ')}`);
+    }
   }
 
   /**
@@ -132,7 +151,7 @@ export class LogTransport {
    * @returns {this} The current instance for chaining.
    */
   public write(msg: LogMessage): this {
-    let str = this.formatLogMessage(msg);
+    let str = this.formatLogMessage('string', msg);
     return this._write(str);
   }
 
@@ -180,28 +199,13 @@ export class LogTransport {
    * @param params {LogMessage} The log message parameters.
    * @returns {string} The formatted log message.
    */
-  protected formatLogMessage(params: LogMessage): string {
-    const formatter = new TransportStringFormatter(
-      params,
-      this._showOpts,
-      this._formatOpts,
-      this._logLevels
-    );
-    return formatter.format();
-
-    // const line = this._msgParts.join(' ');
-    // this._state.transport.write(this);
-    this.clear();
-    if (isFunction(this.options.format)) {
-      return this.options.format(params, opts);
-    } else if (this.options.format === 'template') {
-      return format.paramsToString(params, opts);
-    } else if (this.options.format === 'json') {
-      let json = format.paramsToJson(params, opts);
-      return JSON.stringify(json);
-    } else {
-      let json = format.paramsToJsonArray(params, opts);
-      return JSON.stringify(json);
-    }
+  protected formatLogMessage(type: FormatterType, params: LogMessage): string {
+    const formatter = this._formatterFactory.getFormatter(type);
+    formatter.init({
+      show: this._showOpts,
+      format: this._formatOpts,
+      logLevels: this._logLevels
+    });
+    return formatter.format(params);
   }
 }
