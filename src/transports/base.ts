@@ -6,6 +6,7 @@ import {
   LoggerShowOpts,
   LogMessage,
   LogMsgPart,
+  SeparatorOpts,
   TimePrefix,
   TransportOptions
 } from '../types';
@@ -23,6 +24,7 @@ export type LogTransportOpenCallbacks = {
 export class LogTransport {
   protected _formatterFactory: TransportFormatterFactory;
   protected _showOpts: LoggerShowOpts;
+  protected _separatorOpts: SeparatorOpts;
   protected _logLevels: LogLevel;
   protected _formatOpts: LoggerLineFormatOpts;
   protected _timer: AppTimer;
@@ -37,6 +39,7 @@ export class LogTransport {
 
   constructor(opts: TransportOptions) {
     this._showOpts = opts.show;
+    this._separatorOpts = opts.separatorOpts;
     this._logLevels = opts.logLevel;
     this._timer = opts.timer;
     const missing: string[] = [];

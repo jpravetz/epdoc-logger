@@ -2,17 +2,7 @@ import { defaultLogLevelDef, LogLevel, LogLevelName, LogLevelValue } from './lev
 import { AppTimer } from './lib/app-timer';
 import { Logger } from './logger';
 import { TransportManager } from './transport-manager';
-import { LogTransport } from './transports/base';
-import { TransportFactory } from './transports/factory';
-import {
-  LoggerShowOpts,
-  LogMessage,
-  LogMessageConsts,
-  LogMgrDefaults,
-  LogMgrOpts,
-  SeparatorOpts
-} from './types';
-
+import { LogMessage, LogMessageConsts, LogMgrDefaults, LogMgrOpts } from './types';
 
 let mgrIdx = 0;
 
@@ -41,18 +31,15 @@ let mgrIdx = 0;
 export class LogManager {
   protected name: string;
   protected _timer: AppTimer;
-  protected _show: LoggerShowOpts;
+  // protected _show: LoggerShowOpts;
   protected _requireAllTransportsReady = false;
-  protected _separatorOpts: SeparatorOpts;
+  // protected _separatorOpts: SeparatorOpts;
   protected _msgConsts: LogMessageConsts;
-  protected transportFactory: TransportFactory = new TransportFactory();
   protected _defaults: LogMgrDefaults;
   protected _logLevels: LogLevel;
-  protected transports: LogTransport[] = [];
+  protected _transportMgr: TransportManager;
   protected consoleOptions: any;
   protected _running: boolean;
-  protected _transportMgr: TransportManager;
-  protected allTransportsReady: boolean;
   protected _context: any;
 
   // protected _style: Style;
@@ -71,8 +58,8 @@ export class LogManager {
 
     if (options.defaults) {
       const defaults: LogMgrDefaults = options.defaults;
-      this._separatorOpts = defaults.separatorOpts ?? { char: '#', length: 70 };
-      this._show = defaults.show ?? {};
+      // this._separatorOpts = defaults.separatorOpts ?? { char: '#', length: 70 };
+      // this._show = defaults.show ?? {};
       // this._style = defaults.style ?? new ColorStyle();
       if (this._logLevels.isLogLevel(defaults.levelThreshold)) {
         this._logLevels.levelThreshold = defaults.levelThreshold;
@@ -82,7 +69,7 @@ export class LogManager {
       }
       this._msgConsts = defaults.msgConsts ?? {};
     }
-    this._transportMgr = new TransportManager(logMsgFn:this.log);
+    this._transportMgr = new TransportManager(this);
     this._transportMgr.addTransports(options.transports);
 
     // if (this._runOpts.autoRun) {
@@ -96,6 +83,10 @@ export class LogManager {
 
   get context(): any {
     return this._context;
+  }
+
+  get logLevels(): LogLevel {
+    return this._logLevels;
   }
 
   /**
@@ -127,17 +118,19 @@ export class LogManager {
   }
 
   /**
-   * Log messages are first written to a buffer, then flushed. Calling this function will force
-   * the queue to be flushed. Normally this function should not need to be called. Will only
-   * flush the queue if all transports are ready to receive messages.
+   * Calling this function will conditionally cause the queue to be flushed.
+   * Messages are first written to a buffer using the `logMessage` function, then
+   * flushed. Normally this function should not need to be called externally, as
+   * it is called internally whenever there may be messages to write. When
+   * `_requireAllTransportsReady` is true, will only flush the queue if all
+   * transports are ready to receive messages.
    * @returns {LogManager}
-   * @private
    */
-  flushQueue(): void {
+  protected flushQueue(): this {
     if (this._running && this._msgQueue.length) {
       if (
-        this.transports.length &&
-        (!this._requireAllTransportsReady || this._transportMgr.allReady())
+        this._transportMgr.hasTransports() &&
+        (!this._requireAllTransportsReady || this._transportMgr.allReady)
       ) {
         let nextMsg: LogMessage = this._msgQueue.shift();
         if (nextMsg) {
@@ -146,6 +139,7 @@ export class LogManager {
         }
       }
     }
+    return this;
   }
 
   /**
@@ -154,7 +148,7 @@ export class LogManager {
    * @param d {Date} The application start time
    * @return {LogManager}
    */
-  timer(timer: AppTimer):this {
+  timer(timer: AppTimer): this {
     this._timer = timer;
     return this;
   }
@@ -189,7 +183,7 @@ export class LogManager {
    * @param options {LogMessage} - The log message options.
    * @returns {void}
    */
-  protected logLoggerMessage(options: LogMessage = {}): void {
+  protected logLoggerMessage(options: LogMessage = {}): this {
     const opts = Object.assign({ emitter: 'logger', action: 'log' }, options);
     return this.logMessage(opts);
   }
@@ -204,7 +198,7 @@ export class LogManager {
    * @param options {LogMessage} - The log message options.
    * @returns {void}
    */
-  logMessage(options: LogMessage): void {
+  logMessage(options: LogMessage): this {
     if (!options.time) {
       options.time = new Date();
     }
@@ -214,21 +208,9 @@ export class LogManager {
     return this.flushQueue();
   }
 
-  /**
-   * Set the {@link LogManager} objects's minimum log level. Transports may have
-   * their own level, but when calling this method, the transports will be set
-   * to the new level.
-   * @param level {string} - Must be one of {@link LogManager#LEVEL_ORDER}
-   * @param [options] {Object}
-   * @param [options.transports=false] {Boolean} Set the level for all
-   * transports as well.
-   * @return {LogManager}
-   */
   level(level: LogLevelName | LogLevelValue): this {
     this._logLevels.levelThreshold = level;
-    this.transports.forEach((transport) => {
-      transport.levelThreshold = this._logLevels.levelThreshold;
-    });
+    this._transportMgr.setLevelThreshold(this._logLevels.levelThreshold);
     return this;
   }
 
@@ -307,4 +289,3 @@ export class LogManager {
     return this._transportMgr.flush();
   }
 }
-

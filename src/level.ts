@@ -71,6 +71,10 @@ export class LogLevel {
     return level <= this._errorStackThreshold;
   }
 
+  fromName(level: LogLevelName): LogLevelValue {
+    return this._levelDef[level];
+  }
+
   asValue(level: LogLevelName | LogLevelValue): LogLevelValue {
     if (isInteger(level) && this.isLogLevelValue(level)) {
       return level;

@@ -1,5 +1,6 @@
 import { isArray } from '@epdoc/typeutil';
-import { LogLevel } from './level';
+import { LogLevel, LogLevelValue } from './level';
+import { LogManager } from './log-manager';
 import { Logger } from './logger';
 import { LogTransport, LogTransportOpenCallbacks, LogTransportType } from './transports/base';
 import { TransportFactory } from './transports/factory';
@@ -7,7 +8,6 @@ import {
   consoleTransportDefaults,
   isTransportOptions,
   LogMessage,
-  LogMessageFn,
   TransportOptions
 } from './types';
 
@@ -36,14 +36,40 @@ let mgrIdx = 0;
  */
 
 export class TransportManager {
+  protected _logMgr: LogManager;
   protected _transportFactory: TransportFactory = new TransportFactory();
-  protected _logLevels: LogLevel;
   protected _transports: LogTransport[] = [];
-  protected _allTransportsReady: boolean;
-  protected logLoggerMessage: LogMessageFn;
+  protected _areAllTransportsReady: boolean = false;
 
-  constructor(logMsgFn: LogMessageFn) {
-    this.logLoggerMessage = logMsgFn;
+  constructor(logMgr: LogManager) {
+    this._logMgr = logMgr;
+  }
+
+  public hasTransports(): boolean {
+    return this._transports.length > 0;
+  }
+
+  public get allReady(): boolean {
+    return this._areAllTransportsReady;
+  }
+
+  protected get logMgr(): LogManager {
+    return this._logMgr;
+  }
+
+  protected get logLevels(): LogLevel {
+    return this._logMgr.logLevels;
+  }
+
+  /**
+   * Set the log level for all transports. Called from `LogManager.level()` method.
+   * @param level {string} The log level to set.
+   */
+  setLevelThreshold(level: LogLevelValue): this {
+    this._transports.forEach((transport) => {
+      transport.levelThreshold = level;
+    });
+    return this;
   }
 
   public addTransports(transports: TransportOptions | TransportOptions[]) {
@@ -72,7 +98,7 @@ export class TransportManager {
       let name = newTransport.name;
       let topts = newTransport.getOptions();
       let sOptions = topts ? ' (' + JSON.stringify(topts) + ')' : '';
-      this.logLoggerMessage({
+      this._logMgr.logMessage({
         action: 'logger.transport.add',
         message: "Added transport '" + name + "'" + sOptions,
         data: { transport: newTransport.name }
@@ -109,7 +135,8 @@ export class TransportManager {
       const cb: LogTransportOpenCallbacks = {
         onSuccess: () => {
           transport.clear();
-          this.logLoggerMessage({
+          this.allReadyCompute();
+          this._logMgr.logMessage({
             level: this._logLevels.asValue('info'),
             action: 'logger.start.success',
             message: `Started transport '${name}'`,
@@ -121,26 +148,28 @@ export class TransportManager {
           }
         },
         onError: (err) => {
-          this.logLoggerMessage({
-            level: this._logLevels.asValue('info'),
+          this._logMgr.logMessage({
+            level: this.logLevels.asValue('info'),
             action: 'logger.warn',
             message: `Tried but failed to start transport '${name}'. ${err}`,
             data: { transport: name }
           });
           this.removeTransport(transport);
+          this.allReadyCompute();
           if (!bResolved) {
             bResolved = true;
             resolve(true);
           }
         },
         onClose: () => {
-          this.logLoggerMessage({
-            level: this._logLevels.asValue('info'),
+          this._logMgr.logMessage({
+            level: this.logLevels.asValue('info'),
             action: 'logger.close',
             message: `Closed transport '${name}'`,
             data: { transport: name }
           });
           this.removeTransport(transport);
+          this.allReadyCompute();
         }
       };
 
@@ -188,7 +217,7 @@ export class TransportManager {
       if (t.match(transport)) {
         let job = t.stop();
         jobs.push(job);
-        this.logLoggerMessage({
+        this._logMgr.logMessage({
           action: 'logger.transport.remove',
           message: `Removed transport '${t.toString()}'`,
           data: { transport: t.toString() }
@@ -198,6 +227,7 @@ export class TransportManager {
       }
     });
     this._transports = remainingTransports;
+    this.allReadyCompute();
     return Promise.all(jobs);
   }
 
@@ -234,16 +264,9 @@ export class TransportManager {
     return this._transports;
   }
 
-  /**
-   * Log messages are first written to a buffer, then flushed. Calling this function will force
-   * the queue to be flushed. Normally this function should not need to be called. Will only
-   * flush the queue if all transports are ready to receive messages.
-   * @returns {LogManager}
-   * @private
-   */
   writeMessage(msg: LogMessage): void {
     this._transports.forEach((transport) => {
-      if (this._logLevels.meetsThreshold(msg.level, transport.levelThreshold)) {
+      if (this.logLevels.meetsThreshold(msg.level, transport.levelThreshold)) {
         // nextMsg.level = undefined;
         transport.write(msg);
       }
@@ -255,12 +278,9 @@ export class TransportManager {
    * @returns {boolean}
    * @private
    */
-  allReady(): boolean {
-    if (!this._transports.length) {
-      return false;
-    }
-    const transport = this._transports.find((t) => !t.ready());
-    return transport instanceof LogTransport ? false : true;
+  allReadyCompute(): this {
+    this._areAllTransportsReady = this.hasTransports() && this._transports.every((t) => t.ready());
+    return this;
   }
 
   /**
@@ -275,6 +295,7 @@ export class TransportManager {
       let job = transport.stop();
       jobs.push(job);
     });
+    this.allReadyCompute();
     return Promise.all(jobs);
   }
 

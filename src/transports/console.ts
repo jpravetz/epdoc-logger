@@ -1,5 +1,5 @@
 import { TransportOptions } from '../types';
-import { LogTransport } from './base';
+import { LogTransport, LogTransportOpenCallbacks } from './base';
 
 export const defaultConsoleTransportOpts: TransportOptions = {
   name: 'console',
@@ -29,9 +29,9 @@ export class ConsoleTransport extends LogTransport {
     return null;
   }
 
-  open(onSuccess) {
+  open(cb: LogTransportOpenCallbacks) {
     this.bReady = true;
-    onSuccess && onSuccess(true);
+    cb.onSuccess(true);
   }
 
   get type(): string {

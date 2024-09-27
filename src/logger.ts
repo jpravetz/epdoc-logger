@@ -4,17 +4,12 @@
  *****************************************************************************/
 'use strict';
 
-import { isArray, isNonEmptyString } from '@epdoc/typeutil';
+import { Dict, isArray, isNonEmptyString } from '@epdoc/typeutil';
 import { LogLevel, LogLevelName, LogLevelValue } from './level';
 import { LogManager } from './log-manager';
 import { LoggerMessageBuilder, LogMsgBuilder } from './msg-builder';
 import { Style } from './style';
-import { LoggerLineOpts, LogMessageConsts, SeparatorOpts } from './types';
-
-let util = require('util');
-let format = require('./format');
-let moment = require('moment');
-let _ = require('underscore');
+import { LoggerLineOpts, LogMessage, LogMessageConsts, SeparatorOpts } from './types';
 
 /**
  * <p>Create a new log object with methods to log to the transport that is attached to
@@ -69,15 +64,16 @@ export class Logger {
   protected _reqId: string;
   protected _sid: string;
   protected _emitter: string[];
-  protected _ctx: object;
+  protected _ctx: Dict;
   protected _style: Style;
-  // protected _logLevel: string;
+  protected _level: LogLevelValue;
   // protected bErrorStack: boolean;
   protected _logData: object;
   protected _logAction: string;
   protected _stack: string[] = [];
   protected _initialized: boolean = false;
   protected _line: LogMsgBuilder;
+  protected _silent: boolean;
 
   constructor(
     logMgr: LogManager,
@@ -119,6 +115,14 @@ export class Logger {
 
   get name() {
     return this._name;
+  }
+
+  protected get logMgr(): LogManager {
+    return this._logMgr;
+  }
+
+  protected get logLevels(): LogLevel {
+    return this._logMgr.logLevels;
   }
 
   setContext(ctx: object): this {
@@ -211,10 +215,13 @@ export class Logger {
    * @return {Logger}
    */
   separator(options: SeparatorOpts) {
-    if (this.isAboveLevel(this._logMgr.LEVEL_INFO)) {
-      const opts = this._separatorOpts;
-      let sep = opts.char.repeat(Math.floor(opts.length / opts.char.length));
-      this._writeMessage(this._logLevels.asValue('info'), sep);
+    if (this._logLevels.meetsThreshold(this._logLevels.fromName('info'))) {
+      const logMsg: LogMessage = {
+        level: this._logLevels.fromName('info'),
+        action: 'logger.separator',
+        separator: true
+      };
+      this._logMgr.logMessage(logMsg);
     }
     return this;
   }
@@ -303,7 +310,7 @@ export class Logger {
    * @see Logger#popName
    */
   pushName(name: string) {
-    this.stack.push(name);
+    this._stack.push(name);
     return this;
   }
 
@@ -317,15 +324,15 @@ export class Logger {
    */
   popName(options: any) {
     if (options && options.all === true) {
-      this.stack = [];
+      this._stack = [];
     } else {
-      this.stack.pop();
+      this._stack.pop();
     }
     return this;
   }
 
   getStack() {
-    return this.stack;
+    return this._stack;
   }
 
   /**
@@ -349,7 +356,7 @@ export class Logger {
   elapsed(name: string, key: string) {
     name || (name = 'elapsed');
     key || (key = 'elapsed');
-    this.timer || (this.timer = {});
+    this._timer || (this._timer = {});
     return this._setData('logData', key, this.getElapsed(name));
   }
 
@@ -362,9 +369,9 @@ export class Logger {
    */
   getElapsed(name: string) {
     name || (name = 'elapsed');
-    this.timer || (this.timer = {});
-    if (this.timer[name]) {
-      return new Date().getTime() - this.timer[name];
+    this._timer || (this._timer = {});
+    if (this._timer[name]) {
+      return new Date().getTime() - this._timer[name];
     }
     return 0;
   }
@@ -377,8 +384,8 @@ export class Logger {
    */
   resetElapsed(name: string) {
     name || (name = 'elapsed');
-    this.timer || (this.timer = {});
-    this.timer[name] = new Date().getTime();
+    this._timer || (this._timer = {});
+    this._timer[name] = new Date().getTime();
     return this;
   }
 
@@ -398,14 +405,14 @@ export class Logger {
    * @return {number} Response time in milliseconds
    */
   getHrElapsed() {
-    if (this.ctx) {
+    if (this._ctx) {
       let val;
-      if (this.ctx._hrStartTime) {
-        val = this.ctx._hrStartTime;
-      } else if (this.ctx && this.ctx.state && this.ctx.state.hrStartTime) {
-        val = this.ctx.state.hrStartTime;
-      } else if (this.ctx.req && this.ctx.req._hrStartTime) {
-        val = this.ctx.req._hrStartTime;
+      if (this._ctx._hrStartTime) {
+        val = this._ctx._hrStartTime;
+      } else if (this._ctx && this._ctx.state && this._ctx.state.hrStartTime) {
+        val = this._ctx.state.hrStartTime;
+      } else if (this._ctx.req && this._ctx.req._hrStartTime) {
+        val = this._ctx.req._hrStartTime;
       }
       if (val) {
         let parts = process.hrtime(val);
@@ -415,7 +422,10 @@ export class Logger {
     return 0;
   }
 
+  get logLevel() : LogLevelValue {
+    return this._logMgr._logLevels.levelThreshold;
   date(d: Date, s: string) {
+    if( this._log)
     if (this.isAboveLevel(this._logMgr.LEVEL_INFO)) {
       d || (d = new Date());
       this.logAction = s || 'currentTime';
@@ -481,7 +491,7 @@ export class Logger {
     if (args.length > 1) {
       let params = {
         level: args.shift(),
-        emitter: this.stack.join('.')
+        emitter: this._stack.join('.')
       };
       if (this.logData) {
         params.data = this.logData;
@@ -516,10 +526,10 @@ export class Logger {
           params.message = arr.join(' ');
         }
       }
-      if (this.ctx) {
+      if (this._ctx) {
         this.logParams(params);
       } else {
-        if (this.silent !== true) {
+        if (this._silent !== true) {
           this._logMgr.logParams(params, this.logLevel);
         }
       }
@@ -528,7 +538,7 @@ export class Logger {
 
   /**
    * Log a raw message in the spirit of Logger.logMessage, adding sid and reqId columns from
-   * this.ctx.req Looks for sessionID in req.session.id or req.sessionId, otherwise uses the
+   * this._ctx.req Looks for sessionID in req.session.id or req.sessionId, otherwise uses the
    * passed in values for sid and reqId (if any). This is the method that calls the underlying
    * logging outputter. If you want to use your own logging tool, you can replace this method, or
    * provide your own transport.
@@ -551,19 +561,19 @@ export class Logger {
       }
     }
 
-    if (this.ctx) {
-      if (this.ctx.state && this.ctx.app) {
+    if (this._ctx) {
+      if (this._ctx.state && this._ctx.app) {
         // Attempt to determine if this is a koa context
-        setParams(this.ctx);
-      } else if (this.ctx.req) {
+        setParams(this._ctx);
+      } else if (this._ctx.req) {
         // Must be an express context
-        setParams(this.ctx.req);
+        setParams(this._ctx.req);
       } else {
-        setParams(this.ctx);
+        setParams(this._ctx);
       }
     }
-    if (this.silent !== true) {
-      this._logMgr.logParams(params, this.logLevel);
+    if (this._silent !== true) {
+      this._logMgr.logMessage(params);
     }
     return this;
   }
@@ -578,8 +588,8 @@ export class Logger {
    * @param {string} level - Must be one of LogManager.LEVEL_ORDER.
    * @return {Logger} Self
    */
-  setLevel(level: string) {
-    this.logLevel = level;
+  setLevel(level: LogLevelValue) {
+    this._level = level;
     return this;
   }
 
@@ -587,8 +597,8 @@ export class Logger {
    * Get the log level for this object
    * @returns {string} The currently set log level for this Logger object.
    */
-  getLevel() {
-    return this.logLevel;
+  getLevel(): LogLevelValue {
+    return this._level;
   }
 
   /**
@@ -598,7 +608,7 @@ export class Logger {
    *   reference is null.
    */
   isAboveLevel(level: string) {
-    let reference = this.logLevel || this._logMgr.logLevel;
+    let reference = this._level || this._logMgr.logLevel;
     if (this._logMgr.LEVEL_ORDER.indexOf(level) >= this._logMgr.LEVEL_ORDER.indexOf(reference)) {
       return true;
     }

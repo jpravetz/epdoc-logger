@@ -70,9 +70,9 @@ export type SeparatorOpts = Partial<{
 }>;
 
 export type LogMgrDefaults = Partial<{
-  show: LoggerShowOpts;
-  style: Style;
-  separatorOpts: SeparatorOpts;
+  // show: LoggerShowOpts;
+  // style: Style;
+  // separatorOpts: SeparatorOpts;
   levelThreshold: LogLevelValue;
   errorStackThreshold: LogLevelValue;
   msgConsts: LogMessageConsts;
@@ -107,6 +107,7 @@ export type LogMessage = LogMessageConsts &
     data: Dict;
     parts: LogMsgPart[];
     partsFormatter: LineFormatterFn;
+    separator: boolean;
   }>;
 
 export const consoleTransportDefaults: TransportOptions = {
@@ -126,6 +127,7 @@ export const consoleTransportDefaults: TransportOptions = {
 export type TransportOptions = Partial<{
   name: TransportType; // not required internally
   show: LoggerShowOpts;
+  separatorOpts: SeparatorOpts;
   logLevel: LogLevel;
   timer: AppTimer;
   consts: LogMessageConsts;

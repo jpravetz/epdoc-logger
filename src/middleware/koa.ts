@@ -35,7 +35,7 @@ export class Koa2Middleware extends LoggerMiddleware {
     ctx[this.objName] = log;
 
     if (this.excludedMethod(ctx.req.method)) {
-      log.silent = true;
+      log._silent = true;
     } else {
       ctx.delayTime = function () {
         return ctx.state._delayTime;
