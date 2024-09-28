@@ -1,6 +1,7 @@
 import { defaultLogLevelDef, LogLevel, LogLevelName, LogLevelValue } from './level';
 import { AppTimer } from './lib/app-timer';
 import { Logger } from './logger';
+import { Style } from './style';
 import { TransportManager } from './transport-manager';
 import { LogMessage, LogMessageConsts, LogMgrDefaults, LogMgrOpts } from './types';
 
@@ -31,6 +32,7 @@ let mgrIdx = 0;
 export class LogManager {
   protected name: string;
   protected _timer: AppTimer;
+  protected _style: Style;
   // protected _show: LoggerShowOpts;
   protected _requireAllTransportsReady = false;
   // protected _separatorOpts: SeparatorOpts;
@@ -52,6 +54,7 @@ export class LogManager {
     this._timer = options.timer ?? new AppTimer();
     this.name = 'LogManager#' + ++mgrIdx;
     this._running = false;
+    this._style = new Style(options.styleOpts);
 
     // Count of how many errors, warnings, etc
     this._logLevels = new LogLevel(options.logLevels ?? defaultLogLevelDef);
@@ -174,7 +177,7 @@ export class LogManager {
    */
   getLogger(emitter: string, context: object): Logger {
     const msgConsts: LogMessageConsts = Object.assign({}, this._msgConsts, { emitter });
-    return new Logger(this, msgConsts, this._logLevels, this._separatorOpts, this._context);
+    return new Logger(this, msgConsts, this._context);
   }
 
   /**
@@ -199,9 +202,9 @@ export class LogManager {
    * @returns {void}
    */
   logMessage(options: LogMessage): this {
-    if (!options.time) {
-      options.time = new Date();
-    }
+    // if (!options.timer) {
+    //   options.timer = new AppTimer();
+    // }
     options.level = options.level ?? this._logLevels.asValue('info');
     this._msgQueue.push(options);
     this._logLevels.incCounter(options.level);

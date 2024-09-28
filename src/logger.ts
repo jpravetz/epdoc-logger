@@ -9,7 +9,7 @@ import { LogLevel, LogLevelName, LogLevelValue } from './level';
 import { LogManager } from './log-manager';
 import { LoggerMessageBuilder, LogMsgBuilder } from './msg-builder';
 import { Style } from './style';
-import { LoggerLineOpts, LogMessage, LogMessageConsts, SeparatorOpts } from './types';
+import { LoggerLineOpts, LogMessage, LogMessageConsts } from './types';
 
 /**
  * <p>Create a new log object with methods to log to the transport that is attached to
@@ -58,8 +58,7 @@ import { LoggerLineOpts, LogMessage, LogMessageConsts, SeparatorOpts } from './t
 
 export class Logger {
   protected _logMgr: LogManager;
-  protected _logLevels: LogLevel;
-  protected _separatorOpts: SeparatorOpts;
+  // protected _separatorOpts: SeparatorOpts;
   protected _name: string;
   protected _reqId: string;
   protected _sid: string;
@@ -78,13 +77,10 @@ export class Logger {
   constructor(
     logMgr: LogManager,
     msgConsts: LogMessageConsts,
-    logLevels: LogLevel,
-    separatorOpts: SeparatorOpts,
     context: object
   ) {
     this._logMgr = logMgr;
-    this._logLevels = Object.assign({}, logLevels);
-    this._separatorOpts = Object.assign({}, separatorOpts);
+    // this._separatorOpts = Object.assign({}, separatorOpts);
     if (isNonEmptyString(msgConsts.emitter)) {
       this._emitter = [msgConsts.emitter];
     } else if (isArray(msgConsts.emitter)) {
@@ -101,16 +97,22 @@ export class Logger {
     // Action column
     this._logAction;
 
+    const msg: LogMessage = {
+      emitter: this._emitter,
+      reqId: this._reqId,
+      sid: this._sid,
+    };
+
+
     // Contains Express and koa req and res properties
     // If ctx.req.sessionId, ctx.req.sid or ctx.req.session.id are set, these are used for sid
     // column. If ctx.req._reqId, this is used as reqId column
     this._ctx = context;
     this.addLevelMethods();
-    this._line = new LoggerMessageBuilder({
-      logLevels: this._logLevels,
-      separatorOpts: this._separatorOpts,
-      style: this._style
-    }) as LogMsgBuilder;
+    this._line = new LoggerMessageBuilder(
+      this._logMgr,
+       msg
+    ) as LogMsgBuilder;
   }
 
   get name() {

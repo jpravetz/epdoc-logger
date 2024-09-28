@@ -8,19 +8,12 @@ import {
   isString,
   pick
 } from '@epdoc/typeutil';
-import { LogLevel, LogLevelValue } from './level';
+import { LogLevel, LogLevelName, LogLevelValue } from './level';
 import { AppTimer } from './lib/app-timer';
 import { StringEx } from './lib/util';
+import { LogManager } from './log-manager';
 import { Logger } from './logger';
-import { Style } from './style';
-import {
-  LoggerLineOpts,
-  LoggerShowOpts,
-  LogMessage,
-  LogMsgPart,
-  SeparatorOpts,
-  StyleFormatterFn
-} from './types';
+import { LoggerShowOpts, LogMessage, LogMsgPart, SeparatorOpts, StyleFormatterFn } from './types';
 
 const DEFAULT_TAB_SIZE = 2;
 
@@ -29,8 +22,7 @@ const DEFAULT_TAB_SIZE = 2;
  * line, add styling, and emit the log line.
  */
 export class LoggerMessageBuilder {
-  protected _logger: Logger;
-  protected _opts: LoggerLineOpts = {};
+  protected _logMgr: LogManager;
   protected _showOpts: LoggerShowOpts;
   protected _tabSize: Integer = DEFAULT_TAB_SIZE;
   // protected _lineFormat: LoggerLineFormatOpts;
@@ -38,7 +30,6 @@ export class LoggerMessageBuilder {
   protected _separatorOpts: SeparatorOpts;
   protected _logLevels: LogLevel;
 
-  protected _level: LogLevelValue;
   protected _enabled: boolean = false;
   protected _msgIndent: string = '';
   protected _msgParts: LogMsgPart[] = [];
@@ -46,21 +37,38 @@ export class LoggerMessageBuilder {
   protected _timer: AppTimer;
   // protected _level: LogLevelValue = logLevel.info;
   protected _showElapsed: boolean = false;
-  protected _msg: LogMessage = {
-    parts: []
-  };
+  protected _msg: LogMessage;
   // protected _reqId: string;
   // protected _sid: string;
   // protected _emitter: string;
   // protected _action: string;
   protected _data: Record<string, any> = {};
 
-  constructor(opts: LoggerLineOpts) {
-    this._opts = opts;
-    this._msg = Object.assign(this._msg, opts.msg);
-    // this._logLevels = opts.logLevels;
-    // this._separatorOpts = opts.separatorOpts;
+  constructor(logMgr: LogManager, msg: LogMessage) {
+    this._logMgr = logMgr;
+    this._msg = msg ?? {};
     this.addStyleMethods();
+  }
+
+  protected get logMgr(): LogManager {
+    return this._logMgr;
+  }
+
+  protected get logLevels(): LogLevel {
+    return this._logMgr.logLevels;
+  }
+
+  get level(): LogLevelValue {
+    return this._msg.level;
+  }
+
+  set level(val: LogLevelValue | LogLevelName) {
+    this._msg.level = this.logLevels.asValue(val);
+    this._enabled = this.meetsThreshold();
+  }
+
+  meetsThreshold(): boolean {
+    return this.logLevels.meetsThreshold(this.level);
   }
 
   // setOpts(opts: LoggerLineOpts): this {
@@ -79,36 +87,18 @@ export class LoggerMessageBuilder {
   //   return this;
   // }
 
-  meetsThreshold(): boolean {
-    return this._logLevels.meetsThreshold(this._level);
-  }
-
   // separatorOpts(opts: SeparatorOpts): this {
   //   this._separatorOpts = opts;
   //   return this;
   // }
 
-  setLevel(val: LogLevelValue): this {
-    this._level = val;
-    this._enabled = this.meetsThreshold();
-    return this;
-  }
+  // get separatorOpts(): SeparatorOpts {
+  //   return this._opts.separatorOpts;
+  // }
 
-  get level(): LogLevelValue {
-    return this._msg.level;
-  }
-
-  get logLevel(): LogLevel {
-    return this._opts.logLevels;
-  }
-
-  get separatorOpts(): SeparatorOpts {
-    return this._opts.separatorOpts;
-  }
-
-  get style(): Style {
-    return this._opts.style;
-  }
+  // get style(): Style {
+  //   return this._opts.style;
+  // }
 
   /**
    * Returns true if the line is empty of a composed string message
@@ -169,14 +159,14 @@ export class LoggerMessageBuilder {
     return this;
   }
 
-  separator() {
-    if (this.meetsThreshold()) {
-      const opts = this._separatorOpts;
-      let sep = opts.char.repeat(Math.floor(opts.length / opts.char.length));
-      this.plain(sep);
-    }
-    return this;
-  }
+  // separator() {
+  //   if (this.meetsThreshold()) {
+  //     const opts = this._separatorOpts;
+  //     let sep = opts.char.repeat(Math.floor(opts.length / opts.char.length));
+  //     this.plain(sep);
+  //   }
+  //   return this;
+  // }
 
   /**
    * Set a property or multiple properties in the <code>data</code> column.
@@ -357,7 +347,7 @@ export class LoggerMessageBuilder {
    */
   emit(...args: any[]): void {
     if (this._enabled) {
-      this._logger.logParams(this._msg);
+      this._logMgr.logMessage(this._msg);
       this.clear();
     }
   }

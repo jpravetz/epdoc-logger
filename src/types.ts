@@ -1,7 +1,8 @@
 import { Dict, Integer, isDict, isString } from '@epdoc/typeutil';
 import { LogLevel, LogLevelDef, LogLevelValue } from './level';
 import { AppTimer } from './lib/app-timer';
-import { Style } from './style';
+import { LogManager } from './log-manager';
+import { StyleOptions } from './style';
 
 export type TimePrefix = 'local' | 'utc' | 'elapsed' | 'interval' | false;
 export type TransportType = string;
@@ -26,10 +27,9 @@ export type LoggerLineFormatOpts = Partial<{
 
 /** LoggerLine options that are constant across all lines of a logger instance. */
 export type LoggerLineOpts = Partial<{
+  logMgr: LogManager;
   msg: LogMessage;
-  logLevels: LogLevel;
-  separatorOpts: SeparatorOpts;
-  style: Style;
+  // style: Style;
 }>;
 
 export type LoggerShowOpts = Partial<{
@@ -88,10 +88,16 @@ export type LogMsgPart = {
  * log messages.
  */
 export type LogMessageConsts = Partial<{
+  /** The name of the emitter, which is typically a string. */
   emitter: string | string[];
+  /** The action to log, which is a verb indicating the action being logged. */
   action: string;
+  /** The request ID, in the event this log message is associated with a server request. */
   reqId: string;
+  /** The session ID, in the event this log message is associated with a
+   * session. This will come from the context of the message. */
   sid: string;
+  /** The static data, which is typically a string. TODO define what this is. */
   static: string;
 }>;
 
@@ -100,13 +106,24 @@ export type LogMessageConsts = Partial<{
  */
 export type LogMessage = LogMessageConsts &
   Partial<{
-    time: Date;
+    /** The timer to use for the message, in order to display the current time or elapsed time.*/
     timer: AppTimer;
+    /** The level of the message, as a LogLevelValue */
     level: LogLevelValue;
+    /** The message to log. If this is not defined, then the message is
+     * generated from the parrts array. */
     message: any;
+    /** Data to log and display as JSON or as a stringified JSON object */
     data: Dict;
+    /** An array of strings and other objects to be formatted and logged and put
+     * in the message property. */
     parts: LogMsgPart[];
+    /** The formatter to use for the message. If this is not defined, then the message is
+     * formatted using util.format.
+     * @deprecated
+     */
     partsFormatter: LineFormatterFn;
+    /** Indicates if this is a separator line, in which case message is ignored */
     separator: boolean;
   }>;
 
@@ -143,6 +160,7 @@ export type LogMgrOpts = Partial<{
   timer: AppTimer;
   defaults: LogMgrDefaults;
   logLevels: LogLevelDef;
+  styleOpts: StyleOptions;
   // run: LoggerRunOpts;
   /**
    * Array of transport options for logging.

@@ -1,4 +1,3 @@
-import chalk from 'chalk';
 import { StyleFormatterFn } from './types';
 
 export type StyleFormatters = Record<string, StyleFormatterFn>;
@@ -17,8 +16,8 @@ export class Style {
   public readonly _styles: Record<string, StyleFormatterFn>;
   protected _dateFormat: string;
 
-  constructor(options: StyleOptions = { dateFormat: 'YYYY-MM-dd HH:mm:ss' }) {
-    this._dateFormat = options.dateFormat;
+  constructor(options: StyleOptions) {
+    this._dateFormat = options.dateFormat ?? 'YYYY-MM-dd HH:mm:ss';
     if (options.styles) {
       this._styles = Object.assign({}, options.styles);
     }
