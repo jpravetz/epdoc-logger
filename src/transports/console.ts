@@ -1,8 +1,9 @@
+import { LogManager } from '../log-manager';
 import { TransportOptions } from '../types';
 import { LogTransport, LogTransportOpenCallbacks } from './base';
 
 export const defaultConsoleTransportOpts: TransportOptions = {
-  name: 'console',
+  type: 'console',
   show: {
     timestamp: 'elapsed',
     level: true,
@@ -12,16 +13,21 @@ export const defaultConsoleTransportOpts: TransportOptions = {
     emitter: false,
     action: false,
     data: false
+  },
+  format: {
+    type: 'string',
+    tabSize: 2,
+    colorize: true
   }
 };
 
-export function getNewTransport(options: TransportOptions) {
-  return new ConsoleTransport(options);
+export function getNewTransport(logMgr: LogManager, options: TransportOptions) {
+  return new ConsoleTransport(logMgr, options);
 }
 
 export class ConsoleTransport extends LogTransport {
-  constructor(options: TransportOptions) {
-    super(options);
+  constructor(logMgr: LogManager, options: TransportOptions) {
+    super(logMgr, options);
     this._showOpts = this._showOpts ?? defaultConsoleTransportOpts.show;
   }
 

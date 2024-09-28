@@ -1,54 +1,19 @@
-import { StyleFormatterFn } from './types';
-
-export type StyleFormatters = Record<string, StyleFormatterFn>;
-
-export const defaultStyles: StyleFormatters = {} as const;
-
-export type StyleName = keyof typeof defaultStyles;
-export type MethodName = Exclude<keyof typeof defaultStyles, `_${string}`>;
-
-export type StyleOptions = {
-  dateFormat?: string;
-  styles?: Record<string, StyleFormatterFn>;
-};
+import { StyleFormatterFn, StyleFormatters } from './types';
 
 export class Style {
-  public readonly _styles: Record<string, StyleFormatterFn>;
+  public readonly _styles: StyleFormatters;
   protected _dateFormat: string;
 
-  constructor(options: StyleOptions) {
-    this._dateFormat = options.dateFormat ?? 'YYYY-MM-dd HH:mm:ss';
-    if (options.styles) {
-      this._styles = Object.assign({}, options.styles);
-    }
+  constructor(styles: StyleFormatters, dateFormat: string = 'YYYY-MM-dd HH:mm:ss') {
+    this._dateFormat = dateFormat;
+    this._styles = styles;
   }
 
-  get styleNames(): StyleName[] {
-    return Object.keys(this._styles) as StyleName[];
+  get styleNames(): string[] {
+    return Object.keys(this._styles) as string[];
   }
 
-  getDefFromName(name: StyleName): StyleFormatterFn {
+  getDefFromName(name: string): StyleFormatterFn {
     return this._styles[name];
   }
-
-  // format(val: any, style: StyleName): string {
-  //   const s = this.formatToString(val);
-  //   let styleDef: StyleFormatterFn = isNonEmptyString(style) ? this._styles[style] : undefined;
-  //   if (!styleDef) {
-  //     return s;
-  //   }
-  //   return styleDef(s);
-  // }
-
-  // protected formatToString(val: any): string {
-  //   if (isDict(val) || isArray(val)) {
-  //     return JSON.stringify(val);
-  //   } else if (isDate(val)) {
-  //     return dateUtil(val).format(this._dateFormat);
-  //   }
-  //   return String(val);
-  // }
 }
-
-// // Add this type declaration
-// export type StyleInstance = ColorStyle & Record<ColorStyleName, (val: any) => string>;

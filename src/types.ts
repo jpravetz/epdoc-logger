@@ -1,19 +1,25 @@
 import { Dict, Integer, isDict, isString } from '@epdoc/typeutil';
-import { LogLevel, LogLevelDef, LogLevelValue } from './level';
+import { LogLevelDef, LogLevelName, LogLevelValue } from './level';
 import { AppTimer } from './lib/app-timer';
 import { LogManager } from './log-manager';
-import { StyleOptions } from './style';
+import { Style } from './style';
+import { FormatterType } from './transports/formatters';
 
-export type TimePrefix = 'local' | 'utc' | 'elapsed' | 'interval' | false;
+export type TimePrefix = 'local' | 'utc' | 'elapsed' | 'interval' | string | false;
 export type TransportType = string;
 
 export function isValidTimePrefix(val: any): val is TimePrefix {
   return ['local', 'utc', 'elapsed', false].includes(val);
 }
 
-export type LoggerLineFormatOpts = Partial<{
-  tabSize: Integer;
-  stylize: boolean;
+export type LoggerLineFormatOpts = LoggerLineStyleOpts &
+  Partial<{
+    type: FormatterType;
+    tabSize: Integer;
+    colorize: boolean;
+  }>;
+
+export type LoggerLineStyleOpts = Partial<{
   timestamp: StyleFormatterFn;
   level: StyleFormatterFn;
   reqId: StyleFormatterFn;
@@ -63,6 +69,13 @@ export type LoggerShowOpts = Partial<{
 export type LogMessageFn = (msg: LogMessage) => void;
 export type StyleFormatterFn = (text: unknown[]) => string;
 export type LineFormatterFn = (opts: LogMessage) => string;
+
+export type StyleFormatters = Record<string, StyleFormatterFn>;
+
+export type StyleOptions = {
+  dateFormat?: string;
+  styles?: StyleFormatters;
+};
 
 export type SeparatorOpts = Partial<{
   char: string;
@@ -128,7 +141,12 @@ export type LogMessage = LogMessageConsts &
   }>;
 
 export const consoleTransportDefaults: TransportOptions = {
-  name: 'console',
+  type: 'console',
+  format: {
+    type: 'string',
+    tabSize: 2,
+    colorize: true
+  },
   show: {
     timestamp: 'elapsed',
     level: true,
@@ -138,18 +156,26 @@ export const consoleTransportDefaults: TransportOptions = {
     emitter: true,
     action: true,
     data: true
-  }
+  },
+  separator: {
+    char: '#',
+    length: 80
+  },
+  levelThreshold: 'info',
+  errorStackThreshold: 'error'
 };
 
 export type TransportOptions = Partial<{
-  name: TransportType; // not required internally
+  type: TransportType; // not required internally
   show: LoggerShowOpts;
-  separatorOpts: SeparatorOpts;
-  logLevel: LogLevel;
-  timer: AppTimer;
-  consts: LogMessageConsts;
-  levelThreshold: LogLevelValue;
+  separator: SeparatorOpts;
+  // logLevel: LogLevelName | LogLevelValue;
+  // timer: AppTimer;
+  // consts: LogMessageConsts;
+  levelThreshold: LogLevelName | LogLevelValue;
+  errorStackThreshold: LogLevelName | LogLevelValue;
   format: LoggerLineFormatOpts;
+  style: Style;
 }>;
 
 export function isTransportOptions(val: any): val is TransportOptions {
@@ -160,12 +186,11 @@ export type LogMgrOpts = Partial<{
   timer: AppTimer;
   defaults: LogMgrDefaults;
   logLevels: LogLevelDef;
-  styleOpts: StyleOptions;
   // run: LoggerRunOpts;
   /**
    * Array of transport options for logging.
    * Each transport must include a 'name' property.
    * @type {TransportOptions[]}
    */
-  transports: TransportOptions[];
+  // transports: TransportOptions[];
 }>;

@@ -15,7 +15,7 @@ export const defaultLogLevelDef: LogLevelDef = {
 export type LogLevelName = string;
 export type LogLevelValue = Integer;
 
-export class LogLevel {
+export class LogLevels {
   protected _levelDef: LogLevelDef;
   protected _levelValues: Integer[] = [];
   protected _counter: Record<LogLevelName, Integer>;
@@ -118,7 +118,7 @@ export class LogLevel {
    * If the input is a LogLevel, it returns the corresponding LogLevelValue.
    * If the input is a LogLevelValue, it returns the input.
    * If the input is a string representation of a LogLevelValue, it converts and returns the LogLevelValue.
-   * @param {LogLevel | LogLevelValue} level - The LogLevel or LogLevelValue to convert.
+   * @param {LogLevels | LogLevelValue} level - The LogLevel or LogLevelValue to convert.
    * @returns {LogLevelValue} The converted LogLevelValue.
    */
   asName(level: LogLevelName | LogLevelValue): LogLevelName {

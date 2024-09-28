@@ -1,21 +1,22 @@
 import { Dict } from '@epdoc/typeutil';
+import { LogManager } from '../../log-manager';
 import { LogMessage } from '../../types';
 import { TransportFormatter } from './base';
 
-export function getNewFormatter(): TransportFormatter {
-  return new TransportJsonFormatter();
+export function getNewFormatter(logMgr: LogManager): TransportFormatter {
+  return new TransportJsonFormatter(logMgr);
 }
 
 export class TransportJsonFormatter extends TransportFormatter {
   get name(): string {
-    return 'string';
+    return 'json';
   }
 
   format(msg: LogMessage): any {
     this._msg = msg;
     let json: Dict = {
       timestamp: this.getTimeString(),
-      level: this._logLevels.asName(this._msg.level).toUpperCase,
+      level: this.logLevels.asName(this._msg.level).toUpperCase,
       emitter: this._msg.emitter,
       action: this._msg.action,
       // data: this._showOpts.dataObjects ? this._msg.data : JSON.stringify(this._msg.data),

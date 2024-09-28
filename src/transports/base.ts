@@ -1,6 +1,8 @@
 import { Integer, isString } from '@epdoc/typeutil';
-import { LogLevel, LogLevelValue } from '../level';
+import { LogLevels, LogLevelValue } from '../level';
 import { AppTimer } from '../lib/app-timer';
+import { LogManager } from '../log-manager';
+import { Style } from '../style';
 import {
   LoggerLineFormatOpts,
   LoggerShowOpts,
@@ -22,36 +24,44 @@ export type LogTransportOpenCallbacks = {
 };
 
 export class LogTransport {
+  protected _logMgr: LogManager;
   protected _formatterFactory: TransportFormatterFactory;
   protected _showOpts: LoggerShowOpts;
+  protected _style: Style;
   protected _separatorOpts: SeparatorOpts;
-  protected _logLevels: LogLevel;
+  // protected _logLevels: LogLevel;
   protected _formatOpts: LoggerLineFormatOpts;
-  protected _timer: AppTimer;
+  // protected _timer: AppTimer;
   id: Integer = transportIdx++;
   // bIncludeSid: boolean;
   // bIncludeStatic: boolean;
   // colorize: boolean;
   // timestampFormat: string;
   protected _levelThreshold: LogLevelValue;
+  protected _errorStackThreshold: LogLevelValue;
   bReady: boolean;
   protected _msgParts: LogMsgPart[];
 
-  constructor(opts: TransportOptions) {
+  constructor(logMgr: LogManager, opts: TransportOptions) {
+    this._logMgr = logMgr;
     this._showOpts = opts.show;
-    this._separatorOpts = opts.separatorOpts;
-    this._logLevels = opts.logLevel;
-    this._timer = opts.timer;
-    const missing: string[] = [];
-    if (!opts.logLevel) {
-      missing.push('logLevel');
-    }
-    if (!opts.timer) {
-      missing.push('timer');
-    }
-    if (missing.length > 0) {
-      throw new Error(`LogTransport missing required options: ${missing.join(', ')}`);
-    }
+    this._separatorOpts = opts.separator;
+    this._formatOpts = opts.format;
+    this._levelThreshold = logMgr.logLevels.asValue(opts.levelThreshold);
+    this._errorStackThreshold = logMgr.logLevels.asValue(opts.errorStackThreshold);
+
+    // this._logLevels = opts.logLevel;
+    // this._timer = opts.timer;
+    // const missing: string[] = [];
+    // if (!opts.logLevel) {
+    //   missing.push('logLevel');
+    // }
+    // // if (!opts.timer) {
+    // //   missing.push('timer');
+    // // }
+    // if (missing.length > 0) {
+    //   throw new Error(`LogTransport missing required options: ${missing.join(', ')}`);
+    // }
   }
 
   /**
@@ -77,6 +87,14 @@ export class LogTransport {
    */
   get type(): string {
     return 'invalid';
+  }
+
+  get logLevels(): LogLevels {
+    return this._logMgr.logLevels;
+  }
+
+  get timer(): AppTimer {
+    return this._logMgr.appTimer;
   }
 
   /**
@@ -194,7 +212,7 @@ export class LogTransport {
   }
 
   formatTimestamp(msg: LogMessage, format: TimePrefix) {
-    return this._timer.getTimeForPrefix(format);
+    return this.timer.getTimeForPrefix(format);
   }
 
   /**
@@ -205,9 +223,10 @@ export class LogTransport {
   protected formatLogMessage(type: FormatterType, params: LogMessage): string {
     const formatter = this._formatterFactory.getFormatter(type);
     formatter.init({
+      logMgr: this._logMgr,
       show: this._showOpts,
       format: this._formatOpts,
-      logLevels: this._logLevels
+      style: this._style
     });
     return formatter.format(params);
   }

@@ -1,9 +1,14 @@
-import { defaultLogLevelDef, LogLevel, LogLevelName, LogLevelValue } from './level';
+import { defaultLogLevelDef, LogLevelName, LogLevels, LogLevelValue } from './level';
 import { AppTimer } from './lib/app-timer';
 import { Logger } from './logger';
-import { Style } from './style';
 import { TransportManager } from './transport-manager';
-import { LogMessage, LogMessageConsts, LogMgrDefaults, LogMgrOpts } from './types';
+import {
+  LogMessage,
+  LogMessageConsts,
+  LogMgrDefaults,
+  LogMgrOpts,
+  TransportOptions
+} from './types';
 
 let mgrIdx = 0;
 
@@ -32,13 +37,13 @@ let mgrIdx = 0;
 export class LogManager {
   protected name: string;
   protected _timer: AppTimer;
-  protected _style: Style;
+  // protected _style: Style;
   // protected _show: LoggerShowOpts;
   protected _requireAllTransportsReady = false;
   // protected _separatorOpts: SeparatorOpts;
   protected _msgConsts: LogMessageConsts;
   protected _defaults: LogMgrDefaults;
-  protected _logLevels: LogLevel;
+  protected _logLevels: LogLevels;
   protected _transportMgr: TransportManager;
   protected consoleOptions: any;
   protected _running: boolean;
@@ -54,10 +59,10 @@ export class LogManager {
     this._timer = options.timer ?? new AppTimer();
     this.name = 'LogManager#' + ++mgrIdx;
     this._running = false;
-    this._style = new Style(options.styleOpts);
+    // this._style = new Style(options.styleOpts);
 
     // Count of how many errors, warnings, etc
-    this._logLevels = new LogLevel(options.logLevels ?? defaultLogLevelDef);
+    this._logLevels = new LogLevels(options.logLevels ?? defaultLogLevelDef);
 
     if (options.defaults) {
       const defaults: LogMgrDefaults = options.defaults;
@@ -73,7 +78,6 @@ export class LogManager {
       this._msgConsts = defaults.msgConsts ?? {};
     }
     this._transportMgr = new TransportManager(this);
-    this._transportMgr.addTransports(options.transports);
 
     // if (this._runOpts.autoRun) {
     //   this.start();
@@ -88,8 +92,17 @@ export class LogManager {
     return this._context;
   }
 
-  get logLevels(): LogLevel {
+  get logLevels(): LogLevels {
     return this._logLevels;
+  }
+
+  // get style(): Style {
+  //   return this._style;
+  // }
+
+  public addTransport(opts: TransportOptions): this {
+    this._transportMgr.addTransport(opts);
+    return this;
   }
 
   /**
@@ -160,7 +173,7 @@ export class LogManager {
    * Get the time at which the app or this module was initialized
    * @return {Number} Start time in milliseconds
    */
-  get appTimer() {
+  get appTimer(): AppTimer {
     return this._timer;
   }
 

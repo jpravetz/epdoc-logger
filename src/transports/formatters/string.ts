@@ -1,9 +1,10 @@
 import { StringEx } from '../../lib/util';
+import { LogManager } from '../../log-manager';
 import { LogMessage, LogMsgPart, StyleFormatterFn } from '../../types';
 import { TransportFormatter } from './base';
 
-export function getNewFormatter(): TransportFormatter {
-  return new TransportStringFormatter();
+export function getNewFormatter(logMgr: LogManager): TransportFormatter {
+  return new TransportStringFormatter(logMgr);
 }
 
 class TransportStringFormatter extends TransportFormatter {
@@ -28,19 +29,22 @@ class TransportStringFormatter extends TransportFormatter {
     const timePrefix = this._showOpts.timestamp;
     if (timePrefix) {
       const time = this.getTimeString();
-      this.addMsgPart(time, this._formatOpts.timestamp);
+      this.addMsgPart(time, this.style.getDefFromName('timePrefix'));
     }
     return this;
   }
 
   protected addLevelPrefix(): this {
     if (this._showOpts.level) {
-      const levelAsString = this._logLevels.asName(this._msg.level);
+      const levelAsString = this.logLevels.asName(this._msg.level);
       // const styleName = `_${levelAsString.toLowerCase()}Prefix` as StyleName;
       // const formattedLevel = styleName;
       const str = `[${levelAsString.toUpperCase()}]`;
       // this.addMsgPart(util.rightPadAndTruncate(str, 9), styleName);
-      this.addMsgPart(StringEx(str).rightPadAndTruncate(9));
+      this.addMsgPart(
+        StringEx(str).rightPadAndTruncate(9),
+        this.style.getDefFromName('levelPrefx')
+      );
     }
     return this;
   }

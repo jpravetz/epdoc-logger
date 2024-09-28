@@ -1,14 +1,8 @@
-import { isArray } from '@epdoc/typeutil';
-import { LogLevel, LogLevelValue } from './level';
+import { LogLevels, LogLevelValue } from './level';
 import { LogManager } from './log-manager';
 import { LogTransport, LogTransportOpenCallbacks, LogTransportType } from './transports/base';
 import { TransportFactory } from './transports/factory';
-import {
-  consoleTransportDefaults,
-  isTransportOptions,
-  LogMessage,
-  TransportOptions
-} from './types';
+import { consoleTransportDefaults, LogMessage, TransportOptions } from './types';
 
 let mgrIdx = 0;
 
@@ -50,7 +44,7 @@ export class TransportManager {
     return this._logMgr;
   }
 
-  protected get logLevels(): LogLevel {
+  protected get logLevels(): LogLevels {
     return this._logMgr.logLevels;
   }
 
@@ -67,23 +61,6 @@ export class TransportManager {
   }
 
   /**
-   * Adds one or more transports to the manager.
-   * @param {TransportOptions | TransportOptions[]} transports - The transport options to add.
-   */
-
-  public addTransports(transports: TransportOptions | TransportOptions[]) {
-    if (isArray(transports)) {
-      transports.forEach((transport) => {
-        this.addTransport(transport);
-      });
-    } else if (isTransportOptions(transports)) {
-      this.addTransport(transports);
-    } else {
-      this.addTransport(consoleTransportDefaults);
-    }
-  }
-
-  /**
    * Add a log transport. Multiple transports can be in operation at the same time, allowing log
    * messages to be sent to more than one destination.
    * If you are adding a transport while logging is on, you should first call logMgr.stopping,
@@ -94,6 +71,8 @@ export class TransportManager {
     let newTransport = this._transportFactory.getTransport(options);
     if (newTransport) {
       this._transports.unshift(newTransport);
+
+      // log message that we've added a transport
       let name = newTransport.name;
       let topts = newTransport.getOptions();
       let sOptions = topts ? ' (' + JSON.stringify(topts) + ')' : '';
@@ -116,6 +95,9 @@ export class TransportManager {
    */
   public async start(): Promise<any> {
     let jobs = [];
+    if (!this.hasTransports()) {
+      this.addTransport(consoleTransportDefaults);
+    }
     this._transports.forEach((transport) => {
       let job = this.startingTransport(transport);
       jobs.push(job);

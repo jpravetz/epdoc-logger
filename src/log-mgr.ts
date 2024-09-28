@@ -1,13 +1,13 @@
-import chalk from 'chalk';
 import { LogLevelDef } from './level';
+import { AppTimer } from './lib/app-timer';
 import { LogManager } from './log-manager';
 import { Logger } from './logger';
 import { LoggerMessageBuilder } from './msg-builder';
-import { StyleFormatters } from './style';
+import { } from './style';
 import { defaultConsoleTransportOpts } from './transports/console';
-import { LogMessageConsts, LogMgrOpts } from './types';
+import { LogMessage, LogMessageConsts, LogMgrOpts, StyleFormatters } from './types';
 
-export namespace defaultLog {
+import * as DefaultStyle from './styles/default';
 
 
  const logLevelDefs: LogLevelDef = {
@@ -23,38 +23,38 @@ export namespace defaultLog {
 
 export type LogLevelName = keyof typeof logLevelDefs;
 
-const styleFormatters: StyleFormatters = {
-  text: chalk.whiteBright,
-  h1: chalk.bold.magenta,
-  h2: chalk.magenta,
-  h3: chalk.green,
-  action: chalk.black.bgYellow,
-  label: chalk.blue,
-  highlight: chalk.magentaBright,
-  value: chalk.blueBright,
-  path: chalk.blue,
-  date: chalk.cyanBright,
-  warn: chalk.cyan,
-  error: chalk.bold.redBright,
-  strikethru: chalk.inverse,
-  _reqId: chalk.yellowBright,
-  _sid: chalk.yellow,
-  _emitter: chalk.green,
-  _action: chalk.blue,
-  _plain: chalk.white,
-  _suffix: chalk.white,
-  _elapsed: chalk.white,
-  _errorPrefix: chalk.red,
-  _warnPrefix: chalk.cyan,
-  _infoPrefix: chalk.gray,
-  _verbosePrefix: chalk.gray,
-  _debugPrefix: chalk.gray,
-  _sillyPrefix: chalk.gray,
-  _httpPrefix: chalk.gray,
-  _timePrefix: chalk.gray
-} as const;
+// const styleFormatters: StyleFormatters = {
+//   text: chalk.whiteBright,
+//   h1: chalk.bold.magenta,
+//   h2: chalk.magenta,
+//   h3: chalk.green,
+//   action: chalk.black.bgYellow,
+//   label: chalk.blue,
+//   highlight: chalk.magentaBright,
+//   value: chalk.blueBright,
+//   path: chalk.blue,
+//   date: chalk.cyanBright,
+//   warn: chalk.cyan,
+//   error: chalk.bold.redBright,
+//   strikethru: chalk.inverse,
+//   _reqId: chalk.yellowBright,
+//   _sid: chalk.yellow,
+//   _emitter: chalk.green,
+//   _action: chalk.blue,
+//   _plain: chalk.white,
+//   _suffix: chalk.white,
+//   _elapsed: chalk.white,
+//   _errorPrefix: chalk.red,
+//   _warnPrefix: chalk.cyan,
+//   _infoPrefix: chalk.gray,
+//   _verbosePrefix: chalk.gray,
+//   _debugPrefix: chalk.gray,
+//   _sillyPrefix: chalk.gray,
+//   _httpPrefix: chalk.gray,
+//   _timePrefix: chalk.gray
+// } as const;
 
-export type StyleName = keyof typeof styleFormatters;
+// export type StyleName = keyof typeof styleFormatters;
 
 
 
@@ -100,7 +100,28 @@ export class Mgr extends LogManager {
   }
 }
 
-export function createLogMgr(options: LogMgrOpts): LogMgr {
-  return new Mgr(options);
+export function createLogMgr(options:LogMgrOpts): LogManager {
+
+  const logMgrOpts: LogMgrOpts = Object.assign({},options)
+  if( !logMgrOpts.timer ){
+    logMgrOpts.timer = new AppTimer();
+  }
+  if( !logMgrOpts.logLevels ) {
+    logMgrOpts.logLevels =
+  }
+
+  const logMgr: LogManager = new LogManager(logMgrOpts);
+
+  return logMgr;
 }
+
+
+export class MyLineBuilder extends LoggerMessageBuilder {
+  constructor(logMgr:LogManager,msg:LogMessage) {
+    super(logMgr,msg)
+    this.addStyleMethods(DefaultStyle.style.styleNames)
+  }
 }
+
+export type MyLineBuilderPlus = MyLineBuilder & {[key in DefaultStyle.MethodName]:
+(...args: any[]) => MyLineBuilderPlus;};

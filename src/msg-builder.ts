@@ -8,7 +8,7 @@ import {
   isString,
   pick
 } from '@epdoc/typeutil';
-import { LogLevel, LogLevelName, LogLevelValue } from './level';
+import { LogLevelName, LogLevels, LogLevelValue } from './level';
 import { AppTimer } from './lib/app-timer';
 import { StringEx } from './lib/util';
 import { LogManager } from './log-manager';
@@ -28,7 +28,7 @@ export class LoggerMessageBuilder {
   // protected _lineFormat: LoggerLineFormatOpts;
   // protected _style: StyleInstance;
   protected _separatorOpts: SeparatorOpts;
-  protected _logLevels: LogLevel;
+  protected _logLevels: LogLevels;
 
   protected _enabled: boolean = false;
   protected _msgIndent: string = '';
@@ -54,7 +54,7 @@ export class LoggerMessageBuilder {
     return this._logMgr;
   }
 
-  protected get logLevels(): LogLevel {
+  protected get logLevels(): LogLevels {
     return this._logMgr.logLevels;
   }
 
@@ -71,50 +71,12 @@ export class LoggerMessageBuilder {
     return this.logLevels.meetsThreshold(this.level);
   }
 
-  // setOpts(opts: LoggerLineOpts): this {
-  //   this._opts = opts;
-  //   return this;
-  // }
-
   /**
    * Changes the level threshold that was initially set. Does so equally for all
    * transports.
    * @param {LogLevelValue} val - The level threshold.
    * @returns {this} The LoggerLine instance.
    */
-  // setLevelThreshold(val: LogLevelValue): this {
-  //   this._levelThreshold = val;
-  //   return this;
-  // }
-
-  // separatorOpts(opts: SeparatorOpts): this {
-  //   this._separatorOpts = opts;
-  //   return this;
-  // }
-
-  // get separatorOpts(): SeparatorOpts {
-  //   return this._opts.separatorOpts;
-  // }
-
-  // get style(): Style {
-  //   return this._opts.style;
-  // }
-
-  /**
-   * Returns true if the line is empty of a composed string message
-   * @returns {boolean} - True if the line is empty, false otherwise.
-   */
-  // isEmpty(): boolean {
-  //   return this._msgParts.length === 0;
-  // }
-
-  // get stylizeEnabled(): boolean {
-  //   return this._lineFormat.stylize ?? false;
-  // }
-
-  // get style(): StyleInstance {
-  //   return this._style;
-  // }
 
   /**
    * For logging in an Express or Koa environment, sets the request ID for this
@@ -158,15 +120,6 @@ export class LoggerMessageBuilder {
     this._msg.action = args.join('.');
     return this;
   }
-
-  // separator() {
-  //   if (this.meetsThreshold()) {
-  //     const opts = this._separatorOpts;
-  //     let sep = opts.char.repeat(Math.floor(opts.length / opts.char.length));
-  //     this.plain(sep);
-  //   }
-  //   return this;
-  // }
 
   /**
    * Set a property or multiple properties in the <code>data</code> column.
@@ -277,19 +230,6 @@ export class LoggerMessageBuilder {
     return this;
   }
 
-  // /**
-  //  * Adds styled text to the log line.
-  //  * @param {any} val - The value to stylize.
-  //  * @param {StyleName | StyleDef} style - The style to use.
-  //  * @returns {this} The Logger instance.
-  //  */
-  // stylizeOld(style: StyleName, ...args): LoggerLineInstance {
-  //   if (args.length) {
-  //     this._transportLines.forEach((transportLine) => transportLine.stylize(style, ...args));
-  //   }
-  //   return this as unknown as LoggerLineInstance;
-  // }
-
   stylize(style: StyleFormatterFn, ...args): LogMsgBuilder {
     if (this._enabled) {
       this.addMsgPart(args.join(' '), style);
@@ -353,15 +293,28 @@ export class LoggerMessageBuilder {
   }
 
   /**
+   * Creates a separator for the log line. Any other data added to the line will
+   * be ignored. Must still call emit() to actually emit the log line.
+   * @returns {this} The Logger instance.
+   * @see Logger#separator
+   */
+  separator(): this {
+    if (this._enabled) {
+      this._msg.separator = true;
+    }
+    return this;
+  }
+
+  /**
    * Adds our dynamic style methods to the logger instance.
    * @returns {void}
    */
-  private addStyleMethods(): this {
-    const methodNames = Object.getOwnPropertyNames(Object.getPrototypeOf(this));
+  protected addStyleMethods(methodNames: string[]): this {
+    const reservedMethodNames = Object.getOwnPropertyNames(Object.getPrototypeOf(this));
 
-    for (const name in defaultStyles) {
+    for (const name in methodNames) {
       if (!name.startsWith('_')) {
-        if (methodNames.includes(name)) {
+        if (reservedMethodNames.includes(name)) {
           throw new Error(`Cannot declare style with reserved name ${name}`);
         }
         (this as any)[name] = (...args: any[]): LogMsgBuilder => {
@@ -373,6 +326,58 @@ export class LoggerMessageBuilder {
     }
     return this;
   }
+
+  // /**
+  //  * Adds styled text to the log line.
+  //  * @param {any} val - The value to stylize.
+  //  * @param {StyleName | StyleDef} style - The style to use.
+  //  * @returns {this} The Logger instance.
+  //  */
+  // stylizeOld(style: StyleName, ...args): LoggerLineInstance {
+  //   if (args.length) {
+  //     this._transportLines.forEach((transportLine) => transportLine.stylize(style, ...args));
+  //   }
+  //   return this as unknown as LoggerLineInstance;
+  // }
+
+  // setOpts(opts: LoggerLineOpts): this {
+  //   this._opts = opts;
+  //   return this;
+  // }
+
+  // setLevelThreshold(val: LogLevelValue): this {
+  //   this._levelThreshold = val;
+  //   return this;
+  // }
+
+  // separatorOpts(opts: SeparatorOpts): this {
+  //   this._separatorOpts = opts;
+  //   return this;
+  // }
+
+  // get separatorOpts(): SeparatorOpts {
+  //   return this._opts.separatorOpts;
+  // }
+
+  // get style(): Style {
+  //   return this._opts.style;
+  // }
+
+  /**
+   * Returns true if the line is empty of a composed string message
+   * @returns {boolean} - True if the line is empty, false otherwise.
+   */
+  // isEmpty(): boolean {
+  //   return this._msgParts.length === 0;
+  // }
+
+  // get stylizeEnabled(): boolean {
+  //   return this._lineFormat.stylize ?? false;
+  // }
+
+  // get style(): StyleInstance {
+  //   return this._style;
+  // }
 }
 
 export type LogMsgBuilder = LoggerMessageBuilder & {

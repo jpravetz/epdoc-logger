@@ -37,9 +37,11 @@ export class TransportFactory {
   }
 
   getTransport(options: TransportOptions = {}): LogTransport {
-    let factory = options.name ? this._transports[options.name] : undefined;
+    const factory: TransportFactoryMethod = options.type
+      ? this._transports[options.type]
+      : undefined;
     if (!factory) {
-      throw new Error(`Transport ${options.name} not found`);
+      throw new Error(`Transport ${options.type} not found`);
     }
     return factory(options);
   }

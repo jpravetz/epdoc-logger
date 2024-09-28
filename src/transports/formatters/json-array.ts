@@ -1,9 +1,10 @@
 import { isArray } from '@epdoc/typeutil';
+import { LogManager } from '../../log-manager';
 import { LogMessage } from '../../types';
 import { TransportFormatter } from './base';
 
-export function getNewFormatter(): TransportFormatter {
-  return new TransportJsonArrayFormatter();
+export function getNewFormatter(logMgr: LogManager): TransportFormatter {
+  return new TransportJsonArrayFormatter(logMgr);
 }
 
 export class TransportJsonArrayFormatter extends TransportFormatter {
@@ -13,7 +14,7 @@ export class TransportJsonArrayFormatter extends TransportFormatter {
 
   format(msg: LogMessage): any {
     this._msg = msg;
-    let json: any[] = [this.getTimeString(), this._logLevels.asName(this._msg.level).toUpperCase];
+    let json: any[] = [this.getTimeString(), this.logLevels.asName(this._msg.level).toUpperCase];
     if (this._msg.sid) {
       json.push(this._msg.sid);
       json.push(this._msg.reqId);

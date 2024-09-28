@@ -1,21 +1,24 @@
-import { LogLevel } from '../../level';
+import { LogManager } from '../../log-manager';
+import { Style } from '../../style';
 import { LoggerLineFormatOpts, LoggerShowOpts } from '../../types';
 import { TransportFormatter } from './base';
 
-export type FormatterType = 'string' | 'json' | 'template' | string;
+export type FormatterType = 'string' | 'json' | 'json-array' | string;
 
 export type TransportFormatterOpts = {
+  logMgr: LogManager;
   show: LoggerShowOpts;
   format: LoggerLineFormatOpts;
-  logLevels: LogLevel;
+  style: Style;
 };
 
-export type TransportFormatterFactoryMethod = () => TransportFormatter;
+export type TransportFormatterFactoryMethod = (logMgr: LogManager) => TransportFormatter;
 
 export function getNewTransportFormatterFactory(
+  logMgr: LogManager,
   ...args: string[]
 ): Promise<TransportFormatterFactory> {
-  const factory: TransportFormatterFactory = new TransportFormatterFactory();
+  const factory: TransportFormatterFactory = new TransportFormatterFactory(logMgr);
   const jobs: Promise<void>[] = [];
   args.forEach((name) => {
     jobs.push(factory.register(name));
@@ -24,7 +27,12 @@ export function getNewTransportFormatterFactory(
 }
 
 export class TransportFormatterFactory {
+  protected _logMgr: LogManager;
   protected _formatters: Record<FormatterType, TransportFormatterFactoryMethod> = {};
+
+  constructor(logMgr: LogManager) {
+    this._logMgr = logMgr;
+  }
 
   register(name: FormatterType, factoryMethod?: TransportFormatterFactoryMethod): Promise<void> {
     if (factoryMethod) {
@@ -39,10 +47,10 @@ export class TransportFormatterFactory {
   }
 
   getFormatter(name: FormatterType): TransportFormatter {
-    let factoryMethod = name ? this._formatters[name] : undefined;
+    let factoryMethod: TransportFormatterFactoryMethod = name ? this._formatters[name] : undefined;
     if (!factoryMethod) {
       throw new Error(`Formatter ${name} not found`);
     }
-    return factoryMethod();
+    return factoryMethod(this._logMgr);
   }
 }

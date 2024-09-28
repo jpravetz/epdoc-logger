@@ -9,6 +9,7 @@ export class StringUtil {
   constructor(str: string) {
     this._str = str;
   }
+
   /**
    * Returns the plural form of a word based on the given count.
    * @param {string} singular - The singular form of the word.
@@ -36,7 +37,7 @@ export class StringUtil {
     return count;
   }
 
-  rightPadAndTruncate(length: Integer, char = ' ') {
+  rightPadAndTruncate(length: Integer, char = ' '): string {
     return this._str.length > length
       ? this._str.slice(0, length - 1)
       : this._str + char.repeat(length - this._str.length);
