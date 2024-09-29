@@ -9,6 +9,10 @@ export class Style {
     this._styles = styles;
   }
 
+  def(name: string): StyleFormatterFn {
+    return this._styles[name];
+  }
+
   get styleNames(): string[] {
     return Object.keys(this._styles) as string[];
   }

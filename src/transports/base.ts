@@ -1,5 +1,5 @@
 import { Integer, isString } from '@epdoc/typeutil';
-import { LogLevels, LogLevelValue } from '../level';
+import { LogLevels, LogLevelValue } from '../levels';
 import { AppTimer } from '../lib/app-timer';
 import { LogManager } from '../log-manager';
 import { Style } from '../style';

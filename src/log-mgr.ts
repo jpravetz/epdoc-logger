@@ -1,13 +1,14 @@
-import { LogLevelDef } from './level';
+import { LogLevelDef } from './levels';
 import { AppTimer } from './lib/app-timer';
-import { LogManager } from './log-manager';
-import { Logger } from './logger';
-import { LoggerMessageBuilder } from './msg-builder';
+import { LogManager as OriginalLogManager } from './log-manager';
+import { Logger as OriginalLogger } from './logger/base';
+import { MsgBuilder as OriginalMsgBuilder } from './msg-builder/base';
+import { styleFormatters } from './msg-builder/default';
 import { } from './style';
 import { defaultConsoleTransportOpts } from './transports/console';
 import { LogMessage, LogMessageConsts, LogMgrOpts, StyleFormatters } from './types';
 
-import * as DefaultStyle from './styles/default';
+import * as DefaultStyle from './msg-builder/default';
 
 
  const logLevelDefs: LogLevelDef = {
@@ -58,28 +59,28 @@ export type LogLevelName = keyof typeof logLevelDefs;
 
 
 
-export type LoggerLine = LoggerMessageBuilder & {
-  [key in LogLevelName]: (...args: any[]) => LoggerLine; // Ensure dynamic methods return LoggerLineInstance
+export type MsgBuilder = OriginalMsgBuilder & {
+  [key in LogLevelName]: (...args: any[]) => MsgBuilder; // Ensure dynamic methods return LoggerLineInstance
 };
-export type Logger = Logger & {
-  [key in LogLevelName]: (...args: any[]) => LoggerLine; // Ensure dynamic methods return LoggerInstance
+export type Logger = OriginalLogger & {
+  [key in LogLevelName]: (...args: any[]) => Logger; // Ensure dynamic methods return LoggerInstance
 };
 
 const defaultLogMgrOpts: LogMgrOpts = {
   defaults: {
-    show:
+    show:{}
   },
   logLevels: defaultLogLevelDef,
   transports: [defaultConsoleTransportOpts]
 };
 
-export class Mgr extends LogManager {
+export class LogMgr extends OriginalLogManager {
   protected _levelDefs: LogLevelDef;
   protected _styleDefs: StyleFormatters;
 
   constructor(
     options: LogMgrOpts,
-    styleDefs: StyleFormatters = defaultStyleFormatters
+    styleDefs: StyleFormatters = styleFormatters
   ) {
     super(options);
     this._levelDefs = levelDefs;
@@ -116,7 +117,7 @@ export function createLogMgr(options:LogMgrOpts): LogManager {
 }
 
 
-export class MyLineBuilder extends LoggerMessageBuilder {
+export class MyLineBuilder extends MsgBuilder {
   constructor(logMgr:LogManager,msg:LogMessage) {
     super(logMgr,msg)
     this.addStyleMethods(DefaultStyle.style.styleNames)

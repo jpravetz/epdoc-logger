@@ -3,7 +3,7 @@ import { isString } from '@epdoc/typeutil';
 import { isNonEmptyString } from 'epdoc-util';
 import { ParsedUrlQuery } from 'querystring';
 import { LogManager } from '../log-manager';
-import { LoggerNew } from '../logger';
+import { LoggerNew } from '../logger/base';
 
 export type MiddlewareRouteInfo = Partial<{
   method: string;

@@ -8,12 +8,12 @@ import {
   isString,
   pick
 } from '@epdoc/typeutil';
-import { LogLevelName, LogLevels, LogLevelValue } from './level';
-import { AppTimer } from './lib/app-timer';
-import { StringEx } from './lib/util';
-import { LogManager } from './log-manager';
-import { Logger } from './logger';
-import { LoggerShowOpts, LogMessage, LogMsgPart, SeparatorOpts, StyleFormatterFn } from './types';
+import { LogLevelName, LogLevels, LogLevelValue } from '../levels';
+import { AppTimer } from '../lib/app-timer';
+import { StringEx } from '../lib/util';
+import { LogManager } from '../log-manager';
+import { Logger } from '../logger/base';
+import { LoggerShowOpts, LogMessage, LogMsgPart, SeparatorOpts, StyleFormatterFn } from '../types';
 
 const DEFAULT_TAB_SIZE = 2;
 
@@ -21,12 +21,11 @@ const DEFAULT_TAB_SIZE = 2;
  * A LoggerLine is a line of output from a Logger. It is used to build up a log
  * line, add styling, and emit the log line.
  */
-export class LoggerMessageBuilder {
+export class MsgBuilder {
   protected _logMgr: LogManager;
   protected _showOpts: LoggerShowOpts;
   protected _tabSize: Integer = DEFAULT_TAB_SIZE;
   // protected _lineFormat: LoggerLineFormatOpts;
-  // protected _style: StyleInstance;
   protected _separatorOpts: SeparatorOpts;
   protected _logLevels: LogLevels;
 
@@ -38,8 +37,6 @@ export class LoggerMessageBuilder {
   // protected _level: LogLevelValue = logLevel.info;
   protected _showElapsed: boolean = false;
   protected _msg: LogMessage;
-  // protected _reqId: string;
-  // protected _sid: string;
   // protected _emitter: string;
   // protected _action: string;
   protected _data: Record<string, any> = {};
@@ -47,7 +44,6 @@ export class LoggerMessageBuilder {
   constructor(logMgr: LogManager, msg: LogMessage) {
     this._logMgr = logMgr;
     this._msg = msg ?? {};
-    this.addStyleMethods();
   }
 
   protected get logMgr(): LogManager {
@@ -62,41 +58,14 @@ export class LoggerMessageBuilder {
     return this._msg.level;
   }
 
-  set level(val: LogLevelValue | LogLevelName) {
+  setLevel(val: LogLevelValue | LogLevelName): this {
     this._msg.level = this.logLevels.asValue(val);
     this._enabled = this.meetsThreshold();
+    return this;
   }
 
   meetsThreshold(): boolean {
     return this.logLevels.meetsThreshold(this.level);
-  }
-
-  /**
-   * Changes the level threshold that was initially set. Does so equally for all
-   * transports.
-   * @param {LogLevelValue} val - The level threshold.
-   * @returns {this} The LoggerLine instance.
-   */
-
-  /**
-   * For logging in an Express or Koa environment, sets the request ID for this
-   * line of output. Use is entirely optional.
-   * @param {string} id - The request ID.
-   * @returns {this} The LoggerLine instance.
-   */
-  reqId(id: string): this {
-    this._msg.reqId = id;
-    return this;
-  }
-
-  /**
-   * Add the session ID for this line of output. Use is entirely optional.
-   * @param {string} id - The session ID.
-   * @returns {this} The LoggerLine instance.
-   */
-  sid(id: string): this {
-    this._msg.sid = id;
-    return this;
   }
 
   /**
@@ -168,7 +137,7 @@ export class LoggerMessageBuilder {
     return this;
   }
 
-  setInitialString(...args: any[]): LogMsgBuilder {
+  setInitialString(...args: any[]): this {
     if (args.length) {
       const count = StringEx(args[0]).countTabsAtBeginningOfString();
       if (count) {
@@ -230,11 +199,11 @@ export class LoggerMessageBuilder {
     return this;
   }
 
-  stylize(style: StyleFormatterFn, ...args): LogMsgBuilder {
+  stylize(style: StyleFormatterFn, ...args): this {
     if (this._enabled) {
       this.addMsgPart(args.join(' '), style);
     }
-    return this as unknown as LogMsgBuilder;
+    return this;
   }
 
   /**
@@ -305,81 +274,7 @@ export class LoggerMessageBuilder {
     return this;
   }
 
-  /**
-   * Adds our dynamic style methods to the logger instance.
-   * @returns {void}
-   */
-  protected addStyleMethods(methodNames: string[]): this {
-    const reservedMethodNames = Object.getOwnPropertyNames(Object.getPrototypeOf(this));
-
-    for (const name in methodNames) {
-      if (!name.startsWith('_')) {
-        if (reservedMethodNames.includes(name)) {
-          throw new Error(`Cannot declare style with reserved name ${name}`);
-        }
-        (this as any)[name] = (...args: any[]): LogMsgBuilder => {
-          // @ts-ignore
-          this.stylize(name as StyleName, ...args);
-          return this as unknown as LogMsgBuilder;
-        };
-      }
-    }
-    return this;
+  partsAsString(): string {
+    return this._msg.parts.map((p) => p.str).join(' ');
   }
-
-  // /**
-  //  * Adds styled text to the log line.
-  //  * @param {any} val - The value to stylize.
-  //  * @param {StyleName | StyleDef} style - The style to use.
-  //  * @returns {this} The Logger instance.
-  //  */
-  // stylizeOld(style: StyleName, ...args): LoggerLineInstance {
-  //   if (args.length) {
-  //     this._transportLines.forEach((transportLine) => transportLine.stylize(style, ...args));
-  //   }
-  //   return this as unknown as LoggerLineInstance;
-  // }
-
-  // setOpts(opts: LoggerLineOpts): this {
-  //   this._opts = opts;
-  //   return this;
-  // }
-
-  // setLevelThreshold(val: LogLevelValue): this {
-  //   this._levelThreshold = val;
-  //   return this;
-  // }
-
-  // separatorOpts(opts: SeparatorOpts): this {
-  //   this._separatorOpts = opts;
-  //   return this;
-  // }
-
-  // get separatorOpts(): SeparatorOpts {
-  //   return this._opts.separatorOpts;
-  // }
-
-  // get style(): Style {
-  //   return this._opts.style;
-  // }
-
-  /**
-   * Returns true if the line is empty of a composed string message
-   * @returns {boolean} - True if the line is empty, false otherwise.
-   */
-  // isEmpty(): boolean {
-  //   return this._msgParts.length === 0;
-  // }
-
-  // get stylizeEnabled(): boolean {
-  //   return this._lineFormat.stylize ?? false;
-  // }
-
-  // get style(): StyleInstance {
-  //   return this._style;
-  // }
 }
-
-export type LogMsgBuilder = LoggerMessageBuilder & {
-  [key in MethodName]: (...args: any[]) => LogMsgBuilder; // Ensure dynamic methods return LoggerLineInstance
-};

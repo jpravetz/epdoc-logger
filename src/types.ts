@@ -1,7 +1,9 @@
 import { Dict, Integer, isDict, isString } from '@epdoc/typeutil';
-import { LogLevelDef, LogLevelName, LogLevelValue } from './level';
+import { LogLevelName, LogLevels, LogLevelValue } from './levels';
 import { AppTimer } from './lib/app-timer';
 import { LogManager } from './log-manager';
+import { Logger } from './log-mgr';
+import { MsgBuilder } from './msg-builder/base';
 import { Style } from './style';
 import { FormatterType } from './transports/formatters';
 
@@ -69,6 +71,12 @@ export type LoggerShowOpts = Partial<{
 export type LogMessageFn = (msg: LogMessage) => void;
 export type StyleFormatterFn = (text: unknown[]) => string;
 export type LineFormatterFn = (opts: LogMessage) => string;
+export type LoggerFactoryMethod = (LogManager, LogMessageConsts, context: object) => Logger;
+export type MsgBuilderFactoryMethod = (LogManager, LogMessage) => MsgBuilder;
+export type LoggerFactoryMethods = {
+  logger: LoggerFactoryMethod;
+  msgBuilder: MsgBuilderFactoryMethod;
+};
 
 export type StyleFormatters = Record<string, StyleFormatterFn>;
 
@@ -185,7 +193,8 @@ export function isTransportOptions(val: any): val is TransportOptions {
 export type LogMgrOpts = Partial<{
   timer: AppTimer;
   defaults: LogMgrDefaults;
-  logLevels: LogLevelDef;
+  logLevels: LogLevels;
+  factoryMethod: LoggerFactoryMethods;
   // run: LoggerRunOpts;
   /**
    * Array of transport options for logging.

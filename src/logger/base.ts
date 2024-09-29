@@ -1,9 +1,9 @@
 import { Dict, Integer, isArray, isNonEmptyString, pick } from '@epdoc/typeutil';
-import { LogLevelName, LogLevels, LogLevelValue } from './level';
-import { LogManager } from './log-manager';
-import { LoggerMessageBuilder, LogMsgBuilder } from './msg-builder';
-import { Style } from './style';
-import { LogMessage, LogMessageConsts } from './types';
+import { LogLevelName, LogLevels, LogLevelValue } from '../levels';
+import { LogManager } from '../log-manager';
+import { MsgBuilder } from '../msg-builder/base';
+import { Style } from '../style';
+import { LogMessage, LogMessageConsts } from '../types';
 
 /**
  * <p>Create a new log object with methods to log to the transport that is attached to
@@ -65,7 +65,7 @@ export class Logger {
   protected _logAction: string;
   protected _stack: string[] = [];
   protected _initialized: boolean = false;
-  protected _line: LogMsgBuilder;
+  protected _line: MsgBuilder;
   protected _silent: boolean;
   protected _truncateLength: Integer;
   protected _msgConsts: LogMessageConsts = { emitter: [] };
@@ -95,8 +95,8 @@ export class Logger {
     // Contains Express and koa req and res properties
     // If ctx.req.sessionId, ctx.req.sid or ctx.req.session.id are set, these are used for sid
     // column. If ctx.req._reqId, this is used as reqId column
-    this.addLevelMethods();
-    this._line = new LoggerMessageBuilder(this._logMgr, this._msgConsts) as LogMsgBuilder;
+    // this.addLevelMethods();
+    this._line = this.logMgr.msgBuilderFactoryMethod(this._logMgr, this._msgConsts);
   }
 
   get name() {
@@ -111,32 +111,7 @@ export class Logger {
     return this._logMgr.logLevels;
   }
 
-  // context(ctx: object): this {
-  //   this._ctx = ctx;
-  //   return this;
-  // }
-
-  // trace(...args: any[]): LoggerLineInstance {
-  //   return this.initLine(logLevel.trace, ...args);
-  // }
-
-  private addLevelMethods(): this {
-    const reservedMethodNames = Object.getOwnPropertyNames(Object.getPrototypeOf(this));
-
-    const levelDefs = this.logLevels.levelDefs;
-    Object.keys(levelDefs).forEach((name) => {
-      if (reservedMethodNames.includes(name)) {
-        throw new Error(`Cannot declare level with reserved name ${name}`);
-      }
-      (this as any)[name] = (...args: any[]): LogMsgBuilder => {
-        // @ts-ignore
-        return this.initLine(levelDefs[name], ...args);
-      };
-    });
-    return this;
-  }
-
-  private initLine(level: LogLevelValue, ...args: any[]): LogMsgBuilder {
+  protected initLine(level: LogLevelValue, ...args: any[]): MsgBuilder {
     if (this._initialized) {
       const unemitted = this._line.partsAsString();
       throw new Error(`Emit the previous log message before logging a new one: ${unemitted}`);
@@ -278,6 +253,31 @@ export class Logger {
   getLevel(): LogLevelValue {
     return this._level;
   }
+
+  // context(ctx: object): this {
+  //   this._ctx = ctx;
+  //   return this;
+  // }
+
+  // trace(...args: any[]): LoggerLineInstance {
+  //   return this.initLine(logLevel.trace, ...args);
+  // }
+
+  // private addLevelMethods(): this {
+  //   const reservedMethodNames = Object.getOwnPropertyNames(Object.getPrototypeOf(this));
+
+  //   const levelDefs = this.logLevels.levelDefs;
+  //   Object.keys(levelDefs).forEach((name) => {
+  //     if (reservedMethodNames.includes(name)) {
+  //       throw new Error(`Cannot declare level with reserved name ${name}`);
+  //     }
+  //     (this as any)[name] = (...args: any[]): LogMsgBuilder => {
+  //       // @ts-ignore
+  //       return this.initLine(levelDefs[name], ...args);
+  //     };
+  //   });
+  //   return this;
+  // }
 
   // addLevelMethod(level) {
   //   /**
@@ -523,6 +523,6 @@ export class Logger {
   // }
 }
 
-export type LoggerInstance = Logger & {
-  [key in LogLevelName]: (...args: any[]) => LogMsgBuilder; // Ensure dynamic methods return LoggerInstance
-};
+// export type LoggerInstance = Logger & {
+//   [key in LogLevelName]: (...args: any[]) => LogMsgBuilder; // Ensure dynamic methods return LoggerInstance
+// };

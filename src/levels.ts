@@ -1,16 +1,6 @@
 import { asInt, Integer, isDefined, isInteger, isString } from '@epdoc/typeutil';
 
 export type LogLevelDef = Record<string, LogLevelValue>;
-export const defaultLogLevelDef: LogLevelDef = {
-  error: 0,
-  warn: 1,
-  info: 2,
-  http: 3,
-  verbose: 4,
-  debug: 5,
-  trace: 6,
-  skip: 9
-} as const;
 
 export type LogLevelName = string;
 export type LogLevelValue = Integer;

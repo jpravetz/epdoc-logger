@@ -1,12 +1,16 @@
-import { defaultLogLevelDef, LogLevelName, LogLevels, LogLevelValue } from './level';
+import { LogLevels, LogLevelValue } from './levels';
 import { AppTimer } from './lib/app-timer';
-import { Logger } from './logger';
+import { Logger } from './logger/base';
+import { logLevels, newDefaultLogger } from './logger/defaults';
+import { newDefaultMsgBuilder } from './msg-builder/default';
 import { TransportManager } from './transport-manager';
 import {
+  LoggerFactoryMethods,
   LogMessage,
   LogMessageConsts,
   LogMgrDefaults,
   LogMgrOpts,
+  MsgBuilderFactoryMethod,
   TransportOptions
 } from './types';
 
@@ -45,6 +49,7 @@ export class LogManager {
   protected _defaults: LogMgrDefaults;
   protected _logLevels: LogLevels;
   protected _transportMgr: TransportManager;
+  protected _factoryMethod: LoggerFactoryMethods;
   protected consoleOptions: any;
   protected _running: boolean;
   protected _context: any;
@@ -59,10 +64,14 @@ export class LogManager {
     this._timer = options.timer ?? new AppTimer();
     this.name = 'LogManager#' + ++mgrIdx;
     this._running = false;
+    this._factoryMethod = {
+      logger: options.factoryMethod?.logger ?? newDefaultLogger,
+      msgBuilder: options.factoryMethod?.msgBuilder ?? newDefaultMsgBuilder
+    };
     // this._style = new Style(options.styleOpts);
 
     // Count of how many errors, warnings, etc
-    this._logLevels = new LogLevels(options.logLevels ?? defaultLogLevelDef);
+    this._logLevels = options.logLevels ?? logLevels;
 
     if (options.defaults) {
       const defaults: LogMgrDefaults = options.defaults;
@@ -94,6 +103,10 @@ export class LogManager {
 
   get logLevels(): LogLevels {
     return this._logLevels;
+  }
+
+  get msgBuilderFactoryMethod(): MsgBuilderFactoryMethod {
+    return this._factoryMethod.msgBuilder;
   }
 
   // get style(): Style {
@@ -190,7 +203,8 @@ export class LogManager {
    */
   getLogger(emitter: string, context: object): Logger {
     const msgConsts: LogMessageConsts = Object.assign({}, this._msgConsts, { emitter });
-    return new Logger(this, msgConsts, this._context);
+    return this._factoryMethod.logger(this, msgConsts, this._context);
+    // return new Logger(this, msgConsts, this._context);
   }
 
   /**

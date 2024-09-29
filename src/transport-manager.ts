@@ -1,4 +1,4 @@
-import { LogLevels, LogLevelValue } from './level';
+import { LogLevels, LogLevelValue } from './levels';
 import { LogManager } from './log-manager';
 import { LogTransport, LogTransportOpenCallbacks, LogTransportType } from './transports/base';
 import { TransportFactory } from './transports/factory';

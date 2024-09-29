@@ -1,5 +1,5 @@
 import { Dict, isObject } from '@epdoc/typeutil';
-import { LoggerNew } from '../logger';
+import { LoggerNew } from '../logger/base';
 
 /**
  * Stub for express.request object, used when passing request object around when simulating req/res/next flow.

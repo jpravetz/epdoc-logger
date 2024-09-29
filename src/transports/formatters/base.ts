@@ -1,4 +1,4 @@
-import { LogLevels } from '../../level';
+import { LogLevels } from '../../levels';
 import { LogManager } from '../../log-manager';
 import { Style } from '../../style';
 import { LoggerLineFormatOpts, LoggerShowOpts, LogMessage } from '../../types';

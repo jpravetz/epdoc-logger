@@ -2,7 +2,7 @@ import { dateUtil } from '@epdoc/timeutil';
 import { Integer } from '@epdoc/typeutil';
 import { NextFunction, Request, Response } from 'express';
 import { LogManager } from '../log-manager';
-import { LoggerNew } from '../logger';
+import { LoggerNew } from '../logger/base';
 import { LoggerMiddleware, MiddlewareRouteInfo } from './base';
 import { ExpressResponseHooks } from './response-hooks';
 
