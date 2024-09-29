@@ -2,7 +2,7 @@ import { Dict, Integer, isDict, isString } from '@epdoc/typeutil';
 import { LogLevelName, LogLevels, LogLevelValue } from './levels';
 import { AppTimer } from './lib/app-timer';
 import { LogManager } from './log-manager';
-import { Logger } from './log-mgr';
+import { Logger } from './logger/base';
 import { MsgBuilder } from './msg-builder/base';
 import { Style } from './style';
 import { FormatterType } from './transports/formatters';
@@ -104,23 +104,27 @@ export type LogMsgPart = {
   style?: StyleFormatterFn;
 };
 
-/**
- * Properties of a LogMessage that are likely to be constant across a number of
- * log messages.
- */
-export type LogMessageConsts = Partial<{
-  /** The name of the emitter, which is typically a string. */
-  emitter: string | string[];
-  /** The action to log, which is a verb indicating the action being logged. */
-  action: string;
+export type LogContextParams = Partial<{
   /** The request ID, in the event this log message is associated with a server request. */
   reqId: string;
   /** The session ID, in the event this log message is associated with a
    * session. This will come from the context of the message. */
   sid: string;
-  /** The static data, which is typically a string. TODO define what this is. */
-  static: string;
 }>;
+
+/**
+ * Properties of a LogMessage that are likely to be constant across a number of
+ * log messages.
+ */
+export type LogMessageConsts = LogContextParams &
+  Partial<{
+    /** The name of the emitter, which is typically a string. */
+    emitter: string | string[];
+    /** The action to log, which is a verb indicating the action being logged. */
+    action: string;
+    /** The static data, which is typically a string. TODO define what this is. */
+    static: string;
+  }>;
 
 /**
  * Properties of a log message. Only the 'message' property is the descriptive string.

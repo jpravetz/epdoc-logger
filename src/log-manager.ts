@@ -1,4 +1,4 @@
-import { LogLevels, LogLevelValue } from './levels';
+import { LogLevelName, LogLevels, LogLevelValue } from './levels';
 import { AppTimer } from './lib/app-timer';
 import { Logger } from './logger/base';
 import { logLevels, newDefaultLogger } from './logger/defaults';
@@ -60,7 +60,7 @@ export class LogManager {
   protected levelThreshold: LogLevelValue;
   protected errorStackThreshold: LogLevelValue;
 
-  constructor(options: LogMgrOpts) {
+  constructor(options: LogMgrOpts = {}) {
     this._timer = options.timer ?? new AppTimer();
     this.name = 'LogManager#' + ++mgrIdx;
     this._running = false;
@@ -116,6 +116,23 @@ export class LogManager {
   public addTransport(opts: TransportOptions): this {
     this._transportMgr.addTransport(opts);
     return this;
+  }
+
+  /**
+   * Return a new {@link Logger} object with the specified emitter name.
+   * Although it's a new logger instance, it still uses the same underlying
+   * 'writeMessageParams' method, and whatever transport is set globally by this LogManager.
+   * @param {string} emitter Name of emitter, module or file, added as a column to log output
+   * @param {object} [context] A context object. For Express or koa this would have 'req' and
+   *   'res' properties. The context.req may also have reqId and sid/sessionId/session.id
+   *   properties that are used to populate their respective columns of output. Otherwise these
+   *   columns are left blank on output.
+   * @return A new {logger} object.
+   */
+  getLogger(emitter: string, context?: object): Logger {
+    const msgConsts: LogMessageConsts = Object.assign({}, this._msgConsts, { emitter });
+    return this._factoryMethod.logger(this, msgConsts, this._context);
+    // return new Logger(this, msgConsts, this._context);
   }
 
   /**
@@ -188,23 +205,6 @@ export class LogManager {
    */
   get appTimer(): AppTimer {
     return this._timer;
-  }
-
-  /**
-   * Return a new {@link Logger} object with the specified emitter name.
-   * Although it's a new logger instance, it still uses the same underlying
-   * 'writeMessageParams' method, and whatever transport is set globally by this LogManager.
-   * @param {string} emitter Name of emitter, module or file, added as a column to log output
-   * @param {object} [context] A context object. For Express or koa this would have 'req' and
-   *   'res' properties. The context.req may also have reqId and sid/sessionId/session.id
-   *   properties that are used to populate their respective columns of output. Otherwise these
-   *   columns are left blank on output.
-   * @return A new {logger} object.
-   */
-  getLogger(emitter: string, context: object): Logger {
-    const msgConsts: LogMessageConsts = Object.assign({}, this._msgConsts, { emitter });
-    return this._factoryMethod.logger(this, msgConsts, this._context);
-    // return new Logger(this, msgConsts, this._context);
   }
 
   /**

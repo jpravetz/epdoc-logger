@@ -13,7 +13,14 @@ import { AppTimer } from '../lib/app-timer';
 import { StringEx } from '../lib/util';
 import { LogManager } from '../log-manager';
 import { Logger } from '../logger/base';
-import { LoggerShowOpts, LogMessage, LogMsgPart, SeparatorOpts, StyleFormatterFn } from '../types';
+import {
+  LogContextParams,
+  LoggerShowOpts,
+  LogMessage,
+  LogMsgPart,
+  SeparatorOpts,
+  StyleFormatterFn
+} from '../types';
 
 const DEFAULT_TAB_SIZE = 2;
 
@@ -36,7 +43,7 @@ export class MsgBuilder {
   protected _timer: AppTimer;
   // protected _level: LogLevelValue = logLevel.info;
   protected _showElapsed: boolean = false;
-  protected _msg: LogMessage;
+  protected _msg: LogMessage = {};
   // protected _emitter: string;
   // protected _action: string;
   protected _data: Record<string, any> = {};
@@ -44,6 +51,25 @@ export class MsgBuilder {
   constructor(logMgr: LogManager, msg: LogMessage) {
     this._logMgr = logMgr;
     this._msg = msg ?? {};
+  }
+
+  logManager(val: LogManager): this {
+    if (val instanceof LogManager) {
+      this._logMgr = val;
+    }
+    return this;
+  }
+
+  logMessage(val: LogMessage): this {
+    if (val) {
+      this._msg = val;
+    }
+    return this;
+  }
+
+  contextParams(val: LogContextParams): this {
+    this._msg = Object.assign(this._msg, val);
+    return this;
   }
 
   protected get logMgr(): LogManager {

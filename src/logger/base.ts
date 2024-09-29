@@ -1,9 +1,9 @@
-import { Dict, Integer, isArray, isNonEmptyString, pick } from '@epdoc/typeutil';
+import { Dict, Integer, isNonEmptyArray, isNonEmptyString } from '@epdoc/typeutil';
 import { LogLevelName, LogLevels, LogLevelValue } from '../levels';
 import { LogManager } from '../log-manager';
 import { MsgBuilder } from '../msg-builder/base';
 import { Style } from '../style';
-import { LogMessage, LogMessageConsts } from '../types';
+import { LogContextParams, LogMessage, LogMessageConsts } from '../types';
 
 /**
  * <p>Create a new log object with methods to log to the transport that is attached to
@@ -54,6 +54,7 @@ export class Logger {
   protected _logMgr: LogManager;
   // protected _separatorOpts: SeparatorOpts;
   protected _name: string;
+  protected _ctxParams: LogContextParams = {};
   protected _reqId: string;
   protected _sid: string;
   protected _emitter: string[];
@@ -70,37 +71,55 @@ export class Logger {
   protected _truncateLength: Integer;
   protected _msgConsts: LogMessageConsts = { emitter: [] };
 
-  constructor(logMgr: LogManager, msgConsts: LogMessageConsts, context: object) {
+  constructor(logMgr?: LogManager) {
     this._logMgr = logMgr;
-    // this._separatorOpts = Object.assign({}, separatorOpts);
+  }
 
-    if (isNonEmptyString(msgConsts.emitter)) {
-      (this._msgConsts.emitter as string[]).push(msgConsts.emitter);
-    } else if (isArray(msgConsts.emitter)) {
-      this._msgConsts.emitter = (this._msgConsts.emitter as string[]).concat(msgConsts.emitter);
+  logManager(val: LogManager): this {
+    if (val) {
+      this._logMgr = val;
     }
-    this._name = 'Logger#' + (this._msgConsts.emitter as string[]).join('.');
-    this._stack = this._msgConsts.emitter as string[];
+    return this;
+  }
 
-    this._msgConsts = Object.assign(this._msgConsts, pick(msgConsts, 'action', 'static'));
-    // this._ctx = context;
-    this.setContextParams(this._msgConsts, context);
+  emitter(val: string): this {
+    if (isNonEmptyString(val)) {
+      this._emitter.push(val);
+      this._stack = this._emitter;
+    } else if (isNonEmptyArray(val)) {
+      this._emitter.concat(val);
+      this._stack = this._emitter;
+    }
+    return this;
+  }
 
-    // this.logLevel = logMgr.levelThreshold ? logMgr.levelThreshold : logMgr.LEVEL_DEFAULT;
-    // this.bErrorStack = logMgr.errorStackThreshold ? logMgr.errorStackThreshold : false;
-    this._logData;
-    // Action column
-    this._logAction;
+  context(ctx: any): this {
+    this.setContextParams(this._ctxParams, ctx);
+    return this;
+  }
 
-    // Contains Express and koa req and res properties
-    // If ctx.req.sessionId, ctx.req.sid or ctx.req.session.id are set, these are used for sid
-    // column. If ctx.req._reqId, this is used as reqId column
-    // this.addLevelMethods();
-    this._line = this.logMgr.msgBuilderFactoryMethod(this._logMgr, this._msgConsts);
+  msgBuilder(builder: MsgBuilder): this {
+    if (builder) {
+      this._line = builder;
+    }
+    return this;
+  }
+
+  public resolve(): this {
+    if (!this._logMgr) {
+      throw new Error('Log Manager not configured');
+    }
+    if (this._line) {
+      this._line
+        .logManager(this._logMgr)
+        .emitter(this._emitter.join('.'))
+        .contextParams(this._ctxParams);
+    }
+    return this;
   }
 
   get name() {
-    return this._name;
+    return 'Logger#' + (this._emitter as string[]).join('.');
   }
 
   protected get logMgr(): LogManager {

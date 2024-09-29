@@ -1,7 +1,6 @@
 import { LogLevelDef, LogLevels } from '../levels';
 import { LogManager } from '../log-manager';
 import { MsgBuilder } from '../msg-builder/base';
-import { LogMessageConsts } from '../types';
 import { Logger } from './base';
 
 const logLevelDefs: LogLevelDef = {
@@ -21,12 +20,8 @@ export type LogLevelName = keyof typeof logLevelDefs;
 
 export const logLevels = new LogLevels(logLevelDefs);
 
-export function newDefaultLogger(
-  logMgr: LogManager,
-  consts: LogMessageConsts,
-  ctx: object
-): Logger {
-  return new DefaultLogger(logMgr, consts, ctx);
+export function newDefaultLogger(logMgr?: LogManager): Logger {
+  return new DefaultLogger().logManager(logMgr).resolve();
 }
 
 export class DefaultLogger extends Logger {

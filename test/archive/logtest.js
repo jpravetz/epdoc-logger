@@ -4,62 +4,61 @@
  * Copyright 2012-2016 Jim Pravetz. May be freely distributed under the MIT license.
  *****************************************************************************/
 'use strict';
-    var _ = require('underscore');
+let _ = require('underscore');
 
 const TIMER_INTERVAL = 2000;
 const BUFFER_INTERVAL = 0; //1000;
-var type = "console";
-//var type = "sos";
-//var type = "file";
+let type = 'console';
+//let type = "sos";
+//let type = "file";
 
-var type = process.argv[process.argv.length - 1];
+let type = process.argv[process.argv.length - 1];
 
-console.log("type = " + type);
+console.log('type = ' + type);
 
-var Logger = require('../index');
+let Logger = require('../index');
 Logger.setGlobalLogLevel('verbose');
 
-_.each( [ 'console', 'file', 'sos' ], function(t) {
-    console.log("Validating '" + t + "' logger class" );
-    var LoggerClass = Logger.getLoggerClass(t);
-    var logger = new LoggerClass();
-    if( logger.type() !== t ) {
-        console.log( "ERROR: Logger type is not " + t );
-    }
+_.each(['console', 'file', 'sos'], function (t) {
+  console.log("Validating '" + t + "' logger class");
+  let LoggerClass = Logger.getLoggerClass(t);
+  let logger = new LoggerClass();
+  if (logger.type() !== t) {
+    console.log('ERROR: Logger type is not ' + t);
+  }
 });
 
-var log = require('../index').get('test');
-var params = { path: __dirname + "/temp.log", buffer: BUFFER_INTERVAL};
-console.log("Testing for type '" + type + "'" + " and parameters " + JSON.stringify(params) );
+let log = require('../index').get('test');
+let params = { path: __dirname + '/temp.log', buffer: BUFFER_INTERVAL };
+console.log("Testing for type '" + type + "'" + ' and parameters ' + JSON.stringify(params));
 
 log.date();
-log.info("Hello world");
+log.info('Hello world');
 
-Logger.setLogger( type, params );
-log.info("Hello " + Logger.getCurrentLogger().type() );
+Logger.setLogger(type, params);
+log.info('Hello ' + Logger.getCurrentLogger().type());
 log.date();
-log.verbose("Verbose message");
-log.data('obj', {a: 3}).debug("Debug message");
-log.error("Error message");
-log.error("Error message");
-log.fatal("Danger, danger!");
+log.verbose('Verbose message');
+log.data('obj', { a: 3 }).debug('Debug message');
+log.error('Error message');
+log.error('Error message');
+log.fatal('Danger, danger!');
 log.info();
-log.warn("Warning message");
-log.log('info', ["First line of message", "Second line of message", "third line of message"]);
+log.warn('Warning message');
+log.log('info', ['First line of message', 'Second line of message', 'third line of message']);
 Logger.logMessage({
-    message: "Calling Logger.writeMessage",
-    emitter: "MyModule",
-    sid: "MySessionId",
-    data: {key: "value"}
+  message: 'Calling Logger.writeMessage',
+  emitter: 'MyModule',
+  sid: 'MySessionId',
+  data: { key: 'value' }
 });
 
-var idx = 0;
-var timer = setInterval(function() {
-    log.date();
-    log.debug("Message %d", ++idx);
-    var t = Logger.getStartTime();
-    log.warn("We started at this time %s", new Date(t));
+let idx = 0;
+let timer = setInterval(function () {
+  log.date();
+  log.debug('Message %d', ++idx);
+  let t = Logger.getStartTime();
+  log.warn('We started at this time %s', new Date(t));
 }, TIMER_INTERVAL);
-
 
 console.log('done');
