@@ -1,16 +1,17 @@
 import { Integer } from '@epdoc/typeutil';
-
-export interface LoggerResponse extends Response {
-  _origSend: Function;
-  _origEnd: Function;
-  delayTime: Function;
-}
+import { Request, Response } from 'express';
 
 export interface LoggerRequest extends Request {
   _reqId: Integer;
   _startTime: Date;
   _hrStartTime: [number, number];
   session?: { id: string };
+}
+
+export interface LoggerResponse extends Response {
+  _origSend: Function;
+  _origEnd: Function;
+  delayTime: Function;
 }
 
 /**
