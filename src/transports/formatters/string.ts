@@ -1,9 +1,9 @@
+import { LogMgr } from '../../core/logmgr';
 import { StringEx } from '../../lib/util';
-import { LogManager } from '../../log-manager';
 import { LogMessage, LogMsgPart, StyleFormatterFn } from '../../types';
 import { TransportFormatter } from './base';
 
-export function getNewFormatter(logMgr: LogManager): TransportFormatter {
+export function getNewFormatter(logMgr: LogMgr): TransportFormatter {
   return new TransportStringFormatter(logMgr);
 }
 

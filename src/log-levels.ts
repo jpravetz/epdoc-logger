@@ -1,9 +1,9 @@
 import { asInt, Integer, isDefined, isInteger, isString } from '@epdoc/typeutil';
 
-export type LogLevelDef = Record<string, LogLevelValue>;
-
+export type LogLevel = LogLevelName | LogLevelValue | string;
 export type LogLevelName = string;
 export type LogLevelValue = Integer;
+export type LogLevelDef = Record<string, LogLevelValue>;
 
 export class LogLevels {
   protected _levelDef: LogLevelDef;

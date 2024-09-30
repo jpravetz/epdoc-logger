@@ -1,4 +1,4 @@
-import { LogManager } from '../log-manager';
+import { LogMgr } from '../core/logmgr';
 import { TransportOptions } from '../types';
 import { LogTransport, LogTransportOpenCallbacks } from './base';
 
@@ -21,12 +21,12 @@ export const defaultConsoleTransportOpts: TransportOptions = {
   }
 };
 
-export function getNewTransport(logMgr: LogManager, options: TransportOptions) {
+export function getNewTransport(logMgr: LogMgr, options: TransportOptions) {
   return new ConsoleTransport(logMgr, options);
 }
 
 export class ConsoleTransport extends LogTransport {
-  constructor(logMgr: LogManager, options: TransportOptions) {
+  constructor(logMgr: LogMgr, options: TransportOptions) {
     super(logMgr, options);
     this._showOpts = this._showOpts ?? defaultConsoleTransportOpts.show;
   }

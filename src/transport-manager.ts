@@ -1,5 +1,5 @@
-import { LogLevels, LogLevelValue } from './levels';
-import { LogManager } from './log-manager';
+import { LogMgr } from './core';
+import { LogLevels, LogLevelValue } from './log-levels';
 import { LogTransport, LogTransportOpenCallbacks, LogTransportType } from './transports/base';
 import { TransportFactory } from './transports/factory';
 import { consoleTransportDefaults, LogMessage, TransportOptions } from './types';
@@ -11,16 +11,16 @@ let mgrIdx = 0;
  * multiple logging destinations.
  */
 export class TransportManager {
-  protected _logMgr: LogManager;
+  protected _logMgr: LogMgr;
   protected _transportFactory: TransportFactory = new TransportFactory();
   protected _transports: LogTransport[] = [];
   protected _areAllTransportsReady: boolean = false;
 
   /**
    * Creates an instance of TransportManager.
-   * @param {LogManager} logMgr - The log manager instance that manages all logging..
+   * @param {LogMgr} logMgr - The log manager instance that manages all logging..
    */
-  constructor(logMgr: LogManager) {
+  constructor(logMgr: LogMgr) {
     this._logMgr = logMgr;
   }
 
@@ -40,7 +40,7 @@ export class TransportManager {
     return this._areAllTransportsReady;
   }
 
-  protected get logMgr(): LogManager {
+  protected get logMgr(): LogMgr {
     return this._logMgr;
   }
 
@@ -161,32 +161,9 @@ export class TransportManager {
     });
   }
 
-  // _getNewTransport(options: TransportOptions): LogTransport {
-  //   if (isTransportOptions(options)) {
-  //     const defaultOpts: LogMessageConsts = {
-  //       sid: this._msgConsts.sid,
-  //       static: this._msgConsts.static
-  //     };
-  //     const opts: TransportOptions = Object.assign(defaultOpts, options);
-  //     const transport: LogTransport = this._transportFactory.getTransport(opts);
-  //     if (transport) {
-  //       const err = transport.validateOptions();
-  //       if (!err) {
-  //         return transport;
-  //       } else {
-  //         this.logLoggerMessage({
-  //           action: 'logger.transport.add.warn',
-  //           message: `Could not add transport ${opts.name}: ${err.message}`,
-  //           data: { options: options }
-  //         });
-  //       }
-  //     }
-  //   }
-  // }
-
   /**
    * Remove a specific transport. Pauses log output. The caller should call [start()]{@link
-   * LogManager#start} to restart logging.
+   * LogMgr#start} to restart logging.
    * @param {LogTransportType | LogTransport} transport - The transport to remove.
    * @returns {Promise<any>} A promise that resolves when the transport is removed.
    */
@@ -210,30 +187,6 @@ export class TransportManager {
     this.allReadyCompute();
     return Promise.all(jobs);
   }
-
-  // /**
-  //  * Test if this is a known transport
-  //  * @param s {string} Name of the transport
-  //  * @returns {boolean}
-  //  */
-  // isValidTransport(s) {
-  //   if (isString(s) && ['console', 'file', 'callback', 'loggly', 'sos'].indexOf(s) >= 0) {
-  //     return true;
-  //   }
-  //   return false;
-  // }
-
-  /**
-   * Return one of the predefined transport classes by name. If you want to define your own class,
-   * it is suggested you subclass or copy one of the existing transports.
-   * @returns {*} LogManager Class for which you should call new with options, or if creating
-   *   your own transport you may subclass this object.
-   */
-  // getTransportByName(type) {
-  //   if (isString(type)) {
-  //     return require('./transports/' + type);
-  //   }
-  // }
 
   /**
    * Get the list of currently set transports.

@@ -1,9 +1,9 @@
 import { Dict } from '@epdoc/typeutil';
-import { LogManager } from '../../log-manager';
+import { LogMgr } from '../../core/logmgr';
 import { LogMessage } from '../../types';
 import { TransportFormatter } from './base';
 
-export function getNewFormatter(logMgr: LogManager): TransportFormatter {
+export function getNewFormatter(logMgr: LogMgr): TransportFormatter {
   return new TransportJsonFormatter(logMgr);
 }
 

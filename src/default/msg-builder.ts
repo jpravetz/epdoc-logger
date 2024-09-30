@@ -1,7 +1,7 @@
 import chalk from 'chalk';
-import { LogManager } from '../log-manager';
-import { LogMessage, StyleFormatters } from '../types';
-import { MsgBuilder } from './base';
+import * as original from '../core';
+
+import { StyleFormatters } from '../types';
 
 export const styleFormatters: StyleFormatters = {
   text: chalk.whiteBright,
@@ -36,17 +36,13 @@ export const styleFormatters: StyleFormatters = {
 
 export type StyleName = keyof typeof styleFormatters;
 
-export function newDefaultMsgBuilder(logMgr: LogManager, msg: LogMessage): DefaultMsgBuilder {
-  return new DefaultMsgBuilder(logMgr, msg);
-}
-
 /**
  * Message Builder class for styling messages. Extends the BaseMsgBuilder to
  * provide custom formatting using chained messages. If you prefer to declare
  * and use a custom set of formatting metchods, declare your own MsgBuilder and
  * pass it to the LogManager. s
  */
-export class DefaultMsgBuilder extends MsgBuilder {
+export class MsgBuilder extends original.MsgBuilder {
   public text(...args: any[]): this {
     return this.stylize(styleFormatters.text, ...args);
   }

@@ -1,45 +1,36 @@
-import { LogLevelName, LogLevels, LogLevelValue } from './levels';
-import { AppTimer } from './lib/app-timer';
-import { Logger } from './logger/base';
-import { logLevels, newDefaultLogger } from './logger/defaults';
-import { newDefaultMsgBuilder } from './msg-builder/default';
-import { TransportManager } from './transport-manager';
-import {
-  LoggerFactoryMethods,
-  LogMessage,
-  LogMessageConsts,
-  LogMgrDefaults,
-  LogMgrOpts,
-  MsgBuilderFactoryMethod,
-  TransportOptions
-} from './types';
+import { LogLevelName } from '.';
+import { AppTimer } from '../lib/app-timer';
+import { LogLevels, LogLevelValue } from '../log-levels';
+import { TransportManager } from '../transport-manager';
+import { Context, LogMessage, LogMessageConsts, LogMgrDefaults, TransportOptions } from '../types';
+import { Logger } from './logger';
 
 let mgrIdx = 0;
 
 /**
  * Create a new LogManager object with no transports. Logged messages will not begin
- * writing to the transport until a transport is added and [start()]{@link LogManager#start} is
+ * writing to the transport until a transport is added and [start()]{@link LogMgr#start} is
  * called. Pass in configuration options to configure the logger and transports.
  *
- * <p>To manually add a transport call [addTransport()]{@link LogManager#addTransport}. More than
+ * <p>To manually add a transport call [addTransport()]{@link LogMgr#addTransport}. More than
  * one transport can be configured at the same time. Alternatively the LogManager can be started up
  * immediately by setting <code>options.autoRun</code> to true. In this situation, if
  * <code>options.transports</code> is set, then the specified transports will be used. But if
  * <code>options.transports</code> is not set, then the default {@link ConsoleTransport} is used.
  *
  * <p>It is normal to have one LogManager per application, and to call
- * [get(emitterName)]{@link LogManager#getLogger} to get a new {@link Logger} object for each
+ * [get(emitterName)]{@link LogMgr#getLogger} to get a new {@link Logger} object for each
  * emitter and then call methods on this {@link Logger} object to log messages.
  *
- * <p>Refer to {@link LogManager#setOptions} for options documentation.
+ * <p>Refer to {@link LogMgr#setOptions} for options documentation.
  *
  * @class A LogManager is used to manage logging, including transports, startup, shutdown and
  *   various options.
  * @constructor
  */
 
-export class LogManager {
-  protected name: string;
+export class LogMgr {
+  protected uid: string;
   protected _timer: AppTimer;
   // protected _style: Style;
   // protected _show: LoggerShowOpts;
@@ -48,11 +39,9 @@ export class LogManager {
   protected _msgConsts: LogMessageConsts;
   protected _defaults: LogMgrDefaults;
   protected _logLevels: LogLevels;
-  protected _transportMgr: TransportManager;
-  protected _factoryMethod: LoggerFactoryMethods;
+  protected _transportMgr: TransportManager = new TransportManager(this);
   protected consoleOptions: any;
-  protected _running: boolean;
-  protected _context: any;
+  protected _running: boolean = false;
 
   // protected _style: Style;
 
@@ -60,53 +49,12 @@ export class LogManager {
   protected levelThreshold: LogLevelValue;
   protected errorStackThreshold: LogLevelValue;
 
-  constructor(options: LogMgrOpts = {}) {
-    this._timer = options.timer ?? new AppTimer();
-    this.name = 'LogManager#' + ++mgrIdx;
-    this._running = false;
-    this._factoryMethod = {
-      logger: options.factoryMethod?.logger ?? newDefaultLogger,
-      msgBuilder: options.factoryMethod?.msgBuilder ?? newDefaultMsgBuilder
-    };
-    // this._style = new Style(options.styleOpts);
-
-    // Count of how many errors, warnings, etc
-    this._logLevels = options.logLevels ?? logLevels;
-
-    if (options.defaults) {
-      const defaults: LogMgrDefaults = options.defaults;
-      // this._separatorOpts = defaults.separatorOpts ?? { char: '#', length: 70 };
-      // this._show = defaults.show ?? {};
-      // this._style = defaults.style ?? new ColorStyle();
-      if (this._logLevels.isLogLevel(defaults.levelThreshold)) {
-        this._logLevels.levelThreshold = defaults.levelThreshold;
-      }
-      if (this._logLevels.isLogLevel(defaults.errorStackThreshold)) {
-        this._logLevels.errorStackThreshold = defaults.errorStackThreshold;
-      }
-      this._msgConsts = defaults.msgConsts ?? {};
-    }
-    this._transportMgr = new TransportManager(this);
-
-    // if (this._runOpts.autoRun) {
-    //   this.start();
-    // }
-  }
-
-  set context(ctx: any) {
-    this._context = ctx;
-  }
-
-  get context(): any {
-    return this._context;
+  constructor() {
+    this.uid = 'LogManager#' + mgrIdx++;
   }
 
   get logLevels(): LogLevels {
     return this._logLevels;
-  }
-
-  get msgBuilderFactoryMethod(): MsgBuilderFactoryMethod {
-    return this._factoryMethod.msgBuilder;
   }
 
   // get style(): Style {
@@ -129,9 +77,9 @@ export class LogManager {
    *   columns are left blank on output.
    * @return A new {logger} object.
    */
-  getLogger(emitter: string, context?: object): Logger {
+  protected getLogger(emitter: string, context?: Context): Logger {
     const msgConsts: LogMessageConsts = Object.assign({}, this._msgConsts, { emitter });
-    return this._factoryMethod.logger(this, msgConsts, this._context);
+    return new Logger(this).context(context);
     // return new Logger(this, msgConsts, this._context);
   }
 
@@ -143,7 +91,7 @@ export class LogManager {
    * add the console transport to ensure that there is at least one transport.
    * @param {function} [callback] Called when all transports are ready to receive messages. It is
    *   not normally necessary to wait for this callback.
-   * @return {LogManager}
+   * @return {LogMgr}
    */
   public async start(): Promise<any> {
     if (!this._running) {
@@ -170,7 +118,7 @@ export class LogManager {
    * it is called internally whenever there may be messages to write. When
    * `_requireAllTransportsReady` is true, will only flush the queue if all
    * transports are ready to receive messages.
-   * @returns {LogManager}
+   * @returns {LogMgr}
    */
   protected flushQueue(): this {
     if (this._running && this._msgQueue.length) {
@@ -192,10 +140,12 @@ export class LogManager {
    * Set automatically when the LogManager module is initialized, but can be set manually to
    * the earliest known time that the application was started.
    * @param d {Date} The application start time
-   * @return {LogManager}
+   * @return {LogMgr}
    */
   timer(timer: AppTimer): this {
-    this._timer = timer;
+    if (timer) {
+      this._timer = timer;
+    }
     return this;
   }
 
@@ -229,6 +179,9 @@ export class LogManager {
    * @returns {void}
    */
   logMessage(options: LogMessage): this {
+    if (!this._logLevels) {
+      throw new Error('LogLevels not defined for this LogMgr');
+    }
     // if (!options.timer) {
     //   options.timer = new AppTimer();
     // }
@@ -238,6 +191,10 @@ export class LogManager {
     return this.flushQueue();
   }
 
+  levelAsValue(val: LogLevelValue | LogLevelName | string): LogLevelValue {
+    return this._logLevels.asValue(val);
+  }
+
   level(level: LogLevelName | LogLevelValue): this {
     this._logLevels.levelThreshold = level;
     this._transportMgr.setLevelThreshold(this._logLevels.levelThreshold);
@@ -245,14 +202,14 @@ export class LogManager {
   }
 
   /**
-   * Set the {@link LogManager} objects's minimum log level for showing error
+   * Set the {@link LogMgr} objects's minimum log level for showing error
    * stacks. This applies to all transports as well: they cannot have unique
    * error stack levels.
-   * @param level {string} - Must be one of {@link LogManager#LEVEL_ORDER}
+   * @param level {string} - Must be one of {@link LogMgr#LEVEL_ORDER}
    * @param [options] {Object}
    * @param [options.transports=false] {Boolean} Set the level for all
    * transports as well.
-   * @return {LogManager}
+   * @return {LogMgr}
    */
   errorLevel(level: LogLevelName | LogLevelValue): this {
     this._logLevels.errorStackThreshold = level;
@@ -260,7 +217,7 @@ export class LogManager {
   }
 
   /**
-   * Return true if the level is equal to or greater then the {@link LogManager#levelThreshold}
+   * Return true if the level is equal to or greater then the {@link LogMgr#levelThreshold}
    * property.
    * @param level {string} Level that is to be tested
    * @param [thresholdLevel] {string} Threshold level against which <code>level</code> is to be
@@ -276,7 +233,7 @@ export class LogManager {
    * Write a log line to the transport with a count of how many of each level of message has been
    * output. This is a useful function to call when the application is shutdown.
    * @param {string} [message]
-   * @return {LogManager}
+   * @return {LogMgr}
    */
   writeCount(message: string) {
     return this.logLoggerMessage({

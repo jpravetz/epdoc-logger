@@ -1,10 +1,4 @@
-/*****************************************************************************
- * middleware/error_handler.js
- * Copyright 2012-2016 Jim Pravetz. May be freely distributed under the MIT license.
- *****************************************************************************/
-'use strict';
-
-var Logger = require('../logger');
+import { Logger } from '../../core';
 
 /**
  * Middleware to dump errors to Logger
@@ -15,14 +9,14 @@ var Logger = require('../logger');
 module.exports = function () {
   return function (err, req, res, next) {
     if (doCatch(err)) {
-      var params = {
+      let params = {
         method: req.route ? req.route.method : undefined,
         path: req.path,
         protocol: req.protocol,
         ip: req.ip,
         params: req.params
       };
-      var msg = {
+      let msg = {
         level: 'error',
         reqId: req._reqId,
         sid: req.session ? req.session.id : undefined,
@@ -32,7 +26,7 @@ module.exports = function () {
         message: err.message
       };
       Logger.logMessage(msg);
-      var errMsg = err.status === 403 ? 'Forbidden. Reloading this page may resolve.' : err.message;
+      let errMsg = err.status === 403 ? 'Forbidden. Reloading this page may resolve.' : err.message;
       res.status(err.status).json({ error: { errorId: 'exception', message: errMsg } });
     } else {
       next(err);

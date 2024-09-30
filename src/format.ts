@@ -1,5 +1,5 @@
 import { Dict, isDict, isError, isNonEmptyArray, pad } from '@epdoc/typeutil';
-import { LoggerError } from './error';
+import { LoggerError } from './lib/error';
 
 let colorize = require('./lib/colorize');
 

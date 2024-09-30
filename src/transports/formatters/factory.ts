@@ -1,4 +1,4 @@
-import { LogManager } from '../../log-manager';
+import { LogMgr } from '../../core/logmgr';
 import { Style } from '../../style';
 import { LoggerLineFormatOpts, LoggerShowOpts } from '../../types';
 import { TransportFormatter } from './base';
@@ -6,16 +6,16 @@ import { TransportFormatter } from './base';
 export type FormatterType = 'string' | 'json' | 'json-array' | string;
 
 export type TransportFormatterOpts = {
-  logMgr: LogManager;
+  logMgr: LogMgr;
   show: LoggerShowOpts;
   format: LoggerLineFormatOpts;
   style: Style;
 };
 
-export type TransportFormatterFactoryMethod = (logMgr: LogManager) => TransportFormatter;
+export type TransportFormatterFactoryMethod = (logMgr: LogMgr) => TransportFormatter;
 
 export function getNewTransportFormatterFactory(
-  logMgr: LogManager,
+  logMgr: LogMgr,
   ...args: string[]
 ): Promise<TransportFormatterFactory> {
   const factory: TransportFormatterFactory = new TransportFormatterFactory(logMgr);
@@ -27,10 +27,10 @@ export function getNewTransportFormatterFactory(
 }
 
 export class TransportFormatterFactory {
-  protected _logMgr: LogManager;
+  protected _logMgr: LogMgr;
   protected _formatters: Record<FormatterType, TransportFormatterFactoryMethod> = {};
 
-  constructor(logMgr: LogManager) {
+  constructor(logMgr: LogMgr) {
     this._logMgr = logMgr;
   }
 

@@ -1,7 +1,8 @@
-import { AppTimer } from './lib/app-timer';
-import { LogManager } from './log-manager';
-import { DefaultLogger } from './logger/defaults';
+import * as originalLog from './core';
+import * as defaultLog from './default';
 
-export { AppTimer, DefaultLogger, LogManager };
+export * from './lib/app-timer';
+export * from './types';
+export { defaultLog, originalLog };
 
-export * as koa from './middleware/koa';
+export * as koa from './middleware/core/koa';

@@ -1,7 +1,10 @@
 import * as Koa from 'koa';
 
 import { dateUtil, Milliseconds } from '@epdoc/timeutil';
-import { LoggerMiddleware, MiddlewareRouteInfo } from './base';
+import { Dict } from '@epdoc/typeutil';
+import { Logger } from '../../core';
+import { MiddlewareRouteInfo } from '../types';
+import { LoggerMiddleware } from './base';
 
 let reqId = 0;
 
@@ -31,11 +34,12 @@ export class Koa2Middleware extends LoggerMiddleware {
 
   requestLogger(ctx: Koa2MiddlewareContext, next: Koa.Next): Promise<any> {
     // Add our method to the Koa context object
-    let log = this.logMgr.getLogger(this.emitter, ctx);
-    ctx[this.objName] = log;
+    let log = this.getNewLogger().emitter(this._emitter).context(ctx);
+
+    ctx[this._objName] = log;
 
     if (this.excludedMethod(ctx.req.method)) {
-      log._silent = true;
+      log.silent = true;
     } else {
       ctx.delayTime = function () {
         return ctx.state._delayTime;
@@ -43,25 +47,30 @@ export class Koa2Middleware extends LoggerMiddleware {
     }
 
     return next().then(() => {
-      log.data({ status: ctx.res.status }).hrElapsed('responseTime');
+      // @ts-ignore
+      const data: Dict = { status: ctx.res.status };
       if (ctx.state.delayTime) {
-        log.data('delay', ctx.state.delayTime);
+        data.delay, ctx.state.delayTime;
       }
       // If you want to log more properties you can add them to res._logSendData
       if (ctx.state.logSendData) {
         Object.keys(ctx.state.logSendData).forEach((key) => {
-          log.data(key, ctx.state.logSendData[key]);
+          data[key] = ctx.state.logSendData[key];
         });
       }
-      log.action('response.send')._info();
+      super.logResponse(log, data);
       return Promise.resolve();
     });
   }
 
+  getLogger(ctx: Koa2MiddlewareContext): Logger {
+    return ctx[this._objName];
+  }
+
   routeInfo(ctx: Koa2MiddlewareContext, next: Koa.Next) {
     //let rawCookie = req.cookies['connect.sid'];
-
-    if (ctx.log) {
+    const log = this.getLogger(ctx);
+    if (log && !log.silent) {
       let d: Date = ctx.state.startTime || ctx._startTime || new Date();
       let data: MiddlewareRouteInfo = {
         method: ctx.method,
@@ -78,14 +87,15 @@ export class Koa2Middleware extends LoggerMiddleware {
       if (ctx.method && ctx.method.toLowerCase() === 'post') {
         data['content-length'] = ctx.length;
       }
-      ctx.log.action('routeInfo').data(data)._info();
+      super.logRouteInfo(log, data);
     }
 
     return next();
   }
 
   routeSeparator(ctx: Koa2MiddlewareContext, next: Koa.Next) {
-    if (ctx.log) {
+    const log = this.getLogger(ctx);
+    if (log && !log.silent) {
       let d = ctx.state.startTime || ctx._startTime || new Date();
       let data: MiddlewareRouteInfo = {
         method: ctx.method,
@@ -99,7 +109,7 @@ export class Koa2Middleware extends LoggerMiddleware {
       data.localtime = dateUtil(d).toISOLocaleString();
       // data.utctime = (d).toISOString();
 
-      super.routeSeparatorForLog(ctx.log, data);
+      super.logRouteSeparator(log, data);
     }
 
     return next();

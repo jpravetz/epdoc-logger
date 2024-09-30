@@ -1,11 +1,11 @@
 import { Dict, Integer, isDict, isString } from '@epdoc/typeutil';
-import { LogLevelName, LogLevels, LogLevelValue } from './levels';
+import { LogMgr } from './core/logmgr';
 import { AppTimer } from './lib/app-timer';
-import { LogManager } from './log-manager';
-import { Logger } from './logger/base';
-import { MsgBuilder } from './msg-builder/base';
+import { LogLevelName, LogLevelValue } from './log-levels';
 import { Style } from './style';
 import { FormatterType } from './transports/formatters';
+
+export type Context = Dict;
 
 export type TimePrefix = 'local' | 'utc' | 'elapsed' | 'interval' | string | false;
 export type TransportType = string;
@@ -35,7 +35,7 @@ export type LoggerLineStyleOpts = Partial<{
 
 /** LoggerLine options that are constant across all lines of a logger instance. */
 export type LoggerLineOpts = Partial<{
-  logMgr: LogManager;
+  logMgr: LogMgr;
   msg: LogMessage;
   // style: Style;
 }>;
@@ -71,12 +71,6 @@ export type LoggerShowOpts = Partial<{
 export type LogMessageFn = (msg: LogMessage) => void;
 export type StyleFormatterFn = (text: unknown[]) => string;
 export type LineFormatterFn = (opts: LogMessage) => string;
-export type LoggerFactoryMethod = (LogManager, LogMessageConsts, context: object) => Logger;
-export type MsgBuilderFactoryMethod = (LogManager, LogMessage) => MsgBuilder;
-export type LoggerFactoryMethods = {
-  logger: LoggerFactoryMethod;
-  msgBuilder: MsgBuilderFactoryMethod;
-};
 
 export type StyleFormatters = Record<string, StyleFormatterFn>;
 
@@ -194,16 +188,15 @@ export function isTransportOptions(val: any): val is TransportOptions {
   return isDict(val) && isString(val.name);
 }
 
-export type LogMgrOpts = Partial<{
-  timer: AppTimer;
-  defaults: LogMgrDefaults;
-  logLevels: LogLevels;
-  factoryMethod: LoggerFactoryMethods;
-  // run: LoggerRunOpts;
-  /**
-   * Array of transport options for logging.
-   * Each transport must include a 'name' property.
-   * @type {TransportOptions[]}
-   */
-  // transports: TransportOptions[];
-}>;
+// export type LogMgrOpts = Partial<{
+//   timer: AppTimer;
+//   defaults: LogMgrDefaults;
+//   logLevels: LogLevels;
+//   // run: LoggerRunOpts;
+//   /**
+//    * Array of transport options for logging.
+//    * Each transport must include a 'name' property.
+//    * @type {TransportOptions[]}
+//    */
+//   // transports: TransportOptions[];
+// }>;

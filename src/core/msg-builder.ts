@@ -8,11 +8,10 @@ import {
   isString,
   pick
 } from '@epdoc/typeutil';
-import { LogLevelName, LogLevels, LogLevelValue } from '../levels';
+import { Logger, LogMgr } from '.';
 import { AppTimer } from '../lib/app-timer';
 import { StringEx } from '../lib/util';
-import { LogManager } from '../log-manager';
-import { Logger } from '../logger/base';
+import { LogLevel, LogLevels, LogLevelValue } from '../log-levels';
 import {
   LogContextParams,
   LoggerShowOpts,
@@ -29,7 +28,7 @@ const DEFAULT_TAB_SIZE = 2;
  * line, add styling, and emit the log line.
  */
 export class MsgBuilder {
-  protected _logMgr: LogManager;
+  protected _logMgr: LogMgr;
   protected _showOpts: LoggerShowOpts;
   protected _tabSize: Integer = DEFAULT_TAB_SIZE;
   // protected _lineFormat: LoggerLineFormatOpts;
@@ -48,13 +47,13 @@ export class MsgBuilder {
   // protected _action: string;
   protected _data: Record<string, any> = {};
 
-  constructor(logMgr: LogManager, msg: LogMessage) {
+  constructor(logMgr: LogMgr, msg: LogMessage) {
     this._logMgr = logMgr;
     this._msg = msg ?? {};
   }
 
-  logManager(val: LogManager): this {
-    if (val instanceof LogManager) {
+  logManager(val: LogMgr): this {
+    if (val instanceof LogMgr) {
       this._logMgr = val;
     }
     return this;
@@ -72,7 +71,7 @@ export class MsgBuilder {
     return this;
   }
 
-  protected get logMgr(): LogManager {
+  protected get logMgr(): LogMgr {
     return this._logMgr;
   }
 
@@ -84,7 +83,7 @@ export class MsgBuilder {
     return this._msg.level;
   }
 
-  setLevel(val: LogLevelValue | LogLevelName): this {
+  setLevel(val: LogLevel): this {
     this._msg.level = this.logLevels.asValue(val);
     this._enabled = this.meetsThreshold();
     return this;
@@ -128,7 +127,7 @@ export class MsgBuilder {
    * @param [value] {string} If key is a string then sets <code>data[key]</code> to this value.
    * @return {Logger}
    */
-  data(key: string | any, value: any): this {
+  data(key: string | any, value?: any): this {
     return this._setData(key, value);
   }
 
@@ -140,7 +139,7 @@ export class MsgBuilder {
    * @returns {Logger}
    * @private
    */
-  _setData(key: string | any, value: any): this {
+  _setData(key: string | any, value?: any): this {
     if ((isString(key) || isNumber(key)) && isDefined(value)) {
       if (!this._msg.data) {
         this._msg.data = {};
@@ -209,13 +208,17 @@ export class MsgBuilder {
 
   protected addMsgPart(str: string, style?: StyleFormatterFn): this {
     // const _style = this.stylizeEnabled ? style : undefined;
-    this._msgParts.push({ str: str, style: style });
+    const part: LogMsgPart = { str: str };
+    if (style) {
+      part.style = style;
+    }
+    this._msgParts.push(part);
     return this;
   }
 
   protected appendMsg(...args: string[]): this {
-    if (this._enabled) {
-      this._msgParts.push({ str: args.join(' ') });
+    if (this._enabled && isNonEmptyArray(args)) {
+      this.addMsgPart(args.join(' '));
     }
     return this;
   }
@@ -226,7 +229,7 @@ export class MsgBuilder {
   }
 
   stylize(style: StyleFormatterFn, ...args): this {
-    if (this._enabled) {
+    if (this._enabled && isNonEmptyArray(args)) {
       this.addMsgPart(args.join(' '), style);
     }
     return this;
@@ -238,10 +241,7 @@ export class MsgBuilder {
    * @returns {this} The Logger instance.
    */
   plain(...args: any[]): this {
-    if (this._enabled && isNonEmptyArray(args)) {
-      this.appendMsg(...args);
-    }
-    return this;
+    return this.appendMsg(...args);
   }
 
   /**

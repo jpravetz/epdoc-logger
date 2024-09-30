@@ -1,7 +1,7 @@
 import { Integer, isString } from '@epdoc/typeutil';
-import { LogLevels, LogLevelValue } from '../levels';
+import { LogMgr } from '../core/logmgr';
 import { AppTimer } from '../lib/app-timer';
-import { LogManager } from '../log-manager';
+import { LogLevels, LogLevelValue } from '../log-levels';
 import { Style } from '../style';
 import {
   LoggerLineFormatOpts,
@@ -24,7 +24,7 @@ export type LogTransportOpenCallbacks = {
 };
 
 export class LogTransport {
-  protected _logMgr: LogManager;
+  protected _logMgr: LogMgr;
   protected _formatterFactory: TransportFormatterFactory;
   protected _showOpts: LoggerShowOpts;
   protected _style: Style;
@@ -42,7 +42,7 @@ export class LogTransport {
   bReady: boolean;
   protected _msgParts: LogMsgPart[];
 
-  constructor(logMgr: LogManager, opts: TransportOptions) {
+  constructor(logMgr: LogMgr, opts: TransportOptions) {
     this._logMgr = logMgr;
     this._showOpts = opts.show;
     this._separatorOpts = opts.separator;

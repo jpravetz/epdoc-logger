@@ -1,17 +1,17 @@
-import { LogLevels } from '../../levels';
-import { LogManager } from '../../log-manager';
+import { LogMgr } from '../../core/logmgr';
+import { LogLevels } from '../../log-levels';
 import { Style } from '../../style';
 import { LoggerLineFormatOpts, LoggerShowOpts, LogMessage } from '../../types';
 import { TransportFormatterOpts } from './factory';
 
 export class TransportFormatter {
-  protected _logMgr: LogManager;
+  protected _logMgr: LogMgr;
   protected _msg: LogMessage;
   protected _showOpts: LoggerShowOpts;
   protected _formatOpts: LoggerLineFormatOpts;
   protected _style: Style;
 
-  constructor(logMgr: LogManager) {
+  constructor(logMgr: LogMgr) {
     this._logMgr = logMgr;
   }
 
