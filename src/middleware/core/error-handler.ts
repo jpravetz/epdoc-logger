@@ -6,7 +6,7 @@ import { Logger } from '../../core';
  * If the exception is not caught, it is allowed to pass through
  */
 
-module.exports = function () {
+export default function () {
   return function (err, req, res, next) {
     if (doCatch(err)) {
       let params = {
@@ -32,7 +32,7 @@ module.exports = function () {
       next(err);
     }
   };
-};
+}
 
 function doCatch(err) {
   // CSRF exceptions, and some JSON parsing errors

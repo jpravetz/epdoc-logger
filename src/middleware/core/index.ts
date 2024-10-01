@@ -1,5 +1,5 @@
+import { LoggerRequest, LoggerResponse, MiddlewareOptions } from '../express/types';
 import { LoggerMiddleware } from './base';
-import { LoggerRequest, LoggerResponse, MiddlewareOptions } from './express';
 
 export {
   MiddlewareOptions as ExpressMiddlewareOptions,

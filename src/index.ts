@@ -5,4 +5,4 @@ export * from './lib/app-timer';
 export * from './types';
 export { defaultLog, originalLog };
 
-export * as koa from './middleware/core/koa';
+export * as koa from './middleware/koa/base';

@@ -1,26 +1,16 @@
 import * as Koa from 'koa';
 
-import { dateUtil, Milliseconds } from '@epdoc/timeutil';
+import { dateUtil } from '@epdoc/timeutil';
 import { Dict } from '@epdoc/typeutil';
 import { Logger } from '../../core';
+import { LoggerMiddleware } from '../core/base';
 import { MiddlewareRouteInfo } from '../types';
-import { LoggerMiddleware } from './base';
+import * as Koa2 from './types';
 
 let reqId = 0;
 
-export interface Koa2MiddlewareContext extends Koa.Context {
-  _reqId: number;
-  state: Koa2MiddlewareState;
-}
-
-export interface Koa2MiddlewareState extends Koa.DefaultState {
-  hrStartTime: [number, number];
-  startTime: Milliseconds;
-  _delayTime: Milliseconds;
-}
-
-export class Koa2Middleware extends LoggerMiddleware {
-  requestId(ctx: Koa2MiddlewareContext, next: Koa.Next): Promise<any> {
+export class Middleware extends LoggerMiddleware {
+  requestId(ctx: Koa2.Context, next: Koa.Next): Promise<any> {
     // Add our properties to the Koa context object
     ctx._reqId = ++reqId;
     ctx.state.hrStartTime = process.hrtime();
@@ -32,7 +22,7 @@ export class Koa2Middleware extends LoggerMiddleware {
     });
   }
 
-  requestLogger(ctx: Koa2MiddlewareContext, next: Koa.Next): Promise<any> {
+  requestLogger(ctx: Koa2.Context, next: Koa.Next): Promise<any> {
     // Add our method to the Koa context object
     let log = this.getNewLogger().emitter(this._emitter).context(ctx);
 
@@ -63,11 +53,11 @@ export class Koa2Middleware extends LoggerMiddleware {
     });
   }
 
-  getLogger(ctx: Koa2MiddlewareContext): Logger {
+  getLogger(ctx: Koa2.Context): Logger {
     return ctx[this._objName];
   }
 
-  routeInfo(ctx: Koa2MiddlewareContext, next: Koa.Next) {
+  routeInfo(ctx: Koa2.Context, next: Koa.Next) {
     //let rawCookie = req.cookies['connect.sid'];
     const log = this.getLogger(ctx);
     if (log && !log.silent) {
@@ -93,7 +83,7 @@ export class Koa2Middleware extends LoggerMiddleware {
     return next();
   }
 
-  routeSeparator(ctx: Koa2MiddlewareContext, next: Koa.Next) {
+  routeSeparator(ctx: Koa2.Context, next: Koa.Next) {
     const log = this.getLogger(ctx);
     if (log && !log.silent) {
       let d = ctx.state.startTime || ctx._startTime || new Date();

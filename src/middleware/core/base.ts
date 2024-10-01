@@ -2,6 +2,10 @@ import { Dict, isString } from '@epdoc/typeutil';
 import { LogMgr, Logger } from '../../core';
 import { MiddlewareOptions, MiddlewareRouteInfo, MiddlewareSeparator } from '../types';
 
+/**
+ * The common, base class that is subclassed by express and koa to create a
+ * framework-specific set of middleware function.
+ */
 export class LoggerMiddleware {
   _logMgr: LogMgr;
   _emitter: string;

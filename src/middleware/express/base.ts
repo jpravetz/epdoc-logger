@@ -1,24 +1,27 @@
 import { dateUtil } from '@epdoc/timeutil';
 import { NextFunction, Request, Response } from 'express';
 import { Logger } from '../../core';
-import * as express from '../express-types';
+import { LoggerMiddleware } from '../core/base';
+import { ExpressResponseHooks } from '../core/response-hooks';
 import { MiddlewareRouteInfo } from '../types';
-import { LoggerMiddleware } from './base';
-import { ExpressResponseHooks } from './response-hooks';
+import * as Express from './types';
 
 // let Response = require('./response');
 // let Logger = require('../logger');
 
 let reqId = 0;
 
+/**
+ * Express middleware that uses the core or base versions of LogMgr and Logger.
+ */
 export class Middleware extends LoggerMiddleware {
-  requestId(req: express.LoggerRequest, res: Response, next: NextFunction) {
+  requestId(req: Express.LoggerRequest, res: Response, next: NextFunction) {
     req._reqId = ++reqId;
     req._hrStartTime = process.hrtime();
     next();
   }
 
-  requestLogger(req: Request, res: express.LoggerResponse, next: NextFunction) {
+  requestLogger(req: Request, res: Express.LoggerResponse, next: NextFunction) {
     let ctx = { req: req, res: res };
     req[this._objName] = this.getNewLogger().emitter(this._emitter).context(ctx);
     res[this._objName] = req[this._objName];
@@ -40,11 +43,11 @@ export class Middleware extends LoggerMiddleware {
     next();
   }
 
-  getLogger(req: express.LoggerRequest): Logger {
+  getLogger(req: Express.LoggerRequest): Logger {
     return req[this._objName];
   }
 
-  routeLogger(req: express.LoggerRequest, res: Response, next: NextFunction) {
+  routeLogger(req: Express.LoggerRequest, res: Response, next: NextFunction) {
     let log = this.getLogger(req);
     if (log) {
       let d: Date = req._startTime || new Date();
@@ -69,7 +72,7 @@ export class Middleware extends LoggerMiddleware {
     next();
   }
 
-  routeSeparator(req: express.LoggerRequest, res: Response, next: NextFunction) {
+  routeSeparator(req: Express.LoggerRequest, res: Response, next: NextFunction) {
     const log: Logger = this.getLogger(req);
     if (log) {
       let d = req._startTime || new Date();
