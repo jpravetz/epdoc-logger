@@ -1,8 +1,8 @@
 import { Integer, isString } from '@epdoc/typeutil';
 import { LogMgr } from '../core/logmgr';
+import { Style } from '../core/style';
 import { AppTimer } from '../lib/app-timer';
 import { LogLevels, LogLevelValue } from '../log-levels';
-import { Style } from '../style';
 import {
   LoggerLineFormatOpts,
   LoggerShowOpts,
@@ -12,7 +12,7 @@ import {
   TimePrefix,
   TransportOptions
 } from '../types';
-import { FormatterType, TransportFormatterFactory } from './formatters/factory';
+import { TransportFormatterFactory } from './formatters/factory';
 
 let transportIdx: Integer = 0;
 
@@ -47,8 +47,8 @@ export class LogTransport {
     this._showOpts = opts.show;
     this._separatorOpts = opts.separator;
     this._formatOpts = opts.format;
-    this._levelThreshold = logMgr.logLevels.asValue(opts.levelThreshold);
-    this._errorStackThreshold = logMgr.logLevels.asValue(opts.errorStackThreshold);
+    this._levelThreshold = logMgr.levelAsValue(opts.levelThreshold);
+    this._errorStackThreshold = logMgr.levelAsValue(opts.errorStackThreshold);
 
     // this._logLevels = opts.logLevel;
     // this._timer = opts.timer;
@@ -77,7 +77,7 @@ export class LogTransport {
    * Get the name of the transport.
    * @returns {string} The name of the transport.
    */
-  get name(): string {
+  get uid(): string {
     return `transport.${this.type}.${this.id}`;
   }
 
@@ -95,6 +95,10 @@ export class LogTransport {
 
   get timer(): AppTimer {
     return this._logMgr.appTimer;
+  }
+
+  get logMgr(): LogMgr {
+    return this._logMgr;
   }
 
   /**
@@ -172,8 +176,10 @@ export class LogTransport {
    * @returns {this} The current instance for chaining.
    */
   public write(msg: LogMessage): this {
-    let str = this.formatLogMessage('string', msg);
-    return this._write(str);
+    if (this._formatOpts.type === 'string') {
+      return this.writeString(this.formatLogMessage(msg) as string);
+    }
+    throw new Error('Base transport write method does not support writing formatted messages');
   }
 
   /**
@@ -181,7 +187,7 @@ export class LogTransport {
    * @param msg {string} The message to write.
    * @returns {this} The current instance for chaining.
    */
-  protected _write(msg: string): this {
+  protected writeString(msg: string): this {
     throw new Error('Base transport cannot be written to');
     return this;
   }
@@ -204,7 +210,7 @@ export class LogTransport {
   }
 
   public toString() {
-    return 'Console';
+    return this.uid;
   }
 
   public getOptions() {
@@ -220,13 +226,13 @@ export class LogTransport {
    * @param params {LogMessage} The log message parameters.
    * @returns {string} The formatted log message.
    */
-  protected formatLogMessage(type: FormatterType, params: LogMessage): string {
-    const formatter = this._formatterFactory.getFormatter(type);
+  protected formatLogMessage(params: LogMessage): any {
+    const formatterType = this._formatOpts.type ?? 'string';
+    const formatter = this._formatterFactory.getFormatter(formatterType);
     formatter.init({
       logMgr: this._logMgr,
       show: this._showOpts,
-      format: this._formatOpts,
-      style: this._style
+      format: this._formatOpts
     });
     return formatter.format(params);
   }

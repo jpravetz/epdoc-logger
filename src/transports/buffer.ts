@@ -1,8 +1,9 @@
+import { LogMgr } from '../core';
 import { TransportOptions } from '../types';
-import { LogTransport } from './base';
+import { LogTransport, LogTransportOpenCallbacks } from './base';
 
 export const defaultBufferTransportOpts: TransportOptions = {
-  name: 'buffer',
+  type: 'buffer',
   show: {
     timestamp: 'elapsed',
     level: true,
@@ -12,18 +13,23 @@ export const defaultBufferTransportOpts: TransportOptions = {
     emitter: false,
     action: false,
     data: false
+  },
+  format: {
+    type: 'string',
+    tabSize: 2,
+    colorize: false
   }
 };
 
-export function getNewTransport(options: TransportOptions) {
-  return new BufferTransport(options);
+export function getNewTransport(logMgr: LogMgr, options: TransportOptions) {
+  return new BufferTransport(logMgr, options);
 }
 
 export class BufferTransport extends LogTransport {
   protected _buffer: string[] = [];
 
-  constructor(options: TransportOptions) {
-    super(options);
+  constructor(logMgr: LogMgr, options: TransportOptions) {
+    super(logMgr, options);
     this._showOpts = this._showOpts ?? defaultBufferTransportOpts.show;
   }
 
@@ -31,9 +37,9 @@ export class BufferTransport extends LogTransport {
     return null;
   }
 
-  open(onSuccess) {
+  open(cb: LogTransportOpenCallbacks) {
     this.bReady = true;
-    onSuccess && onSuccess(true);
+    cb.onSuccess(true);
   }
 
   get type(): string {
@@ -48,13 +54,9 @@ export class BufferTransport extends LogTransport {
     return Promise.resolve();
   }
 
-  protected _write(msg: string): this {
+  protected writeString(msg: string): this {
     this._buffer.push(msg);
     return this;
-  }
-
-  toString() {
-    return 'Buffer';
   }
 
   getOptions() {

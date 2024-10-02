@@ -1,5 +1,5 @@
 import chalk from 'chalk';
-import * as original from '../core';
+import * as base from '../core';
 
 import { StyleFormatters } from '../types';
 
@@ -34,6 +34,13 @@ export const styleFormatters: StyleFormatters = {
   _timePrefix: chalk.gray
 } as const;
 
+export class Style extends base.Style {
+  constructor() {
+    super();
+    this.setStyles(styleFormatters);
+  }
+}
+
 export type StyleName = keyof typeof styleFormatters;
 
 /**
@@ -42,7 +49,7 @@ export type StyleName = keyof typeof styleFormatters;
  * and use a custom set of formatting metchods, declare your own MsgBuilder and
  * pass it to the LogManager. s
  */
-export class MsgBuilder extends original.MsgBuilder {
+export class MsgBuilder extends base.MsgBuilder {
   public text(...args: any[]): this {
     return this.stylize(styleFormatters.text, ...args);
   }

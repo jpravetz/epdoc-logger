@@ -4,6 +4,7 @@ import { LogLevels, LogLevelValue } from '../log-levels';
 import { TransportManager } from '../transport-manager';
 import { Context, LogMessage, LogMessageConsts, LogMgrDefaults, TransportOptions } from '../types';
 import { Logger } from './logger';
+import { Style } from './style';
 
 let mgrIdx = 0;
 
@@ -32,7 +33,7 @@ let mgrIdx = 0;
 export class LogMgr {
   protected uid: string;
   protected _timer: AppTimer;
-  // protected _style: Style;
+  protected _style: Style;
   // protected _show: LoggerShowOpts;
   protected _requireAllTransportsReady = false;
   // protected _separatorOpts: SeparatorOpts;
@@ -57,9 +58,14 @@ export class LogMgr {
     return this._logLevels;
   }
 
-  // get style(): Style {
-  //   return this._style;
-  // }
+  setStyle(style: Style): this {
+    this._style = style;
+    return this;
+  }
+
+  get style(): Style {
+    return this._style;
+  }
 
   public addTransport(opts: TransportOptions): this {
     this._transportMgr.addTransport(opts);

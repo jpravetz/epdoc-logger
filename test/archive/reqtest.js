@@ -11,7 +11,7 @@ let type = 'console';
 
 let Logger = require('../index');
 Logger.setGlobalLogLevel('verbose');
-let log = Logger.get('reqtest');
+const log = Logger.get('reqtest');
 
 let middleware = Logger.middleware();
 

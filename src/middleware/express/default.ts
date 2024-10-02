@@ -1,6 +1,7 @@
 import * as expressBase from './base';
 
 export * from '../types';
+export * from './types';
 
 // import * as express from './core/express';
 // export { express };

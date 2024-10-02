@@ -25,9 +25,3 @@ export interface LoggerResponse extends Response {
  *
  * @module middleware/responseLogger
  */
-
-export type MiddlewareOptions = {
-  objName?: string;
-  emitter?: string;
-  excludeMethod?: string | string[];
-};

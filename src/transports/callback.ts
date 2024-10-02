@@ -1,11 +1,31 @@
-/*****************************************************************************
- * transports/callback.js
- * Copyright 2012-2016 Jim Pravetz. May be freely distributed under the MIT license.
- *****************************************************************************/
-'use strict';
+import { isFunction } from '@epdoc/typeutil';
+import { LogMgr } from '../core';
+import { TransportOptions } from '../types';
+import { LogTransport, LogTransportOpenCallbacks } from './base';
 
-var _ = require('underscore');
-var format = require('./../format');
+export const defaultCallbackTransportOpts: TransportOptions = {
+  type: 'callback',
+  show: {
+    timestamp: 'elapsed',
+    level: true,
+    reqId: false,
+    sid: false,
+    static: false,
+    emitter: false,
+    action: false,
+    data: false
+  },
+  format: {
+    type: 'json',
+    tabSize: 2,
+    colorize: false
+  }
+};
+
+export type CallbackTransportOptions = TransportOptions & {
+  callback: Function;
+  uid: Function;
+};
 
 /**
  * Create a new Callback transport where output is added to a data array or a callback is used to
@@ -21,132 +41,64 @@ var format = require('./../format');
  * @param {function} [options.uid] - Unique identifier used by {@link CallbackTransport#match}.
  * @constructor
  */
-var CallbackTransport = function (options) {
-  this.options = options || {};
-  this.bIncludeSid = options && options.sid === false ? false : true;
-  this.bIncludeStatic = options && options.static === false ? false : true;
-  this.level = this.options.level;
-  this.sType = 'callback';
-  this.bReady = true;
-  this.logCallback = options.callback;
-  this.uid = options.uid;
-  this.data = [];
-};
+export class CallbackTransport extends LogTransport {
+  protected _bIncludeSid: boolean;
+  protected _bIncludeStatic: boolean;
+  protected _level: string;
+  protected _sType: string;
+  protected _bReady: boolean;
+  protected _logCallback: Function;
+  protected _data: any[];
 
-CallbackTransport.prototype = {
-  constructor: CallbackTransport,
+  constructor(logMgr: LogMgr, options: CallbackTransportOptions) {
+    super(logMgr, options);
+    this._showOpts = this._showOpts ?? defaultCallbackTransportOpts.show;
+    this._logCallback = options.callback;
+  }
 
-  validateOptions: function () {
+  validateOptions() {
     return null;
-  },
+  }
 
-  open: function (onSuccess) {
-    this.bReady = true;
-    onSuccess && onSuccess(true);
-  },
+  open(cb: LogTransportOpenCallbacks) {
+    this.bReady = isFunction(this._logCallback);
+    cb.onSuccess(true);
+  }
 
-  type: function () {
-    return this.sType;
-  },
-
-  /**
-   * Test if the transport matches the argument.
-   * @param transport {string|object} If a string, then matches if equal to 'callback'. If an
-   *   object, then matches if transport.type equals 'callback' and if transport.uid matches.
-   * @returns {boolean} True if the transport matches the argument
-   */
-  match: function (transport) {
-    if (isString(transport) && transport === this.sType) {
-      return true;
-    }
-    if (_.isObject(transport) && transport.type === this.sType) {
-      if (transport.uid == this.uid) {
-        return true;
-      }
-    }
-    return false;
-  },
+  get type(): string {
+    return 'callback';
+  }
 
   /**
    * Return true if this logger is ready to accept write operations.
    * Otherwise the caller should buffer writes and call write when ready is true.
    * @returns {boolean}
    */
-  ready: function () {
+  ready() {
     return this.bReady;
-  },
-
+  }
   /**
    * Used to clear the logger display. This is applicable only to certain transports, such
    * as socket transports that direct logs to a UI.
    */
-  clear: function () {
-    this.data = [];
-  },
+  clear() {
+    this._data = [];
+  }
 
-  flush: function (cb) {
-    cb && cb();
-  },
+  public flush(): Promise<void> {
+    return Promise.resolve();
+  }
 
-  /**
-   * Write a log line
-   * @param params {Object} Parameters to be logged:
-   *  @param {Date} params.time - Date object
-   * @param {string} params.level - log level (INFO, WARN, ERROR, or any string)
-   * @param {string} params.reqId - express request ID, if provided (output if options.sid is
-   *   true)
-   * @param {string} params.sid - express session ID, if provided (output if options.sid is true)
-   * @param {string} params.emitter - name of file or module or emitter (noun)
-   * @param {string} params.action - method or operation being performed (verb)
-   * @param {string} params.message - text string to output
-   * @param {Object} params.static - Arbitrary data to be logged in a 'static' column if enabled
-   *   via the LogManager.
-   * @param {Object} params.data - Arbitrary data to be logged in the 'data' column
-   */
-  write: function (params) {
-    var opts = {
-      timestamp: 'iso',
-      sid: this.bIncludeSid,
-      static: this.bIncludeStatic,
-      dataObjects: true
-    };
-    var json = format.paramsToJson(params, opts);
-    if (this.logCallback) {
-      this.logCallback(json);
+  protected writeString(msg: string): this {
+    if (isFunction(this._logCallback)) {
+      this._logCallback(msg);
     } else {
-      this.data.push(json);
+      this._data.push(msg);
     }
-  },
+    return this;
+  }
 
-  end: function (cb) {
-    this.bReady = false;
-    cb && cb();
-  },
-
-  stop: function (cb) {
-    this.end();
-    cb && cb();
-  },
-
-  setLevel: function (level) {
-    this.level = level;
-  },
-
-  toString: function () {
-    return 'Callback' + (this.uid ? ' (' + this.uid + ')' : '');
-  },
-
-  getOptions: function () {
+  getOptions() {
     return undefined;
-  },
-
-  pad: function (n, width, z) {
-    z = z || '0';
-    n = n + '';
-    return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
-  },
-
-  last: true
-};
-
-module.exports = CallbackTransport;
+  }
+}

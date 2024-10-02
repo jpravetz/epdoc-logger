@@ -6,6 +6,9 @@ import { ExpressResponseHooks } from '../core/response-hooks';
 import { MiddlewareRouteInfo } from '../types';
 import * as Express from './types';
 
+export * from '../types';
+export * from './types';
+
 // let Response = require('./response');
 // let Logger = require('../logger');
 

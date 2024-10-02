@@ -6,7 +6,7 @@
 let epdocLogger = require('../index');
 
 describe('logMgr.removeTransport', function () {
-  let logMgr = epdocLogger.getLogManager();
+  const logMgr = epdocLogger.getLogManager();
 
   it('should allow to remove transports', function (done) {
     // 1. add any transport

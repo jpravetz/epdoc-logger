@@ -1,11 +1,12 @@
 import { isString } from '@epdoc/typeutil';
 import fs from 'node:fs';
 import path from 'node:path';
+import { LogMgr } from '../core';
 import { TransportOptions } from '../types';
 import { LogTransport, LogTransportOpenCallbacks } from './base';
 
 export const defaultFileTransportOpts: FileTransportOptions = {
-  name: 'file',
+  type: 'file',
   path: 'logs/app.log',
   show: {
     timestamp: 'elapsed',
@@ -16,6 +17,11 @@ export const defaultFileTransportOpts: FileTransportOptions = {
     emitter: false,
     action: false,
     data: false
+  },
+  format: {
+    type: 'string',
+    tabSize: 2,
+    colorize: false
   }
 };
 
@@ -23,8 +29,8 @@ export type FileTransportOptions = TransportOptions & {
   path: string;
 };
 
-export function getNewTransport(options: FileTransportOptions) {
-  return new FileTransport(options);
+export function getNewTransport(logMgr: LogMgr, options: FileTransportOptions) {
+  return new FileTransport(logMgr, options);
 }
 
 export class FileTransport extends LogTransport {
@@ -34,8 +40,8 @@ export class FileTransport extends LogTransport {
   protected _buffer = []; // Used in case of stream backups
   protected _drainRegistered = false;
 
-  constructor(options: FileTransportOptions) {
-    super(options);
+  constructor(logMgr: LogMgr, options: FileTransportOptions) {
+    super(logMgr, options);
     this._path = options.path;
   }
 
@@ -87,7 +93,7 @@ export class FileTransport extends LogTransport {
    */
   clear() {}
 
-  protected _write(msg: string): this {
+  protected writeString(msg: string): this {
     if (this._writable) {
       this._writable = this._stream.write(msg + '\n', 'utf-8');
     } else {
@@ -110,7 +116,7 @@ export class FileTransport extends LogTransport {
     if (this._buffer.length) {
       let flushing = this._buffer;
       this._buffer = [];
-      flushing.forEach((msg) => this._write(msg));
+      flushing.forEach((msg) => this.writeString(msg));
     }
     return Promise.resolve();
   }
@@ -138,7 +144,7 @@ export class FileTransport extends LogTransport {
   }
 
   toString() {
-    return 'File (' + this._path + ')';
+    return `${this.uid} (${this._path})`;
   }
 
   getOptions() {

@@ -1,4 +1,4 @@
-import { Logger } from '../../core';
+import { LogMgr } from '../../core';
 
 /**
  * Middleware to dump errors to Logger
@@ -6,7 +6,7 @@ import { Logger } from '../../core';
  * If the exception is not caught, it is allowed to pass through
  */
 
-export default function () {
+export default function (logMgr: LogMgr) {
   return function (err, req, res, next) {
     if (doCatch(err)) {
       let params = {
@@ -17,7 +17,7 @@ export default function () {
         params: req.params
       };
       let msg = {
-        level: 'error',
+        level: 0,
         reqId: req._reqId,
         sid: req.session ? req.session.id : undefined,
         emitter: 'app',
@@ -25,7 +25,7 @@ export default function () {
         data: { error: { status: err.status, message: err.message }, params: params },
         message: err.message
       };
-      Logger.logMessage(msg);
+      logMgr.logMessage(msg);
       let errMsg = err.status === 403 ? 'Forbidden. Reloading this page may resolve.' : err.message;
       res.status(err.status).json({ error: { errorId: 'exception', message: errMsg } });
     } else {

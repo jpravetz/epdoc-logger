@@ -4,21 +4,27 @@ import { LogTransport, LogTransportOpenCallbacks } from './base';
 
 export const defaultConsoleTransportOpts: TransportOptions = {
   type: 'console',
+  format: {
+    type: 'string',
+    tabSize: 2,
+    colorize: true
+  },
   show: {
     timestamp: 'elapsed',
     level: true,
     reqId: false,
     sid: false,
     static: false,
-    emitter: false,
-    action: false,
-    data: false
+    emitter: true,
+    action: true,
+    data: true
   },
-  format: {
-    type: 'string',
-    tabSize: 2,
-    colorize: true
-  }
+  separator: {
+    char: '#',
+    length: 80
+  },
+  levelThreshold: 'info',
+  errorStackThreshold: 'error'
 };
 
 export function getNewTransport(logMgr: LogMgr, options: TransportOptions) {
@@ -52,13 +58,9 @@ export class ConsoleTransport extends LogTransport {
     return Promise.resolve();
   }
 
-  protected _write(msg: string): this {
+  protected writeString(msg: string): this {
     console.log(msg);
     return this;
-  }
-
-  toString() {
-    return 'Console';
   }
 
   getOptions() {

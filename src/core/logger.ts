@@ -1,7 +1,6 @@
 import { Dict, Integer, isNonEmptyArray, isNonEmptyString } from '@epdoc/typeutil';
 import { LogLevelName } from '.';
 import { LogLevel, LogLevels, LogLevelValue } from '../log-levels';
-import { Style } from '../style';
 import { LogContextParams, LogMessage, LogMessageConsts } from '../types';
 import { LogMgr } from './logmgr';
 import { MsgBuilder } from './msg-builder';
@@ -60,7 +59,7 @@ export class Logger {
   protected _sid: string;
   protected _emitter: string[];
   // protected _ctx: Dict;
-  protected _style: Style;
+  // protected _style: Style;
   protected _level: LogLevelValue;
   // protected bErrorStack: boolean;
   protected _logData: object;

@@ -1,8 +1,9 @@
 import { LogMgr } from './core';
 import { LogLevels, LogLevelValue } from './log-levels';
 import { LogTransport, LogTransportOpenCallbacks, LogTransportType } from './transports/base';
+import { defaultConsoleTransportOpts } from './transports/console';
 import { TransportFactory } from './transports/factory';
-import { consoleTransportDefaults, LogMessage, TransportOptions } from './types';
+import { LogMessage, TransportOptions } from './types';
 
 let mgrIdx = 0;
 
@@ -73,13 +74,13 @@ export class TransportManager {
       this._transports.unshift(newTransport);
 
       // log message that we've added a transport
-      let name = newTransport.name;
+      let name = newTransport.uid;
       let topts = newTransport.getOptions();
       let sOptions = topts ? ' (' + JSON.stringify(topts) + ')' : '';
       this._logMgr.logMessage({
         action: 'logger.transport.add',
         message: "Added transport '" + name + "'" + sOptions,
-        data: { transport: newTransport.name }
+        data: { transport: newTransport.uid }
       });
     }
     return this;
@@ -96,7 +97,7 @@ export class TransportManager {
   public async start(): Promise<any> {
     let jobs = [];
     if (!this.hasTransports()) {
-      this.addTransport(consoleTransportDefaults);
+      this.addTransport(defaultConsoleTransportOpts);
     }
     this._transports.forEach((transport) => {
       let job = this.startingTransport(transport);

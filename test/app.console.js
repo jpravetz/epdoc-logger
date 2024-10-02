@@ -1,15 +1,6 @@
-/*****************************************************************************
- * app.loggly.js
- * Copyright 2012-2016 Jim Pravetz. May be freely distributed under the MIT license.
- *****************************************************************************/
-'use strict';
-
-let elogger = require('../index');
-let should = require('should');
-
-describe('Console', function () {
-  describe('Function callback', function () {
-    it('Pass', function (done) {
+describe('Console', () => {
+  describe('Function callback', () => {
+    it('Pass', (done) => {
       let idx = 0;
       let actions = ['logger.transport.add', 'logger.start.success', 'bake', '4'];
       let opts = {
@@ -27,16 +18,16 @@ describe('Console', function () {
           }
         }
       };
-      let logMgr = new elogger.LogManager(opts).start();
-      let log = logMgr.getLogger('app.console.start');
+      const logMgr = new elogger.LogManager(opts).start();
+      const log = logMgr.getLogger('app.console.start');
       log.action('bake').info('Starting');
       log.data({ c: 4, e: 7 }).action('4').debug('Running', { a: 2, b: 3 });
       done();
     });
   });
 
-  describe('String format VISUAL', function () {
-    it('Pass', function (done) {
+  describe('String format VISUAL', () => {
+    it('Pass', (done) => {
       let idx = 0;
       let actions = ['logger.transport.add', 'logger.start.success', 'bake', '4'];
       let opts = {
@@ -47,8 +38,8 @@ describe('Console', function () {
           colorize: true
         }
       };
-      let logMgr = new elogger.LogManager(opts).start();
-      let log = logMgr.getLogger('app.console.start');
+      const logMgr = new elogger.LogManager(opts).start();
+      const log = logMgr.getLogger('app.console.start');
       log.action('bake').info('This should be green text');
       log.action('verbose').verbose('This should be cyan text');
       log.action('warn').warn('This should be yellow text');
@@ -58,8 +49,8 @@ describe('Console', function () {
     });
   });
 
-  describe('Custom format VISUAL', function () {
-    it('Pass', function (done) {
+  describe('Custom format VISUAL', () => {
+    it('Pass', (done) => {
       let idx = 0;
       let actions = ['logger.transport.add', 'logger.start.success', 'bake', '4'];
       let opts = {
@@ -70,8 +61,8 @@ describe('Console', function () {
           template: '${action} ${ts} $c015{message} $c{level}'
         }
       };
-      let logMgr = new elogger.LogManager(opts).start();
-      let log = logMgr.getLogger('app.console.start');
+      const logMgr = new elogger.LogManager(opts).start();
+      const log = logMgr.getLogger('app.console.start');
       log.action('bake').info('Green leftpad');
       log.action('test').error('Red leftpad');
       log.data({ c: 4, e: 7 }).action('4').debug('Blue', { a: 2, b: 3 });

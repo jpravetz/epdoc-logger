@@ -31,7 +31,7 @@ describe.skip('Loggly test', function () {
     let opts = {
       token: token
     };
-    let logMgr = Logger.getLogManager();
+    const logMgr = Logger.getLogManager();
     logMgr.setTransport('loggly', opts);
     log = logMgr.getLogger('module3');
     log.info('Doing even more');

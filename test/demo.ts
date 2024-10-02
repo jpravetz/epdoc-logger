@@ -1,8 +1,8 @@
-import { AppTimer, LogManager } from '../src';
+import * as Log from '../src';
 
-const appTimer = new AppTimer();
+const appTimer = new Log.AppTimer();
 
-const logMgr = new LogManager({ timer: appTimer }).levelThreshold('debug');
+const logMgr = new Log.LogMgr().timer(appTimer).level('debug');
 
 const logger = logMgr.getLogger('test');
 

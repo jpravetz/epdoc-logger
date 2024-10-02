@@ -33,7 +33,6 @@ export class MsgBuilder {
   protected _tabSize: Integer = DEFAULT_TAB_SIZE;
   // protected _lineFormat: LoggerLineFormatOpts;
   protected _separatorOpts: SeparatorOpts;
-  protected _logLevels: LogLevels;
 
   protected _enabled: boolean = false;
   protected _msgIndent: string = '';
@@ -84,7 +83,7 @@ export class MsgBuilder {
   }
 
   setLevel(val: LogLevel): this {
-    this._msg.level = this.logLevels.asValue(val);
+    this._msg.level = this.logMgr.levelAsValue(val);
     this._enabled = this.meetsThreshold();
     return this;
   }

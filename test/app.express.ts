@@ -1,19 +1,12 @@
-// let express = require('express');
-// let request = require('supertest');
-// let should = require('should');
-// let elogger = require('../index');
-// let middleware = elogger.middleware();
-
-import e from 'express';
-import { LogManager, DefaultLogger as Logger } from '../src';
+import { LogMgr, Logger, express as middleware } from '../src';
 
 describe('Express response middleware', function () {
   this.timeout(300000);
 
-  let app = e.application;
+  let app = express.application;
 
   beforeEach((done) => {
-    let logMgr = new LogManager();
+    const logMgr = new LogMgr();
     logMgr.start().then(() => {
       let log: Logger = logMgr.getLogger('app') as Logger;
       log.info('Adding middleware');
@@ -46,7 +39,7 @@ describe('Express response middleware', function () {
     }, done);
   });
 
-  it('send', function (done) {
+  it('send', (done) => {
     request(app)
       .get('/a')
       .expect(200)
@@ -61,7 +54,7 @@ describe('Express response middleware', function () {
       });
   });
 
-  it('json', function (done) {
+  it('json', (done) => {
     request(app)
       .get('/b')
       .expect(200)
@@ -76,7 +69,7 @@ describe('Express response middleware', function () {
       });
   });
 
-  it('end', function (done) {
+  it('end', (done) => {
     request(app)
       .get('/c')
       .expect(200)

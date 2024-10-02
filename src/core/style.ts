@@ -1,12 +1,19 @@
-import { StyleFormatterFn, StyleFormatters } from './types';
+import { StyleFormatterFn, StyleFormatters } from '../types';
 
 export class Style {
-  public readonly _styles: StyleFormatters;
-  protected _dateFormat: string;
+  protected _styles: StyleFormatters;
+  protected _dateFormat: string = 'YYYY-MM-dd HH:mm:ss';
 
-  constructor(styles: StyleFormatters, dateFormat: string = 'YYYY-MM-dd HH:mm:ss') {
+  constructor() {}
+
+  setDateFormat(dateFormat: string): this {
     this._dateFormat = dateFormat;
+    return this;
+  }
+
+  setStyles(styles: StyleFormatters): this {
     this._styles = styles;
+    return this;
   }
 
   def(name: string): StyleFormatterFn {

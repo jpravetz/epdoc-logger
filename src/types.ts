@@ -2,7 +2,6 @@ import { Dict, Integer, isDict, isString } from '@epdoc/typeutil';
 import { LogMgr } from './core/logmgr';
 import { AppTimer } from './lib/app-timer';
 import { LogLevelName, LogLevelValue } from './log-levels';
-import { Style } from './style';
 import { FormatterType } from './transports/formatters';
 
 export type Context = Dict;
@@ -146,31 +145,6 @@ export type LogMessage = LogMessageConsts &
     separator: boolean;
   }>;
 
-export const consoleTransportDefaults: TransportOptions = {
-  type: 'console',
-  format: {
-    type: 'string',
-    tabSize: 2,
-    colorize: true
-  },
-  show: {
-    timestamp: 'elapsed',
-    level: true,
-    reqId: false,
-    sid: false,
-    static: false,
-    emitter: true,
-    action: true,
-    data: true
-  },
-  separator: {
-    char: '#',
-    length: 80
-  },
-  levelThreshold: 'info',
-  errorStackThreshold: 'error'
-};
-
 export type TransportOptions = Partial<{
   type: TransportType; // not required internally
   show: LoggerShowOpts;
@@ -181,7 +155,8 @@ export type TransportOptions = Partial<{
   levelThreshold: LogLevelName | LogLevelValue;
   errorStackThreshold: LogLevelName | LogLevelValue;
   format: LoggerLineFormatOpts;
-  style: Style;
+  // style: Style;
+  options: Dict;
 }>;
 
 export function isTransportOptions(val: any): val is TransportOptions {

@@ -1,5 +1,4 @@
 import { LogMgr } from '../../core/logmgr';
-import { Style } from '../../style';
 import { LoggerLineFormatOpts, LoggerShowOpts } from '../../types';
 import { TransportFormatter } from './base';
 
@@ -9,7 +8,7 @@ export type TransportFormatterOpts = {
   logMgr: LogMgr;
   show: LoggerShowOpts;
   format: LoggerLineFormatOpts;
-  style: Style;
+  // style: Style;
 };
 
 export type TransportFormatterFactoryMethod = (logMgr: LogMgr) => TransportFormatter;

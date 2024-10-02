@@ -28,7 +28,7 @@ _.each(['console', 'file', 'sos'], function (t) {
   }
 });
 
-let log = require('../index').get('test');
+const log = require('../index').get('test');
 let params = { path: __dirname + '/temp.log', buffer: BUFFER_INTERVAL };
 console.log("Testing for type '" + type + "'" + ' and parameters ' + JSON.stringify(params));
 

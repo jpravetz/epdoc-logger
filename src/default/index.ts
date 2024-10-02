@@ -1,5 +1,5 @@
 import { Logger, LogLevelName } from './logger';
 import { LogMgr } from './logmgr';
-import { MsgBuilder } from './msg-builder';
+import { MsgBuilder, Style } from './msg-builder';
 
-export { Logger, LogLevelName, LogMgr, MsgBuilder };
+export { Logger, LogLevelName, LogMgr, MsgBuilder, Style };

@@ -1,9 +1,9 @@
-import * as original from '../core';
+import * as base from '../core';
 import { LogLevels } from '../log-levels';
 import { Context } from '../types';
 import { Logger, logLevelDefs } from './logger';
 
-export class LogMgr extends original.LogMgr {
+export class LogMgr extends base.LogMgr {
   constructor() {
     super();
     this._logLevels = new LogLevels(logLevelDefs);

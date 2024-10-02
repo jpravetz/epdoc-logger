@@ -1,280 +1,221 @@
-/*****************************************************************************
- * transports/loggly.js
- * Copyright 2012-2016 Jim Pravetz. May be freely distributed under the MIT license.
- *****************************************************************************/
-'use strict';
+import {
+  Dict,
+  isDefined,
+  isDict,
+  isNonEmptyArray,
+  isNonEmptyString,
+  isPosInteger,
+  isString
+} from '@epdoc/typeutil';
+import fetch from 'node-fetch';
+import os from 'node:os';
+import { LogMgr } from '../core';
+import { LogMessage, TransportOptions } from '../types';
+import { LogTransport, LogTransportOpenCallbacks } from './base';
 
-var _ = require('underscore');
-var os = require('os');
-var request = require('request');
-
-/**
- * Create a new Loggly transport to output log messages to loggly.
- *
- * @param options {Object} Output options include:
- * @param [options.sid] {boolean} - If true then output express request and session IDs, otherwise
- *   do not output these values
- * @param [options.level] {string} - Log level above which to output log messages, overriding
- *   setting for LogManager.
- * @param options.token {string} - The loggly token used for authenticating to loggly.
- * @param [options.tags] {string[]} - Array of loggly tags.
- * @param [options.url] {string} - URL to use for the loggly service. Should be set only if the
- *   default URL value is not working.
- * @param [options.host=os.hostname()] {string} - Set the name of the host that is reported to
- *   loggly in a host column.
- * @param [options.timestamp=ms] {string} - Set the format for timestamp output, must be one of
- *   'ms' or 'iso'.
- * @param [options.static=true] {boolean} - Set whether to output a 'static' column.
- * @param [options.bufferSize=100] {number} - The maximum number of lines of log messages to buffer
- *   before writing to loggly.
- * @param [options.flushInterval=5000] {number} - The maximum number of milliseconds of buffering
- *   before writing to loggly.
- * @constructor
- */
-
-var LogglyTransport = function (options) {
-  options || (options = {});
-  this.options = options;
-  this.token = options.token;
-  this.subdomain = 'logs-01';
-  this.bIncludeSid =
-    options && (options.sid === false || options.bIncludeSid === false) ? false : true;
-  this.bIncludeStatic = options && options.static === false ? false : true;
-  this.level = this.options.level;
-  this.aTags = ['epdoc'];
-  if (_.isArray(options.tags) && options.tags.length) {
-    this.aTags = this.aTags.concat(options.tags);
-  } else if (isString(options.tags)) {
-    this.aTags.push(options.tags);
-  }
-  this.tags = '/tag/' + this.aTags.join(',') + '/';
-  this.sType = 'loggly';
-  this.bReady = false;
-
-  this.url =
-    options.url || 'https://' + this.subdomain + '.loggly.com/bulk/' + this.token + this.tags;
-  this.bufferSize = options.bufferSize || 100;
-  this.maxBufferSize = options.maxBufferSize || 1000;
-  this.flushInterval = options.flushInterval || 5000;
-  if (false !== options.host) {
-    this.host = options.host || os.hostname();
-  }
-  this.buffer = [];
+export const defaultLogglyTransportOpts: TransportOptions = {
+  type: 'loggly',
+  format: {
+    type: 'json',
+    tabSize: 2,
+    colorize: false
+  },
+  show: {
+    timestamp: 'elapsed',
+    level: true,
+    reqId: true,
+    sid: true,
+    static: true,
+    emitter: true,
+    action: true,
+    data: true
+  },
+  separator: {
+    char: '#',
+    length: 80
+  },
+  levelThreshold: 'info',
+  errorStackThreshold: 'error',
+  options: {}
 };
 
-LogglyTransport.prototype = {
-  constructor: LogglyTransport,
+export type LogglyTransportOptions = {
+  token: string;
+  tags?: string | string[];
+  bufferSize?: number;
+  maxBufferSize?: number;
+  flushInterval?: number;
+  host?: string;
+  url?: string;
+};
 
-  validateOptions: function () {
-    if (!isString(this.options.token)) {
+export class LogglyTransport extends LogTransport {
+  protected _token: string;
+  protected _subdomain = 'logs-01';
+  protected _aTags = ['epdoc'];
+  protected _tags: string;
+  protected _bufferSize = 100;
+  protected _maxBufferSize = 1024;
+  protected _flushInterval = 5000;
+  protected _buffer: string[] = [];
+  protected _url: string;
+  protected _host: string = os.hostname();
+  protected _cb: LogTransportOpenCallbacks;
+  protected _timer: NodeJS.Timeout;
+
+  constructor(logMgr: LogMgr, options: TransportOptions) {
+    super(logMgr, options);
+    if (!isDict(options.options)) {
+      throw new Error('Loggly options are required');
+    }
+    const opts = options.options as LogglyTransportOptions;
+    if (isDefined(opts.token)) {
+      this._token = opts.token;
+    }
+    if (isNonEmptyArray(opts.tags)) {
+      this._aTags = this._aTags.concat(opts.tags);
+    } else if (isString(opts.tags)) {
+      this._aTags.push(opts.tags);
+    }
+    this._tags = `/tag/${this._aTags.join(',')}/`;
+    if (opts.url) {
+      this._url = opts.url;
+    } else {
+      this._url = `https://${this._subdomain}.loggly.com/bulk/${this._token}${this._tags}`;
+    }
+    if (isPosInteger(opts.bufferSize)) {
+      this._bufferSize = opts.bufferSize;
+    }
+    if (isPosInteger(opts.maxBufferSize)) {
+      this._maxBufferSize = opts.maxBufferSize;
+    }
+    if (isPosInteger(opts.flushInterval)) {
+      this._flushInterval = opts.flushInterval;
+    }
+    if (isNonEmptyString(opts.host)) {
+      this._host = opts.host;
+    }
+    this._buffer = [];
+  }
+
+  validateOptions() {
+    if (!isString(this._token)) {
       return new Error('Token not specified or invalid');
     }
     return null;
-  },
+  }
 
-  open: function (onSuccess, onError, onClose) {
-    var self = this;
-    this.onError = onError;
-    this.onClose = onClose;
-    this.timer = setInterval(function () {
-      if (self.buffer.length) self.flush();
-    }, this.flushInterval);
+  open(cb: LogTransportOpenCallbacks): void {
+    this._cb = cb;
+    this._timer = setInterval(() => {
+      if (this._buffer.length) {
+        this.flush();
+      }
+    }, this._flushInterval);
     this.bReady = true;
-    onSuccess && onSuccess(true);
-  },
+    cb.onSuccess(true);
+  }
 
-  type: function () {
-    return this.sType;
-  },
-
-  /**
-   * Test if the transport matches the argument.
-   * @param transport {string|object} If a string then matches if equal to 'loggly'. If an object
-   *   then matches if transport.type equals 'loggly' and transport.token equals this transports
-   *   token property.
-   * @returns {boolean} True if the transport matches the argument
-   */
-  match: function (transport) {
-    if (isString(transport) && transport === this.sType) {
-      return true;
-    }
-    if (_.isObject(transport) && transport.type === this.sType && transport.token === this.token) {
-      return true;
-    }
-    return false;
-  },
-
-  /**
-   * Return true if this logger is ready to accept write operations.
-   * Otherwise the caller should buffer writes and call write when ready is true.
-   * @returns {boolean}
-   */
-  ready: function () {
-    return this.bReady;
-  },
+  get type() {
+    return 'loggly';
+  }
 
   /**
    * Used to clear the logger display. This is applicable only to certain transports, such
    * as socket transports that direct logs to a UI.
    */
-  clear: function () {},
+  clear() {}
 
-  /**
-   * Write a log line
-   * @param params {Object} Parameters to be logged:
-   *  @param {Date} params.time - Date object
-   * @param {string} params.level - log level (INFO, WARN, ERROR, or any string)
-   * @param {string} params.reqId - express request ID, if provided (output if options.sid is
-   *   true)
-   * @param {string} params.sid - express session ID, if provided (output if options.sid is true)
-   * @param {string} params.emitter - name of file or module or emitter (noun)
-   * @param {string} params.action - method or operation being performed (verb)
-   * @param {string} params.message - text string to output
-   * @param {Object} params.static - Arbitrary data to be logged in a 'static' column if enabled
-   *   via the LogManager.
-   * @param {Object} params.data - Arbitrary data to be logged in the 'data' column
-   */
-  write: function (params) {
-    this._write(params);
-    if (this.buffer.length >= this.bufferSize) {
-      this.flush();
+  public write(msg: LogMessage): this {
+    const json = this.formatLogMessage(msg) as Dict;
+    if (this._host) {
+      json.hostname = this._host;
     }
-  },
-
-  _write: function (params) {
-    var msg = this._formatLogMessage(params);
-    if (this.host) {
-      msg.hostname = this.host;
-    }
-    if (this.buffer.length < this.maxBufferSize) {
-      this.buffer.push(JSON.stringify(msg));
-    } else if (this.buffer.length === this.maxBufferSize) {
-      var params = {
-        level: 'warn',
+    if (this._buffer.length < this._maxBufferSize) {
+      this._buffer.push(JSON.stringify(json));
+    } else if (this._buffer.length === this._maxBufferSize) {
+      let params: LogMessage = {
+        level: this.logMgr.levelAsValue('warn'),
         emitter: 'logger.transport.loggly',
         action: 'buffer.limit.exceeded.dropping.messages',
         message: 'Loggly buffer limit exceeded. Dropping messages.'
       };
-      var msg = this._formatLogMessage(params);
-      if (this.host) {
-        msg.hostname = this.host;
-      }
-      this.buffer.push(JSON.stringify(msg));
+      this._buffer.push(JSON.stringify(params));
     } else {
       // drop the message on the floor
     }
-  },
+    if (this._buffer.length >= this._bufferSize) {
+      this.flush();
+    }
+    return this;
+  }
 
-  flush: function (opt_cb) {
-    var self = this;
-    var msgs = self.buffer;
-    self.buffer = [];
-    self._send(msgs, function (err) {
-      if (err) {
-        var params = {
-          level: 'warn',
-          emitter: 'logger.transport.loggly',
-          action: 'send.warning.will.retry',
-          message: 'Error sending message to loggly . ' + err
-        };
-        self.buffer = msgs.concat(self.buffer);
-        // write without forcing an immediate flush, giving possible time for error
-        // conditions to disappear
-        self._write(params);
-      }
-      opt_cb && opt_cb();
+  flush(): Promise<void> {
+    let msgs: string[] = this._buffer;
+    this._buffer = [];
+    return this._send(msgs).catch((err) => {
+      let params: LogMessage = {
+        level: this.logMgr.levelAsValue('warn'),
+        emitter: 'logger.transport.loggly',
+        action: 'send.warning.will.retry',
+        message: 'Error sending message to loggly . ' + err
+      };
     });
-  },
+  }
 
-  _send: function (msgs, cb) {
-    var body = msgs.join('\n');
-    var len = Buffer.byteLength(body);
-    var self = this;
-
-    // console.log('>> %d messages %s bytes', msgs.length, len);
-
-    var opts = {
-      body: body,
-      uri: this.url,
-      method: 'POST',
-      headers: {
-        'Content-Type': 'text/plain',
-        'Content-Length': len
+  _send(msgs: string[]): Promise<void> {
+    const body = msgs.join('\n');
+    return fetch(this._url, { method: 'POST', body: body }).then((res) => {
+      if (res.status >= 400) {
+        throw new Error(res.status + ' response');
       }
-    };
-
-    request(opts, function (err, res) {
-      if (!err && res && res.statusCode >= 400) {
-        err = new Error(res.statusCode + ' response');
-      }
-      cb && cb(err, res);
     });
-  },
+  }
 
   /**
    * Flushes the queue and closes the connections to loggly.
    * @param cb
    */
-  end: function (cb) {
-    this.flush(function (err, res) {
-      if (err) {
-        console.error(err.message);
-      }
-      clearInterval(this.timer);
+  public end(): Promise<void> {
+    return this.flush().then(() => {
+      clearInterval(this._timer);
       this.bReady = false;
-      this.onClose && this.onClose();
-      cb && cb(err);
+      this._cb.onClose();
     });
-  },
+  }
 
-  stop: function (cb) {
-    this.end(cb);
-  },
+  getOptions() {
+    return { tags: this._aTags };
+  }
 
-  setLevel: function (level) {
-    this.level = level;
-  },
+  // _formatLogMessage (msg: LogMessage) {
+  //   let json = {
+  //     timestamp: msg.time ? msg.time.toISOString() : new Date().toISOString(),
+  //     level: msg.level,
+  //     emitter: msg.emitter,
+  //     action: msg.action,
+  //     data: msg.data
+  //   };
+  //   if (msg.message) {
+  //     if (typeof msg.message === 'string' && msg.message.length) {
+  //       json.message = msg.message;
+  //     } else if (msg.message instanceof Array) {
+  //       json.message = msg.message.join('\n');
+  //     }
+  //   }
+  //   if (this.bIncludeSid) {
+  //     json.sid = msg.sid;
+  //     json.reqId = msg.reqId;
+  //   }
+  //   if (this.bIncludeStatic) {
+  //     json.static = msg.static;
+  //   }
+  //   return json;
+  // }
 
-  toString: function () {
-    return 'Loggly';
-  },
-
-  getOptions: function () {
-    return { tags: this.aTags };
-  },
-
-  _formatLogMessage: function (params) {
-    var json = {
-      timestamp: params.time ? params.time.toISOString() : new Date().toISOString(),
-      level: params.level,
-      emitter: params.emitter,
-      action: params.action,
-      data: params.data
-    };
-    if (params.message) {
-      if (typeof params.message === 'string' && params.message.length) {
-        json.message = params.message;
-      } else if (params.message instanceof Array) {
-        json.message = params.message.join('\n');
-      }
-    }
-    if (this.bIncludeSid) {
-      json.sid = params.sid;
-      json.reqId = params.reqId;
-    }
-    if (this.bIncludeStatic) {
-      json.static = params.static;
-    }
-    return json;
-  },
-
-  pad: function (n, width, z) {
-    z = z || '0';
-    n = n + '';
-    return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
-  },
-
-  last: true
-};
-
-module.exports = LogglyTransport;
+  // pad (n, width, z) {
+  //   z = z || '0';
+  //   n = n + '';
+  //   return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
+  // }
+}

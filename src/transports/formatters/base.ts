@@ -1,6 +1,5 @@
-import { LogMgr } from '../../core/logmgr';
+import { LogMgr, Style } from '../../core';
 import { LogLevels } from '../../log-levels';
-import { Style } from '../../style';
 import { LoggerLineFormatOpts, LoggerShowOpts, LogMessage } from '../../types';
 import { TransportFormatterOpts } from './factory';
 
@@ -9,7 +8,7 @@ export class TransportFormatter {
   protected _msg: LogMessage;
   protected _showOpts: LoggerShowOpts;
   protected _formatOpts: LoggerLineFormatOpts;
-  protected _style: Style;
+  // protected _style: Style;
 
   constructor(logMgr: LogMgr) {
     this._logMgr = logMgr;
@@ -22,7 +21,7 @@ export class TransportFormatter {
   init(opts: TransportFormatterOpts): this {
     this._showOpts = opts.show;
     this._formatOpts = opts.format;
-    this._style = opts.style;
+    // this._style = opts.style;
     return this;
   }
 
@@ -31,7 +30,7 @@ export class TransportFormatter {
   }
 
   get style(): Style {
-    return this._style;
+    return this._logMgr.style;
   }
 
   format(msg: LogMessage): any {

@@ -7,6 +7,9 @@ import { LoggerMiddleware } from '../core/base';
 import { MiddlewareRouteInfo } from '../types';
 import * as Koa2 from './types';
 
+export * from '../types';
+export * from './types';
+
 let reqId = 0;
 
 export class Middleware extends LoggerMiddleware {
