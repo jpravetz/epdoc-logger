@@ -16,9 +16,7 @@ import { LogTransport, LogTransportOpenCallbacks } from './base';
 export const defaultLogglyTransportOpts: TransportOptions = {
   type: 'loggly',
   format: {
-    type: 'json',
-    tabSize: 2,
-    colorize: false
+    type: 'json'
   },
   show: {
     timestamp: 'elapsed',

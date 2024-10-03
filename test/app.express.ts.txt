@@ -1,35 +1,40 @@
-import { LogMgr, Logger, express as middleware } from '../src';
+import * as express from 'express';
+import { request } from 'http';
+import { LogMgr, Logger, express as e } from '../src';
 
 describe('Express response middleware', function () {
   this.timeout(300000);
 
   let app = express.application;
+  let middleware = new e.Middleware() as e.Middleware;
 
   beforeEach((done) => {
     const logMgr = new LogMgr();
+    middleware.setLogMgr(logMgr);
     logMgr.start().then(() => {
-      let log: Logger = logMgr.getLogger('app') as Logger;
+      let log: Logger = logMgr.getLogger('app');
       log.info('Adding middleware');
-      app.use(middleware.reqId());
+      app.use(middleware.getReqIdFn());
       //app.use(app.router);
-      app.all('*', middleware.responseLogger({ logMgr: logMgr }));
-      app.all('*', middleware.routeSeparator({ separator: '-' }));
-      app.all('*', middleware.routeLogger());
+      app.all('*', middleware.getRequestLoggerFn());
+      app.all('*', middleware.getRouteSeparatorFn());
+      app.all('*', middleware.getRouteLoggerFn());
 
-      app.get('/a', function (req, res) {
-        req.log.pushName('a').resetElapsed();
-        setTimeout(function () {
-          req.log.elapsed().info('Timer should be about 500');
+      app.get('/a', (req, res) => {
+        const log = req.log as Logger;
+        log.pushName('a').resetElapsed();
+        setTimeout(() => {
+          log.info('Timer should be about 500').elapsed('a').emit();
           res.send({ message: 'hello world' });
         }, 500);
       });
-      app.get('/b', function (req, res) {
+      app.get('/b', (req, res) => {
         res.json({ message: 'hello world' });
       });
-      app.get('/c', function (req, res) {
-        req.log.pushName('c').resetElapsed('c');
+      app.get('/c', (req, res) => {
+        log.pushName('c').resetElapsed('c');
         setTimeout(function () {
-          req.log.elapsed('c').info('Timer should be about 250');
+          log.info('Timer should be about 250').elapsed('c').emit();
           res.end('hello world');
         }, 250);
       });
@@ -47,8 +52,8 @@ describe('Express response middleware', function () {
         if (err) {
           done(err);
         } else {
-          should(res).have.property('body');
-          should(res.body).have.property('message', 'hello world');
+          expect(res).toHaveProperty('body');
+          expect(res.body).toHaveProperty('message', 'hello world');
           done();
         }
       });
@@ -62,8 +67,8 @@ describe('Express response middleware', function () {
         if (err) {
           done(err);
         } else {
-          should(res).have.property('body');
-          should(res.body).have.property('message', 'hello world');
+          expect(res).toHaveProperty('body');
+          expect(res.body).toHaveProperty('message', 'hello world');
           done();
         }
       });
@@ -77,7 +82,7 @@ describe('Express response middleware', function () {
         if (err) {
           done(err);
         } else {
-          should(res).have.property('text', 'hello world');
+          expect(res).toHaveProperty('text', 'hello world');
           done();
         }
       });

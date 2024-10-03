@@ -4,10 +4,10 @@ import { Style } from '../core/style';
 import { AppTimer } from '../lib/app-timer';
 import { LogLevels, LogLevelValue } from '../log-levels';
 import {
-  LoggerLineFormatOpts,
   LoggerShowOpts,
   LogMessage,
   LogMsgPart,
+  MsgBuilderFormatOpts,
   SeparatorOpts,
   TimePrefix,
   TransportOptions
@@ -30,7 +30,7 @@ export class LogTransport {
   protected _style: Style;
   protected _separatorOpts: SeparatorOpts;
   // protected _logLevels: LogLevel;
-  protected _formatOpts: LoggerLineFormatOpts;
+  protected _formatOpts: MsgBuilderFormatOpts;
   // protected _timer: AppTimer;
   id: Integer = transportIdx++;
   // bIncludeSid: boolean;

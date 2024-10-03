@@ -1,13 +1,11 @@
 import { LogMgr } from '../../core/logmgr';
-import { LoggerLineFormatOpts, LoggerShowOpts } from '../../types';
+import { FormatterType, LoggerShowOpts, MsgBuilderFormatOpts } from '../../types';
 import { TransportFormatter } from './base';
-
-export type FormatterType = 'string' | 'json' | 'json-array' | string;
 
 export type TransportFormatterOpts = {
   logMgr: LogMgr;
   show: LoggerShowOpts;
-  format: LoggerLineFormatOpts;
+  format: MsgBuilderFormatOpts;
   // style: Style;
 };
 

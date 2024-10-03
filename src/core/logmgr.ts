@@ -2,7 +2,7 @@ import { LogLevelName } from '.';
 import { AppTimer } from '../lib/app-timer';
 import { LogLevels, LogLevelValue } from '../log-levels';
 import { TransportManager } from '../transport-manager';
-import { Context, LogMessage, LogMessageConsts, LogMgrDefaults, TransportOptions } from '../types';
+import { LogMessage, LogMessageConsts, LogMgrDefaults, TransportOptions } from '../types';
 import { Logger } from './logger';
 import { Style } from './style';
 
@@ -83,9 +83,9 @@ export class LogMgr {
    *   columns are left blank on output.
    * @return A new {logger} object.
    */
-  protected getLogger(emitter: string, context?: Context): Logger {
+  protected getLogger(emitter: string): Logger {
     const msgConsts: LogMessageConsts = Object.assign({}, this._msgConsts, { emitter });
-    return new Logger(this).context(context);
+    return new Logger(this);
     // return new Logger(this, msgConsts, this._context);
   }
 

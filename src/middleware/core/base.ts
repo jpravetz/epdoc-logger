@@ -16,7 +16,7 @@ export class LoggerMiddleware {
     char: '#'
   };
 
-  constructor(options: MiddlewareOptions) {
+  constructor(options: MiddlewareOptions = {}) {
     this._emitter = options.emitter ?? 'app';
     this._objName = options.objName ?? 'log';
     this._excludeMethods = isString(options.excludeMethod)

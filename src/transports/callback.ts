@@ -16,9 +16,7 @@ export const defaultCallbackTransportOpts: TransportOptions = {
     data: false
   },
   format: {
-    type: 'json',
-    tabSize: 2,
-    colorize: false
+    type: 'json'
   }
 };
 

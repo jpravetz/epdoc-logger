@@ -1,5 +1,5 @@
 import { Dict, Integer, isNonEmptyArray, isNonEmptyString } from '@epdoc/typeutil';
-import { LogLevelName } from '.';
+import { AppTimer } from '../lib/app-timer';
 import { LogLevel, LogLevels, LogLevelValue } from '../log-levels';
 import { LogContextParams, LogMessage, LogMessageConsts } from '../types';
 import { LogMgr } from './logmgr';
@@ -70,6 +70,7 @@ export class Logger {
   protected _msg: LogMessage = {};
   protected _silent: boolean;
   protected _truncateLength: Integer;
+  protected _timer: AppTimer;
   protected _msgConsts: LogMessageConsts = { emitter: [] };
 
   constructor(logMgr?: LogMgr) {
@@ -82,6 +83,17 @@ export class Logger {
     }
     return this;
   }
+
+  // timer(timer?: AppTimer | true): this {
+  //   if (timer === true) {
+  //     this._timer = new AppTimer();
+  //   } else if (timer instanceof AppTimer) {
+  //     this._timer = timer;
+  //   } else {
+  //     this._timer = this._logMgr.appTimer;
+  //   }
+  //   return this;
+  // }
 
   emitter(val: string): this {
     if (isNonEmptyString(val)) {
@@ -156,20 +168,6 @@ export class Logger {
       .setLevel(level)
       .setInitialString(...args);
   }
-
-  /**
-   * Log a separator line at the info level. This is equivalent to calling log.info().separator().emit()
-   * @param {LogLevelName|LogLevelValue} [level=info] - The log level at which to log the separator.
-   * @return {Logger}
-   */
-  // separator(msg: LogMessage) {
-  //   msg.level = msg.level ?? this.logLevels.asValue('info');
-  //   if (this.logLevels.meetsThreshold(msg.level)) {
-  //     msg.separator = true;
-  //     this._logMgr.logMessage(msg);
-  //   }
-  //   return this;
-  // }
 
   /**
    * A method to add context to the method stack that has gotten us to this point in code.
@@ -277,4 +275,18 @@ export class Logger {
   getLevel(): LogLevelValue {
     return this._level;
   }
+
+  /**
+   * Log a separator line at the info level. This is equivalent to calling log.info().separator().emit()
+   * @param {LogLevelName|LogLevelValue} [level=info] - The log level at which to log the separator.
+   * @return {Logger}
+   */
+  // separator(msg: LogMessage) {
+  //   msg.level = msg.level ?? this.logLevels.asValue('info');
+  //   if (this.logLevels.meetsThreshold(msg.level)) {
+  //     msg.separator = true;
+  //     this._logMgr.logMessage(msg);
+  //   }
+  //   return this;
+  // }
 }

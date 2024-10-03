@@ -1,6 +1,6 @@
 {
   "name": "@epdoc/logger",
-  "version": "3.0.0-beta.10",
+  "version": "3.0.0-beta.14",
   "description": "Logging module with express middleware mixins and extendable transports",
   "bugs": {
     "url": "https://github.com/@epdoc/logger/issues"

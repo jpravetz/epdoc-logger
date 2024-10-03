@@ -63,7 +63,7 @@ class TransportStringFormatter extends TransportFormatter {
     if (this._showOpts.elapsed && this._msg.timer) {
       this.addMsgPart(
         `${this._msg.timer.getTimeForPrefix('elapsed')} (${this._msg.timer.getTimeForPrefix('interval')})`,
-        this._formatOpts.elapsed
+        this.style.getDefFromName('elapsed')
       );
       // this.stylize('_elapsed', `${et.total} (${et.interval})`);
     }

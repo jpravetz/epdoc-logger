@@ -2,35 +2,50 @@ import { Dict, Integer, isDict, isString } from '@epdoc/typeutil';
 import { LogMgr } from './core/logmgr';
 import { AppTimer } from './lib/app-timer';
 import { LogLevelName, LogLevelValue } from './log-levels';
-import { FormatterType } from './transports/formatters';
 
 export type Context = Dict;
 
 export type TimePrefix = 'local' | 'utc' | 'elapsed' | 'interval' | string | false;
+export type FormatterType = 'string' | 'json' | 'json-array' | 'template' | string;
 export type TransportType = string;
 
 export function isValidTimePrefix(val: any): val is TimePrefix {
   return ['local', 'utc', 'elapsed', false].includes(val);
 }
 
-export type LoggerLineFormatOpts = LoggerLineStyleOpts &
-  Partial<{
-    type: FormatterType;
-    tabSize: Integer;
-    colorize: boolean;
-  }>;
-
-export type LoggerLineStyleOpts = Partial<{
-  timestamp: StyleFormatterFn;
-  level: StyleFormatterFn;
-  reqId: StyleFormatterFn;
-  sid: StyleFormatterFn;
-  emitter: StyleFormatterFn;
-  action: StyleFormatterFn;
-  data: StyleFormatterFn;
-  suffix: StyleFormatterFn;
-  elapsed: StyleFormatterFn;
+export type MsgStringFormatOpts = Partial<{
+  type: 'string';
+  tabSize: Integer;
+  colorize: boolean;
 }>;
+export type MsgJsonFormatOpts = {
+  type: 'json';
+};
+export type MsgJsonArrayFormatOpts = {
+  type: 'json-array';
+};
+export type MsgTemplateFormatOpts = {
+  type: 'template';
+  template: string;
+};
+
+export type MsgBuilderFormatOpts =
+  | MsgStringFormatOpts
+  | MsgJsonFormatOpts
+  | MsgJsonArrayFormatOpts
+  | MsgTemplateFormatOpts;
+
+// export type LoggerLineStyleOpts = Partial<{
+//   timestamp: StyleFormatterFn;
+//   level: StyleFormatterFn;
+//   reqId: StyleFormatterFn;
+//   sid: StyleFormatterFn;
+//   emitter: StyleFormatterFn;
+//   action: StyleFormatterFn;
+//   data: StyleFormatterFn;
+//   suffix: StyleFormatterFn;
+//   elapsed: StyleFormatterFn;
+// }>;
 
 /** LoggerLine options that are constant across all lines of a logger instance. */
 export type LoggerLineOpts = Partial<{
@@ -154,7 +169,7 @@ export type TransportOptions = Partial<{
   // consts: LogMessageConsts;
   levelThreshold: LogLevelName | LogLevelValue;
   errorStackThreshold: LogLevelName | LogLevelValue;
-  format: LoggerLineFormatOpts;
+  format: MsgBuilderFormatOpts;
   // style: Style;
   options: Dict;
 }>;
@@ -162,16 +177,3 @@ export type TransportOptions = Partial<{
 export function isTransportOptions(val: any): val is TransportOptions {
   return isDict(val) && isString(val.name);
 }
-
-// export type LogMgrOpts = Partial<{
-//   timer: AppTimer;
-//   defaults: LogMgrDefaults;
-//   logLevels: LogLevels;
-//   // run: LoggerRunOpts;
-//   /**
-//    * Array of transport options for logging.
-//    * Each transport must include a 'name' property.
-//    * @type {TransportOptions[]}
-//    */
-//   // transports: TransportOptions[];
-// }>;

@@ -1,1 +1,1 @@
-export { FormatterType, getNewTransportFormatterFactory } from './factory';
+export { getNewTransportFormatterFactory } from './factory';
