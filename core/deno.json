@@ -1,0 +1,15 @@
+{
+  "name": "@scope/core",
+  "version": "3.0.0",
+  "description": "Core logger module",
+  "exports": "./mod.ts",
+  "tasks": {
+    "test": "deno test --allow-env",
+    "lint": "deno lint",
+    "build": "deno run -A scripts/build_npm.ts",
+    "publish_npm": "cd npm & npm publish --access public"
+  },
+  "tests": {
+    "include": ["test/**/*.ts"]
+  }
+}

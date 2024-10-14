@@ -1,4 +1,4 @@
-import * as Log from '../src';
+import * as Log from '../src/index';
 
 const appTimer = new Log.AppTimer();
 

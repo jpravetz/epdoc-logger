@@ -1,1 +1,0 @@
-export { getNewTransportFormatterFactory } from './factory';

@@ -1,9 +1,9 @@
 import { type Dict, type Integer, isNonEmptyArray, isNonEmptyString } from '@epdoc/typeutil';
-import type { AppTimer } from '../../core/lib/app-timer.ts';
-import type { LogLevel, LogLevels, LogLevelValue } from '../log-levels.ts';
-import type { LogContextParams, LogMessage, LogMessageConsts } from '../types.ts';
+import type { AppTimer } from './app_timer.ts';
+import type { LogLevel, LogLevels, LogLevelValue } from './levels.ts';
 import type { LogMgr } from './logmgr.ts';
 import type { MsgBuilder } from './msg-builder.ts';
+import type { LogContextParams, LogMessage, LogMessageConsts } from './types.ts';
 
 /**
  * <p>Create a new log object with methods to log to the transport that is attached to
@@ -73,7 +73,7 @@ export class Logger {
   protected _timer: AppTimer;
   protected _msgConsts: LogMessageConsts = { emitter: [] };
 
-  constructor(logMgr?: LogMgr) {
+  constructor(logMgr: LogMgr) {
     this._logMgr = logMgr;
   }
 

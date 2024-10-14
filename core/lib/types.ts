@@ -1,7 +1,7 @@
 import { type Dict, type Integer, isDict, isString } from '@epdoc/typeutil';
-import type { AppTimer } from '../core/lib/app-timer.ts';
-import type { LogMgr } from './core/logmgr.ts';
-import type { LogLevelName, LogLevelValue } from './log-levels.ts';
+import type { AppTimer } from './app-timer.ts';
+import type { LogLevelName, LogLevelValue } from './levels.ts';
+import type { LogMgr } from './logmgr.ts';
 
 export type Context = Dict;
 
@@ -10,7 +10,7 @@ export type FormatterType = 'string' | 'json' | 'json-array' | 'template' | stri
 export type TransportType = string;
 
 export function isValidTimePrefix(val: unknown): val is TimePrefix {
-  return ['local', 'utc', 'elapsed', false].includes(val);
+  return ['local', 'utc', 'elapsed', false].includes(val as string);
 }
 
 export type MsgStringFormatOpts = Partial<{
