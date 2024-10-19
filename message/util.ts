@@ -40,4 +40,13 @@ class StringUtil {
       ? this._str.slice(0, length - 1)
       : this._str + char.repeat(length - this._str.length);
   }
+
+  hexEncode() {
+    let result = '';
+    for (let i = 0; i < this._str.length; i++) {
+      const hex = this._str.charCodeAt(i).toString(16);
+      result += ('000' + hex).slice(-4);
+    }
+    return result;
+  }
 }

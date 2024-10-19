@@ -27,6 +27,7 @@ export interface IMsgBuilder {
 export class MsgBuilder implements IMsgBuilder {
   protected _tabSize: Integer = DEFAULT_TAB_SIZE;
   // protected _lineFormat: LoggerLineFormatOpts;
+  protected _applyColors: boolean = true;
 
   protected _msgIndent: string = '';
   protected _msgParts: LogMsgPart[] = [];
@@ -34,7 +35,9 @@ export class MsgBuilder implements IMsgBuilder {
   // protected _level: LogLevelValue = logLevel.info;
   protected _showElapsed: boolean = false;
 
-  constructor() {}
+  constructor(applyColors: boolean = true) {
+    this._applyColors = applyColors;
+  }
 
   /**
    * Clears the current line, essentially resetting the output line. This does
@@ -124,46 +127,6 @@ export class MsgBuilder implements IMsgBuilder {
     return this.appendMsg(...args);
   }
 
-  // protected addElapsed(): this {
-  //   if (this._showElapsed && this._msg.timer) {
-  //     this.addMsgPart(
-  //       `${this._msg.timer.getTimeForPrefix('elapsed')} (${this._msg.timer.getTimeForPrefix('interval')})`,
-  //       this.style.getDefFromName('elapsed')
-  //     );
-  //     // this.stylize('_elapsed', `${et.total} (${et.interval})`);
-  //   }
-  //   return this;
-  // }
-
-  /**
-   * Emits the log line with elapsed time. This is a convenience method for
-   * emitting the log line with elapsed time without having to call `elapsed()`
-   * first.
-   * @param { unknown[]} args - The arguments to emit.
-   * @returns {void}
-   * @see elapsed()
-   * @see emit()
-   */
-  emitWithTime(...args: unknown[]): string {
-    this._showElapsed = true;
-    return this.emit(...args);
-  }
-
-  /**
-   * Emits the log line with elapsed time (Emit With Time = EWT). This is a
-   * convenience method for emitting the log line with elapsed time without
-   * having to call `elapsed()` first.
-   * @param { unknown[]} args - The arguments to emit.
-   * @returns {void}
-   * @see elapsed()
-   * @see emit()
-   * @see emitWithTime()
-   */
-  ewt(...args: unknown[]): string {
-    this._showElapsed = true;
-    return this.emit(...args);
-  }
-
   /**
    * Emits the log line.
    * @param { unknown[]} args - The arguments to emit.
@@ -186,7 +149,7 @@ export class MsgBuilder implements IMsgBuilder {
   protected formatParts(): string {
     const parts: string[] = [];
     this._msgParts.forEach((part: LogMsgPart) => {
-      if (part.style) {
+      if (part.style && this._applyColors) {
         parts.push(part.style(part.str));
       } else {
         parts.push(part.str);

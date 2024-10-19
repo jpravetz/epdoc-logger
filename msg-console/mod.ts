@@ -87,4 +87,52 @@ export class MsgBuilder extends core.MsgBuilder {
   public strikethru(...args: core.StyleArg[]): this {
     return this.stylize(styleFormatters.strikethru, ...args);
   }
+
+  public mark(aMark: string): this {
+    performance.mark(aMark);
+    return this;
+  }
+
+  public elapsed(aMark: string, bMark?: string): this {
+    const measure = performance.measure(aMark, bMark);
+    if (measure) {
+      return this.stylize(styleFormatters._elapsed, measure.duration);
+    }
+    return this;
+  }
+
+  /**
+   * Emits the log line with elapsed time. This is a convenience method for
+   * emitting the log line with elapsed time without having to call `elapsed()`
+   * first.
+   * @param { string } aMark - The start mark.
+   * @param { string } bMark - The end mark.
+   * @returns {string} The log line with elapsed time.
+   * @see elapsed()
+   */
+  emitWithTime(aMark: string, bMark?: string): string {
+    return this.ewt(aMark, bMark);
+  }
+
+  /**
+   * Emits the log line with elapsed time (Emit With Time = EWT). This is a
+   * convenience method for emitting the log line with elapsed time without
+   * having to call `elapsed()` first.
+   * @param { unknown[]} args - The arguments to emit.
+   * @returns {void}
+   * @see elapsed()
+   * @see emit()
+   * @see emitWithTime()
+   */
+  ewt(aMark: string, bMark?: string): string {
+    const measure = performance.measure(aMark, bMark);
+    if (measure) {
+      const description = bMark ? bMark : 'start';
+      return this.stylize(
+        styleFormatters._elapsed,
+        `(${measure.duration.toFixed(3)} ms since ${description})`
+      ).emit();
+    }
+    return this.emit();
+  }
 }

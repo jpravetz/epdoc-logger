@@ -4610,7 +4610,7 @@
           "jsr:@std/assert@1"
         ]
       },
-      "msgcli": {
+      "msg-console": {
         "dependencies": [
           "jsr:@std/fmt@^1.0.2"
         ]
