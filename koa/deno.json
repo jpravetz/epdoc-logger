@@ -1,7 +1,7 @@
 {
-  "name": "@scope/core",
+  "name": "@scope/koa",
   "version": "3.0.0",
-  "description": "Core logger module",
+  "description": "Color and formatting for console output",
   "exports": "./mod.ts",
   "tasks": {
     "test": "deno test --allow-env",
@@ -11,8 +11,5 @@
   },
   "tests": {
     "include": ["test/**/*.ts"]
-  },
-  "imports": {
-    "@std/fmt": "jsr:@std/fmt@^1.0.2"
   }
 }

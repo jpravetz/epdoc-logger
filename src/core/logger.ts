@@ -1,5 +1,5 @@
 import { type Dict, type Integer, isNonEmptyArray, isNonEmptyString } from '@epdoc/typeutil';
-import type { AppTimer } from '../../core/lib/app-timer.ts';
+import type { AppTimer } from '../../apptimer/app-timer.ts';
 import type { LogLevel, LogLevels, LogLevelValue } from '../log-levels.ts';
 import type { LogContextParams, LogMessage, LogMessageConsts } from '../types.ts';
 import type { LogMgr } from './logmgr.ts';

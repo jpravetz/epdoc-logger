@@ -1,5 +1,5 @@
 {
-  "name": "@epdoc/logger",
+  "name": "@scope/loggly",
   "version": "3.0.0-beta.1",
   "description": "Logging module with express middleware mixins and extendable transports",
   "author": {

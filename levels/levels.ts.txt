@@ -1,0 +1,140 @@
+import { asInt, type Integer, isDefined, isInteger, isString } from '@epdoc/typeutil';
+import { ILogLevels } from './leveltypes';
+
+export type LogLevelDef = Record<string, LogLevel>;
+
+export class LogLevels implements ILogLevels {
+  protected _levelDef: LogLevelDef;
+  protected _levelValues: Integer[] = [];
+  protected _counter: Record<LogLevelName, Integer> = {};
+  protected _threshold: LogLevel;
+  protected _errorStackThreshold: LogLevel;
+
+  constructor(levelDef: LogLevelDef) {
+    this._levelDef = levelDef;
+    this._levelValues = Object.values(levelDef);
+    this._levelValues.forEach((level) => {
+      this._counter[level] = 0;
+    });
+    this._threshold = this.asValue('info');
+    this._errorStackThreshold = this.asValue('debug');
+  }
+
+  names(): LevelName[] {
+    return Object.keys(this._levelDef);
+  }
+
+  copy(): LogLevels {
+    return new LogLevels(this._levelDef).setThreshold(this._threshold);
+  }
+
+  setThreshold(level: LogLevelName | LogLevel): this {
+    this._threshold = this.asValue(level);
+    return this;
+  }
+
+  get levelThreshold(): LogLevel {
+    return this._threshold;
+  }
+
+  set levelThreshold(level: LogLevelName | LogLevel) {
+    this._threshold = this.asValue(level);
+  }
+
+  get errorStackThreshold(): LogLevel {
+    return this._errorStackThreshold;
+  }
+
+  set errorStackThreshold(level: LogLevelName | LogLevel) {
+    this._errorStackThreshold = this.asValue(level);
+  }
+
+  get counter() {
+    return this._counter;
+  }
+
+  get levels() {
+    return Object.keys(this._levelDef);
+  }
+
+  get levelDefs() {
+    return this._levelDef;
+  }
+
+  meetsThreshold(level: LogLevel, threshold?: LogLevel): boolean {
+    if (this.isLogLevelValue(threshold)) {
+      return level <= threshold;
+    }
+    return level <= this._threshold;
+  }
+
+  meetsErrorStackThreshold(level: LogLevel): boolean {
+    return level <= this._errorStackThreshold;
+  }
+
+  fromName(level: LogLevelName): LogLevel {
+    return this._levelDef[level];
+  }
+
+  /**
+   * Converts a LogLevel or LogLevelValue to a LogLevelValue.
+   * If the input is a LogLevel, it returns the corresponding LogLevelValue.
+   * If the input is a LogLevelValue, it returns the input.
+   * If the input is a string representation of a LogLevelValue, it converts and returns the LogLevelValue.
+   * @param {LogLevels | LogLevel} level - The LogLevel or LogLevelValue to convert.
+   * @returns {LogLevel} The converted LogLevelValue.
+   */
+  asName(level: LogLevelName | LogLevel): LogLevelName {
+    if (isString(level) && level in this._levelDef) {
+      return level;
+    } else if (isInteger(level) && this.isLogLevelValue(level)) {
+      return Object.keys(this._levelDef).find((key) => this._levelDef[key] === level) as LogLevelName;
+    }
+    return 'silly';
+  }
+
+  asValue(level: LogLevelName | LogLevel): LogLevel {
+    if (isInteger(level) && this.isLogLevelValue(level)) {
+      return level;
+    } else if (isString(level) && this.isLogLevelValue(asInt(level))) {
+      return asInt(level) as LogLevel;
+    } else if (level in this._levelDef) {
+      return this._levelDef[level];
+    }
+    return 9;
+  }
+
+  /**
+   * Checks if the given value is a valid LogLevel.
+   * @param {any} val - The value to check.
+   * @returns {boolean} True if the value is a valid LogLevel, false otherwise.
+   */
+  isLogLevelValue(val: unknown): val is LogLevel {
+    return isInteger(val) && this._levelValues.includes(val);
+  }
+
+  isLogLevelName(val: unknown): val is LogLevelName {
+    return isString(val) && isDefined(this._levelDef[val]);
+  }
+
+  isLogLevel(val: unknown): boolean {
+    return this.isLogLevelValue(val) || this.isLogLevelName(val);
+  }
+
+  /**
+   * Checks if the given level meets the threshold.
+   * @param level - The level to check.
+   * @param threshold - The threshold to compare against.
+   * @returns {boolean} True if the level meets the threshold, false otherwise.
+   * @deprecated
+   */
+  static meetsLogThreshold(level: LogLevel, threshold: LogLevel): boolean {
+    return level <= threshold;
+  }
+
+  incCounter(level: LogLevelName | LogLevel): this {
+    const levelValue = this.asValue(level);
+    this._counter[levelValue]++;
+    return this;
+  }
+}

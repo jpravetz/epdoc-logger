@@ -1,4 +1,6 @@
 import chalk from 'chalk';
+import * as core from '@scope/core';
+
 import * as base from '../core/core-index.ts';
 
 import type { StyleFormatters } from '../types.ts';

@@ -1,0 +1,23 @@
+{
+  "name": "@scope/apptimer",
+  "version": "3.0.0",
+  "description": "Timer for logging",
+  "exports": "./mod.ts",
+  "tasks": {
+    "test": "deno test --allow-env",
+    "lint": "deno lint"
+  },
+  "tests": {
+    "include": ["test/**/*.ts"]
+  },
+  "imports": {
+    "@epdoc/typeutil": "../../@epdoc/typeutil/mod.ts",
+    "@epdoc/timeutil": "../../@epdoc/timeutil/mod.ts"
+  },
+  "fmt": {
+    "options": {
+      "singleQuote": true,
+      "lineWidth": 120
+    }
+  }
+}

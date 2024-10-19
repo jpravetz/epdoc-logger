@@ -1,8 +1,7 @@
 import { type Dict, type Integer, isNonEmptyArray, isNonEmptyString } from '@epdoc/typeutil';
-import type { AppTimer } from './app_timer.ts';
-import type { LogLevel, LogLevels, LogLevelValue } from './levels.ts';
+import type { LogLevel, LogLevels } from '../../levels/levels.ts.txt';
+import type { MsgBuilder } from '../../message/builder.ts';
 import type { LogMgr } from './logmgr.ts';
-import type { MsgBuilder } from './msg-builder.ts';
 import type { LogContextParams, LogMessage, LogMessageConsts } from './types.ts';
 
 /**
@@ -60,7 +59,7 @@ export class Logger {
   protected _emitter: string[];
   // protected _ctx: Dict;
   // protected _style: Style;
-  protected _level: LogLevelValue;
+  protected _level: LogLevel;
   // protected bErrorStack: boolean;
   protected _logData: object;
   protected _logAction: string;
@@ -70,7 +69,6 @@ export class Logger {
   protected _msg: LogMessage = {};
   protected _silent: boolean;
   protected _truncateLength: Integer;
-  protected _timer: AppTimer;
   protected _msgConsts: LogMessageConsts = { emitter: [] };
 
   constructor(logMgr: LogMgr) {
@@ -260,7 +258,7 @@ export class Logger {
    * @param {string} level - Must be one of LogManager.LEVEL_ORDER.
    * @return {Logger} Self
    */
-  setLevel(level: LogLevelValue) {
+  setLevel(level: LogLevel) {
     this._level = level;
     return this;
   }
@@ -269,7 +267,7 @@ export class Logger {
    * Get the log level for this object
    * @returns {string} The currently set log level for this Logger object.
    */
-  getLevel(): LogLevelValue {
+  getLevel(): LogLevel {
     return this._level;
   }
 

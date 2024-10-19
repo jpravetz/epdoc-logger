@@ -1,0 +1,16 @@
+{
+  "name": "@scope/levels",
+  "version": "3.0.0",
+  "description": "Define logging levels",
+  "exports": "./mod.ts",
+  "tasks": {
+    "test": "deno test",
+    "lint": "deno lint"
+  },
+  "imports": {
+    "@epdoc/timeutil": "../@epdoc/timeutil/mod.ts",
+    "@epdoc/typeutil": "../@epdoc/typeutil/mod.ts",
+    "@std/assert": "jsr:@std/assert@^1.0.6",
+    "@std/fmt": "jsr:@std/fmt@^1.0.2"
+  }
+}

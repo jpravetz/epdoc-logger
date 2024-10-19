@@ -1,12 +1,11 @@
 {
-  "name": "@epdoc/logger",
+  "name": "@scope/middleware",
   "version": "3.0.0-beta.1",
   "description": "Logging module with express middleware mixins and extendable transports",
   "author": {
     "name": "James Pravetz",
     "email": "jpravetz@epdoc.com"
   },
-  "workspace": ["core", "message", "basic", "express", "koa", "middleware", "loggly", "levels"],
   "license": "MIT",
   "exports": "./mod.ts",
   "tasks": {
@@ -22,11 +21,5 @@
     "@std/assert": "jsr:@std/assert@1",
     "@epdoc/typeutil": "../@epdoc/typeutil/mod.ts",
     "@epdoc/timeutil": "../@epdoc/timeutil/mod.ts"
-  },
-  "fmt": {
-    "options": {
-      "singleQuote": true,
-      "lineWidth": 120
-    }
   }
 }

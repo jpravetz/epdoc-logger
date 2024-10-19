@@ -1,7 +1,6 @@
-import type { AppTimer } from './app_timer.ts';
-import { LogLevelName, LogLevels, LogLevelValue } from './levels.ts';
+import type { LogLevel, LogLevelName, LogLevels } from '../../levels/levels.ts.txt';
 import { Logger } from './logger.ts';
-import { Style } from './style.ts';
+import type { Style } from './style.ts';
 import { TransportManager } from './transport-mgr.ts';
 import type { LogMessage, LogMessageConsts, LogMgrDefaults, TransportOptions } from './types.ts';
 
@@ -31,7 +30,6 @@ let mgrIdx = 0;
 
 export class LogMgr {
   protected uid: string;
-  protected _timer: AppTimer;
   protected _style: Style;
   // protected _show: LoggerShowOpts;
   protected _requireAllTransportsReady = false;
@@ -40,14 +38,12 @@ export class LogMgr {
   protected _defaults: LogMgrDefaults;
   protected _logLevels: LogLevels;
   protected _transportMgr: TransportManager = new TransportManager(this);
-  protected consoleOptions: any;
+  protected consoleOptions: unknown;
   protected _running: boolean = false;
 
-  // protected _style: Style;
-
-  protected _msgQueue: any[];
-  protected levelThreshold: LogLevelValue;
-  protected errorStackThreshold: LogLevelValue;
+  protected _msgQueue: LogMessage[] = [];
+  protected levelThreshold: LogLevel;
+  protected errorStackThreshold: LogLevel;
 
   constructor() {
     this.uid = 'LogManager#' + mgrIdx++;
@@ -98,7 +94,7 @@ export class LogMgr {
    *   not normally necessary to wait for this callback.
    * @return {LogMgr}
    */
-  public async start(): Promise<any> {
+  public async start(): Promise<unknown> {
     if (!this._running) {
       return this._transportMgr
         .start()
@@ -131,7 +127,7 @@ export class LogMgr {
         this._transportMgr.hasTransports() &&
         (!this._requireAllTransportsReady || this._transportMgr.allReady)
       ) {
-        let nextMsg: LogMessage = this._msgQueue.shift();
+        const nextMsg = this._msgQueue.shift();
         if (nextMsg) {
           this._transportMgr.writeMessage(nextMsg);
           this.flushQueue();
@@ -139,27 +135,6 @@ export class LogMgr {
       }
     }
     return this;
-  }
-
-  /**
-   * Set automatically when the LogManager module is initialized, but can be set manually to
-   * the earliest known time that the application was started.
-   * @param d {Date} The application start time
-   * @return {LogMgr}
-   */
-  timer(timer: AppTimer): this {
-    if (timer) {
-      this._timer = timer;
-    }
-    return this;
-  }
-
-  /**
-   * Get the time at which the app or this module was initialized
-   * @return {Number} Start time in milliseconds
-   */
-  get appTimer(): AppTimer {
-    return this._timer;
   }
 
   /**
@@ -196,11 +171,11 @@ export class LogMgr {
     return this.flushQueue();
   }
 
-  levelAsValue(val: LogLevelValue | LogLevelName | string): LogLevelValue {
+  levelAsValue(val: LogLevel | LogLevelName | string): LogLevel {
     return this._logLevels.asValue(val);
   }
 
-  level(level: LogLevelName | LogLevelValue): this {
+  level(level: LogLevelName | LogLevel): this {
     this._logLevels.levelThreshold = level;
     this._transportMgr.setLevelThreshold(this._logLevels.levelThreshold);
     return this;
@@ -216,7 +191,7 @@ export class LogMgr {
    * transports as well.
    * @return {LogMgr}
    */
-  errorLevel(level: LogLevelName | LogLevelValue): this {
+  errorLevel(level: LogLevelName | LogLevel): this {
     this._logLevels.errorStackThreshold = level;
     return this;
   }
@@ -254,7 +229,7 @@ export class LogMgr {
    * @param {function} [callback] - Called with err when complete.
    * @returns {Promise}
    */
-  destroying(): Promise<any> {
+  destroying(): Promise<unknown> {
     return this.stopping().then(() => {
       this._transportMgr.destroy();
       return Promise.resolve();
@@ -267,7 +242,7 @@ export class LogMgr {
    * @param {function} [callback] - Called with err when complete.
    * @returns {Promise}
    */
-  stopping(): Promise<any> {
+  stopping(): Promise<unknown> {
     this._running = false;
     return this._transportMgr.stop();
   }
@@ -277,7 +252,7 @@ export class LogMgr {
    * @param {function} [callback] - Called with err when complete.
    * @returns {Promise}
    */
-  flushing(): Promise<any> {
+  flushing(): Promise<unknown> {
     return this._transportMgr.flush();
   }
 }

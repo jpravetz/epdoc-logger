@@ -1,6 +1,6 @@
 import { type Dict, type Integer, isDict, isString } from '@epdoc/typeutil';
-import type { AppTimer } from './app-timer.ts';
-import type { LogLevelName, LogLevelValue } from './levels.ts';
+import type { AppTimer } from '../../apptimer/app-timer.ts';
+import type { LogLevel, LogLevelName } from '../../levels/levels.ts.txt';
 import type { LogMgr } from './logmgr.ts';
 
 export type Context = Dict;
@@ -102,15 +102,10 @@ export type LogMgrDefaults = Partial<{
   // show: LoggerShowOpts;
   // style: Style;
   // separatorOpts: SeparatorOpts;
-  levelThreshold: LogLevelValue;
-  errorStackThreshold: LogLevelValue;
+  levelThreshold: LogLevel;
+  errorStackThreshold: LogLevel;
   msgConsts: LogMessageConsts;
 }>;
-
-export type LogMsgPart = {
-  str: string;
-  style?: StyleFormatterFn;
-};
 
 export type LogContextParams = Partial<{
   /** The request ID, in the event this log message is associated with a server request. */
@@ -142,7 +137,7 @@ export type LogMessage = LogMessageConsts &
     /** The timer to use for the message, in order to display the current time or elapsed time.*/
     timer: AppTimer;
     /** The level of the message, as a LogLevelValue */
-    level: LogLevelValue;
+    level: LogLevel;
     /** The message to log. If this is not defined, then the message is
      * generated from the parrts array. */
     message: any;
@@ -167,8 +162,8 @@ export type TransportOptions = Partial<{
   // logLevel: LogLevelName | LogLevelValue;
   // timer: AppTimer;
   // consts: LogMessageConsts;
-  levelThreshold: LogLevelName | LogLevelValue;
-  errorStackThreshold: LogLevelName | LogLevelValue;
+  levelThreshold: LogLevelName | LogLevel;
+  errorStackThreshold: LogLevelName | LogLevel;
   format: MsgBuilderFormatOpts;
   // style: Style;
   options: Dict;

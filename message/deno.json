@@ -1,7 +1,7 @@
 {
-  "name": "@scope/core",
+  "name": "@scope/message",
   "version": "3.0.0",
-  "description": "Core logger module",
+  "description": "Color and formatting for console output",
   "exports": "./mod.ts",
   "tasks": {
     "test": "deno test --allow-env",

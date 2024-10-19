@@ -1,8 +1,8 @@
+import type { LogLevel, LogLevels } from '../../levels/levels.ts.txt';
 import type { LogMgr } from '../core/core-index.ts';
 import type { LogTransport, LogTransportOpenCallbacks, LogTransportType } from '../core/transports/base.ts';
 import { defaultConsoleTransportOpts } from '../core/transports/console.ts';
 import { TransportFactory } from '../core/transports/factory.ts';
-import type { LogLevels, LogLevelValue } from './levels.ts';
 import type { LogMessage, TransportOptions } from './types.ts';
 
 // let mgrIdx = 0;
@@ -51,10 +51,10 @@ export class TransportManager {
 
   /**
    * Sets the log level for all transports.
-   * @param {LogLevelValue} level - The log level to set.
+   * @param {LogLevel} level - The log level to set.
    * @returns {this} The instance of TransportManager for chaining.
    */
-  public setLevelThreshold(level: LogLevelValue): this {
+  public setLevelThreshold(level: LogLevel): this {
     this._transports.forEach((transport) => {
       transport.levelThreshold = level;
     });

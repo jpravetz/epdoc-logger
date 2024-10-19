@@ -1,5 +1,5 @@
 import type { LogMgr } from '../../core/logmgr.ts';
-import { StringEx } from '../../lib/util.ts';
+import { StringEx } from '../../../message/util.ts';
 import type { LogMessage, LogMsgPart, StyleFormatterFn } from '../../types.ts';
 import type { TransportFormatter } from './base.ts';
 

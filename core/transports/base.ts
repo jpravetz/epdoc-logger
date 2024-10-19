@@ -25,8 +25,8 @@ export class LogTransport {
   // bIncludeStatic: boolean;
   // colorize: boolean;
   // timestampFormat: string;
-  protected _levelThreshold: core.LogLevelValue;
-  protected _errorStackThreshold: core.LogLevelValue;
+  protected _levelThreshold: core.LogLevel;
+  protected _errorStackThreshold: core.LogLevel;
   bReady: boolean;
   protected _msgParts: core.LogMsgPart[];
 
@@ -102,11 +102,11 @@ export class LogTransport {
    * Set the log level for the transport.
    * @param level {string} The log level to set.
    */
-  set levelThreshold(level: core.LogLevelValue) {
+  set levelThreshold(level: core.LogLevel) {
     this._levelThreshold = level;
   }
 
-  get levelThreshold(): core.LogLevelValue {
+  get levelThreshold(): core.LogLevel {
     return this._levelThreshold;
   }
 
