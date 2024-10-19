@@ -1,0 +1,59 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "request": "launch",
+      "name": "Debug msgcli/test.ts",
+      "type": "node",
+      "cwd": "${workspaceFolder}",
+      "env": {},
+      "runtimeExecutable": "/Users/jpravetz/.deno/bin/deno",
+      "runtimeArgs": [
+        "test",
+        "--inspect-brk",
+        "--allow-env",
+        "--allow-sys",
+        "--allow-read",
+        "--allow-write",
+        "./msgcli/test.ts"
+      ],
+      "attachSimplePort": 9229
+    },
+    {
+      "request": "launch",
+      "name": "Debug message/test.ts",
+      "type": "node",
+      "cwd": "${workspaceFolder}",
+      "env": {},
+      "runtimeExecutable": "/Users/jpravetz/.deno/bin/deno",
+      "runtimeArgs": [
+        "test",
+        "--inspect-brk",
+        "--allow-env",
+        "--allow-sys",
+        "--allow-read",
+        "--allow-write",
+        "./message/test.ts"
+      ],
+      "attachSimplePort": 9229
+    },
+    {
+      "request": "launch",
+      "name": "Debug levels/test.ts",
+      "type": "node",
+      "cwd": "${workspaceFolder}",
+      "env": {},
+      "runtimeExecutable": "/Users/jpravetz/.deno/bin/deno",
+      "runtimeArgs": [
+        "test",
+        "--inspect-brk",
+        "--allow-env",
+        "--allow-sys",
+        "--allow-read",
+        "--allow-write",
+        "./levels/test.ts"
+      ],
+      "attachSimplePort": 9229
+    }
+  ]
+}

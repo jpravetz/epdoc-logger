@@ -6,7 +6,7 @@
     "name": "James Pravetz",
     "email": "jpravetz@epdoc.com"
   },
-  "workspace": ["core", "message", "basic", "express", "koa", "middleware", "loggly", "levels"],
+  "workspace": ["core", "message", "basic", "express", "koa", "middleware", "loggly", "levels", "msgcli"],
   "license": "MIT",
   "exports": "./mod.ts",
   "tasks": {

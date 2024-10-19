@@ -1,0 +1,17 @@
+{
+  "name": "@scope/msgcli",
+  "version": "3.0.0",
+  "description": "An implementation of the message module for the CLI",
+  "exports": "./mod.ts",
+  "tasks": {
+    "test": "deno test --allow-env",
+    "lint": "deno lint"
+  },
+  "tests": {
+    "include": ["test/**/*.ts"]
+  },
+  "imports": {
+    "@std/fmt": "jsr:@std/fmt@^1.0.2",
+    "@epdoc/message": "@scope/message"
+  }
+}

@@ -1,57 +1,40 @@
 import { type Integer, isInteger, isNonEmptyArray, isNonEmptyString } from '@epdoc/typeutil';
-import type { ILogLevels, LevelName, LogLevel } from '@scope/levels';
 import { StringEx } from './util.ts';
 
 const DEFAULT_TAB_SIZE = 2;
 
-export type StyleFormatterFn = (text: unknown[]) => string;
+export type StyleFormatterFn = (str: string) => string;
+export type StyleArg = string | number;
 
 export type LogMsgPart = {
   str: string;
   style?: StyleFormatterFn;
 };
 
+export interface IMsgBuilder {
+  clear(): this;
+  setInitialString(...args: StyleArg[]): this;
+  indent(n: Integer | string): this;
+  tab(n: Integer): this;
+  comment(...args: string[]): this;
+  emit(...args: unknown[]): string;
+}
+
 /**
  * A LoggerLine is a line of output from a Logger. It is used to build up a log
  * line, add styling, and emit the log line.
  */
-export class MsgBuilder {
-  protected _logLevels: ILogLevels;
-  protected _level: LogLevel = 0;
-  protected _threshold: LogLevel = 0;
-
+export class MsgBuilder implements IMsgBuilder {
   protected _tabSize: Integer = DEFAULT_TAB_SIZE;
   // protected _lineFormat: LoggerLineFormatOpts;
 
-  protected _enabled: boolean = false;
   protected _msgIndent: string = '';
   protected _msgParts: LogMsgPart[] = [];
   protected _suffix: string[] = [];
   // protected _level: LogLevelValue = logLevel.info;
   protected _showElapsed: boolean = false;
 
-  constructor(logLevels: ILogLevels, level: LogLevel | LevelName) {
-    this._logLevels = logLevels;
-    this.setLevel(level);
-  }
-
-  protected get logLevels(): ILogLevels {
-    return this._logLevels;
-  }
-
-  get level(): LogLevel {
-    return this._level ?? this.logLevels.asValue(this.logLevels.defaultLevelName);
-  }
-
-  setLevel(val: LogLevel | LevelName): this {
-    this._level = this.logLevels.asValue(val);
-    this._enabled = this.meetsThreshold();
-    return this;
-  }
-
-  meetsThreshold(): boolean {
-    return this.logLevels.meetsThreshold(this.level, this._threshold);
-  }
+  constructor() {}
 
   /**
    * Clears the current line, essentially resetting the output line. This does
@@ -63,7 +46,7 @@ export class MsgBuilder {
     return this;
   }
 
-  setInitialString(...args: (string | number)[]): this {
+  setInitialString(...args: StyleArg[]): this {
     if (args.length) {
       const count = StringEx(args[0]).countTabsAtBeginningOfString();
       if (count) {
@@ -75,12 +58,10 @@ export class MsgBuilder {
   }
 
   indent(n: Integer | string = DEFAULT_TAB_SIZE): this {
-    if (this._enabled) {
-      if (isInteger(n)) {
-        this.addMsgPart(' '.repeat(n - 1));
-      } else if (isNonEmptyString(n)) {
-        this.addMsgPart(n);
-      }
+    if (isInteger(n)) {
+      this.addMsgPart(' '.repeat(n - 1));
+    } else if (isNonEmptyString(n)) {
+      this.addMsgPart(n);
     }
     return this;
   }
@@ -91,9 +72,7 @@ export class MsgBuilder {
    * @returns {this} The Logger instance.
    */
   tab(n: Integer = 1): this {
-    if (this._enabled) {
-      this._msgIndent = ' '.repeat(n * this._tabSize - 1);
-    }
+    this._msgIndent = ' '.repeat(n * this._tabSize - 1);
     return this;
   }
 
@@ -118,7 +97,7 @@ export class MsgBuilder {
   }
 
   protected appendMsg(...args: unknown[]): this {
-    if (this._enabled && isNonEmptyArray(args)) {
+    if (isNonEmptyArray(args)) {
       this.addMsgPart(args.join(' '));
     }
     return this;
@@ -129,8 +108,8 @@ export class MsgBuilder {
     return this;
   }
 
-  stylize(style: StyleFormatterFn | null, ...args: (string | number)[]): this {
-    if (this._enabled && isNonEmptyArray(args)) {
+  stylize(style: StyleFormatterFn | null, ...args: StyleArg[]): this {
+    if (isNonEmptyArray(args)) {
       this.addMsgPart(args.join(' '), style);
     }
     return this;
@@ -195,10 +174,8 @@ export class MsgBuilder {
   emit(...args: unknown[]): string {
     this.appendMsg(...args);
     let result = '';
-    if (this._enabled) {
-      result = this.formatParts();
-      this.clear();
-    }
+    result = this.formatParts();
+    this.clear();
     return result;
   }
 
@@ -210,7 +187,7 @@ export class MsgBuilder {
     const parts: string[] = [];
     this._msgParts.forEach((part: LogMsgPart) => {
       if (part.style) {
-        parts.push(part.style(part.str as unknown as string[]));
+        parts.push(part.style(part.str));
       } else {
         parts.push(part.str);
       }

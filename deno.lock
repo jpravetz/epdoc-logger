@@ -4609,6 +4609,11 @@
         "dependencies": [
           "jsr:@std/assert@1"
         ]
+      },
+      "msgcli": {
+        "dependencies": [
+          "jsr:@std/fmt@^1.0.2"
+        ]
       }
     }
   }
