@@ -1,4 +1,4 @@
-import { PerformanceObserver, performance } from 'node:perf_hooks';
+import { performance, PerformanceObserver } from 'node:perf_hooks';
 
 const obs = new PerformanceObserver((items) => {
   console.log('obs', items.getEntries()[0].duration);

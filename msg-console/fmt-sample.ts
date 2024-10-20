@@ -1,7 +1,19 @@
 import * as colors from '@std/fmt/colors';
-import { MsgBuilder } from './mod.ts';
+import { MsgBuilder } from './builder.ts';
 
-const builder = new MsgBuilder();
+type ColorFn = (str: string) => string;
+const colorNames: (keyof typeof colors)[] = [
+  'blue',
+  'green',
+  'yellow',
+  'red',
+  'cyan',
+  'magenta',
+  'white',
+  'gray',
+];
+
+const builder = new MsgBuilder('INFO');
 const result = builder
   .h1('Heading 1')
   .h2('Heading 2')
@@ -17,38 +29,52 @@ const result = builder
   .error('error')
   .emit();
 console.log(result);
-['blue', 'green', 'yellow', 'red', 'cyan', 'magenta', 'white', 'gray'].forEach((color: string) => {
-  const colorFn = colors[color];
-  const brightColorFn = colors[bright(color)];
-  const bgColorFn = colors[bg(color)];
+
+colorNames.forEach((colorName) => {
+  const brightColorName = bright(colorName);
+  const bgColorName = bg(colorName);
+  const colorFn: ColorFn = colors[colorName] as ColorFn;
+  const brightColorFn: ColorFn = colors[brightColorName] as ColorFn;
+  const bgColorFn: ColorFn = colors[bgColorName] as ColorFn;
   console.log(
     [
-      colors.bold(colorFn('bold ' + color)),
-      colorFn(color),
-      brightColorFn(bright(color)),
-      colors.bold(brightColorFn('bold ' + bright(color))),
-    ].join(', ')
+      colors.bold(colorFn('bold ' + colorName)),
+      colorFn(colorName),
+      brightColorFn(bright(colorName)),
+      colors.bold(brightColorFn('bold ' + bright(colorName))),
+      colors.inverse(colorFn(`inverse ${colorName}`)),
+      colors.underline(colorFn(`underline ${colorName}`)),
+      colors.italic(colorFn(`italic ${colorName}`)),
+      bgColorFn(colorFn(`bg ${colorName}`)),
+    ].join(', '),
   );
-  console.log(
-    [
-      colors.inverse(colorFn(`inverse ${color}`)),
-      colors.underline(colorFn(`underline ${color}`)),
-      colors.italic(colorFn(`italic ${color}`)),
-      bgColorFn(colorFn(`bg ${color}`)),
-    ].join(', ')
-  );
+  console.log();
+  const line1: string[] = [];
+  const line2: string[] = [];
+  colorNames.forEach((colorName2) => {
+    const bgColorName = bg(colorName2);
+    const bgColorBrightName = bg(bright(colorName2));
+    const bgColorFn2: ColorFn = colors[bgColorName] as ColorFn;
+    const bgColorBrightFn: ColorFn = colors[bgColorBrightName] as ColorFn;
+    line1.push(bgColorFn2(colorFn(`${colorName} ${bgColorName}`)));
+    line2.push(bgColorBrightFn(brightColorFn(`${brightColorName} ${bgColorBrightName}`)));
+  });
+  console.log(line1.join(', '));
+  console.log();
+  console.log(line2.join(', '));
+  console.log();
 });
 
-function bright(str: string): string {
+function bright(str: string): keyof typeof colors {
   if (str === 'gray') {
     return 'gray';
   }
-  return 'bright' + str.charAt(0).toUpperCase() + str.slice(1);
+  return ('bright' + str.charAt(0).toUpperCase() + str.slice(1)) as keyof typeof colors;
 }
 
-function bg(str: string): string {
+function bg(str: string): keyof typeof colors {
   if (str === 'gray') {
     return 'gray';
   }
-  return 'bg' + str.charAt(0).toUpperCase() + str.slice(1);
+  return ('bg' + str.charAt(0).toUpperCase() + str.slice(1)) as keyof typeof colors;
 }

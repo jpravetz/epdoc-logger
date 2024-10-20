@@ -15,6 +15,7 @@
     "middleware",
     "loggly",
     "levels",
+    "logger",
     "msg-console"
   ],
   "license": "MIT",

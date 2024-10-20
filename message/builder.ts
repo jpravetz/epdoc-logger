@@ -1,4 +1,5 @@
 import { type Integer, isInteger, isNonEmptyArray, isNonEmptyString } from '@epdoc/typeutil';
+import type { LevelName } from '@scope/levels';
 import { StringEx } from './util.ts';
 
 const DEFAULT_TAB_SIZE = 2;
@@ -11,7 +12,13 @@ export type LogMsgPart = {
   style?: StyleFormatterFn;
 };
 
+export interface ILogEmitter {
+  emit(level: LevelName, msg: string): void;
+}
+
 export interface IMsgBuilder {
+  setLevel(level: LevelName): this;
+  setEmitter(emitter: ILogEmitter): this;
   clear(): this;
   setInitialString(...args: StyleArg[]): this;
   indent(n: Integer | string): this;
@@ -25,6 +32,8 @@ export interface IMsgBuilder {
  * line, add styling, and emit the log line.
  */
 export class MsgBuilder implements IMsgBuilder {
+  protected _level: LevelName;
+  protected _emitter: ILogEmitter | undefined;
   protected _tabSize: Integer = DEFAULT_TAB_SIZE;
   // protected _lineFormat: LoggerLineFormatOpts;
   protected _applyColors: boolean = true;
@@ -35,8 +44,29 @@ export class MsgBuilder implements IMsgBuilder {
   // protected _level: LogLevelValue = logLevel.info;
   protected _showElapsed: boolean = false;
 
-  constructor(applyColors: boolean = true) {
-    this._applyColors = applyColors;
+  constructor(level: LevelName, emitter?: ILogEmitter) {
+    this._level = level;
+    this._emitter = emitter;
+  }
+
+  setLevel(level: LevelName): this {
+    this._level = level;
+    return this;
+  }
+
+  setEmitter(emitter: ILogEmitter): this {
+    this._emitter = emitter;
+    return this;
+  }
+
+  applyColors(): this {
+    this._applyColors = true;
+    return this;
+  }
+
+  noColors(): this {
+    this._applyColors = false;
+    return this;
   }
 
   /**
@@ -139,6 +169,9 @@ export class MsgBuilder implements IMsgBuilder {
     let result = '';
     result = this.formatParts();
     this.clear();
+    if (this._emitter) {
+      this._emitter.emit(this._level, result);
+    }
     return result;
   }
 

@@ -4595,6 +4595,11 @@
           "jsr:@std/fmt@^1.0.2"
         ]
       },
+      "logger": {
+        "dependencies": [
+          "jsr:@std/fmt@^1.0.2"
+        ]
+      },
       "loggly": {
         "dependencies": [
           "jsr:@std/assert@1"

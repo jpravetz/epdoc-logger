@@ -1,8 +1,8 @@
-export function StringEx(str: unknown) {
+export function StringEx(str: unknown): StringUtil {
   return new StringUtil(str);
 }
 
-class StringUtil {
+export class StringUtil {
   private _str: string;
   constructor(str: unknown) {
     this._str = String(str);
@@ -15,7 +15,7 @@ class StringUtil {
    * @param {string} [plural] - The plural form of the word (optional).
    * @returns {string} The plural form of the word.
    */
-  plural(n: number, plural?: string) {
+  plural(n: number, plural?: string): string {
     if (n === 1) {
       return this._str;
     }
@@ -41,7 +41,7 @@ class StringUtil {
       : this._str + char.repeat(length - this._str.length);
   }
 
-  hexEncode() {
+  hexEncode(): string {
     let result = '';
     for (let i = 0; i < this._str.length; i++) {
       const hex = this._str.charCodeAt(i).toString(16);

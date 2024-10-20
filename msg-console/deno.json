@@ -12,6 +12,7 @@
   },
   "imports": {
     "@std/fmt": "jsr:@std/fmt@^1.0.2",
-    "@epdoc/message": "@scope/message"
+    "@epdoc/message": "@scope/message",
+    "@scope/levels": "../levels/mod.ts"
   }
 }
