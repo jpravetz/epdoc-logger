@@ -15,6 +15,7 @@
   "imports": {
     "@std/fmt": "jsr:@std/fmt@^1.0.2",
     "@scope/levels": "../levels/mod.ts",
-    "@scope/message": "../message/mod.ts"
+    "@scope/message": "../message/mod.ts",
+    "@scope/msg-console": "../msg-console/mod.ts"
   }
 }
